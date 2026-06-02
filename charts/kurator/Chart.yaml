@@ -2,8 +2,8 @@ apiVersion: v2
 name: kurator
 description: Kubernetes operator for declarative IBM MQ resources on an existing queue manager
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.2.0
+appVersion: "0.2.0"
 kubeVersion: ">=1.28.0-0"
 home: https://github.com/konradheimel/kurator
 sources:

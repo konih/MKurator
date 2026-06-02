@@ -87,7 +87,13 @@ var _ = Describe("QueueReconciler", func() {
 
 		mockAdmin := mqadmintest.NewMockAdmin(GinkgoT())
 		mockAdmin.EXPECT().
-			GetQueue(mock.Anything, testQueueName).
+			GetQueue(mock.Anything, mqadmin.QueueSpec{
+				Name: testQueueName,
+				Type: mqadmin.QueueTypeLocal,
+				Attributes: map[string]string{
+					testAttrMaxDepth: testMaxDepth,
+				},
+			}).
 			Return(nil, &mqadmin.NotFoundError{Object: testQueueName})
 		mockAdmin.EXPECT().
 			DefineQueue(mock.Anything, mqadmin.QueueSpec{

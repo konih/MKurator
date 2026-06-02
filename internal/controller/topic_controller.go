@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -41,6 +40,7 @@ func (r *TopicReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return result, err
 }
 
+//nolint:dupl // same connection/finalizer/sync pattern as QueueReconciler
 func (r *TopicReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	topic := &messagingv1alpha1.Topic{}
@@ -175,11 +175,7 @@ func (r *TopicReconciler) setSyncedError(
 func toMQTopicSpec(topic *messagingv1alpha1.Topic) mqadmin.TopicSpec {
 	attrs := map[string]string{}
 	for k, v := range topic.Spec.Attributes {
-		key := strings.ToLower(k)
-		if key == "topicstr" {
-			key = "topstr"
-		}
-		attrs[key] = v
+		attrs[mqadmin.NormalizeAttrKey(k)] = v
 	}
 	return mqadmin.TopicSpec{
 		Name:       topic.Spec.TopicName,

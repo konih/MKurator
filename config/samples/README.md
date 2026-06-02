@@ -112,12 +112,38 @@ spec:
 |-------|-------------|-------|
 | `connectionRef.name` | `qm1` | Must match a **Ready** `QueueManagerConnection` |
 | `queueName` | `APP.ORDERS` | Actual IBM MQ object name |
-| `type` | `local` | Only type reconciled in v0.1.0 |
+| `type` | `local` | `QLOCAL`; see also `alias` and `remote` samples below |
 | `attributes.maxdepth` | `"5000"` | String in YAML; sent as numeric to mqweb |
 | `attributes.descr` | Human-readable text | Mapped to MQSC `DESCR` |
 
 Helm copy:
 [`charts/kurator/samples/resources/queue.yaml`](../../charts/kurator/samples/resources/queue.yaml).
+
+---
+
+## `messaging_v1alpha1_queue_alias.yaml`
+
+Alias queue pointing at `APP.ORDERS` (`targq`).
+
+| Field | This sample | Notes |
+|-------|-------------|-------|
+| `type` | `alias` | `DEFINE QALIAS` |
+| `attributes.targq` | `APP.ORDERS` | Target queue name |
+
+Verify: `task mq:runmqsc -- "DISPLAY QALIAS('APP.ORDERS.ALIAS') TARGQ DESCR"`
+
+---
+
+## `messaging_v1alpha1_queue_remote.yaml`
+
+Remote queue definition to `APP.ORDERS` on `QM1` (local demo).
+
+| Field | This sample | Notes |
+|-------|-------------|-------|
+| `type` | `remote` | `DEFINE QREMOTE` |
+| `attributes.rname` | `APP.ORDERS` | Remote queue name |
+| `attributes.rqmname` | `QM1` | Remote queue manager |
+| `attributes.xmitq` | `SYSTEM.DEFAULT.XMIT.QUEUE` | Transmission queue |
 
 ---
 

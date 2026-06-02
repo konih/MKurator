@@ -41,6 +41,7 @@ func (r *QueueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return result, err
 }
 
+//nolint:dupl // same connection/finalizer/sync pattern as TopicReconciler
 func (r *QueueReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	q := &messagingv1alpha1.Queue{}
@@ -83,13 +84,6 @@ func (r *QueueReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, nil
 	}
 
-	if q.Spec.Type != "" && q.Spec.Type != messagingv1alpha1.QueueTypeLocal {
-		return r.setSyncedError(ctx, q, &mqadmin.TerminalError{
-			Reason:  "UnsupportedQueueType",
-			Message: fmt.Sprintf("queue type %q is not supported in v1alpha1", q.Spec.Type),
-		})
-	}
-
 	spec := toMQQueueSpec(q)
 	if err := r.ensureQueue(ctx, admin, spec); err != nil {
 		return r.setSyncedError(ctx, q, err)
@@ -120,7 +114,7 @@ func (r *QueueReconciler) getConnection(
 }
 
 func (r *QueueReconciler) ensureQueue(ctx context.Context, admin mqadmin.Admin, spec mqadmin.QueueSpec) error {
-	observed, err := admin.GetQueue(ctx, spec.Name)
+	observed, err := admin.GetQueue(ctx, spec)
 	if err != nil && !errors.Is(err, mqadmin.ErrNotFound) {
 		return err
 	}
@@ -147,7 +141,7 @@ func (r *QueueReconciler) handleDeletion(
 		return ctrl.Result{}, err
 	}
 
-	if err := admin.DeleteQueue(ctx, q.Spec.QueueName); err != nil {
+	if err := admin.DeleteQueue(ctx, toMQQueueSpec(q)); err != nil {
 		return r.setSyncedError(ctx, q, err)
 	}
 
@@ -193,13 +187,9 @@ func toMQQueueSpec(q *messagingv1alpha1.Queue) mqadmin.QueueSpec {
 	for k, v := range q.Spec.Attributes {
 		attrs[strings.ToLower(k)] = v
 	}
-	qType := mqadmin.QueueTypeLocal
-	if q.Spec.Type != "" {
-		qType = mqadmin.QueueType(q.Spec.Type)
-	}
 	return mqadmin.QueueSpec{
 		Name:       q.Spec.QueueName,
-		Type:       qType,
+		Type:       mqadmin.QueueType(q.Spec.Type),
 		Attributes: attrs,
 	}
 }

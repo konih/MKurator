@@ -148,8 +148,7 @@ before access-control work.
   reconcilers land).
 - [x] Drift detection: case-insensitive `pub`/`sub`/policies; channel `maxinst` /
   `maxinstc`; topic `pubscope`/`subscope` where mqweb DISPLAY allows.
-- [ ] Optional follow-on in this phase: **alias** and **remote** queue types (same
-  patterns as `Queue`).
+- [x] **Alias** and **remote** queue types (`QALIAS`, `QREMOTE`) with drift detection.
 - [ ] Optional: extend queue DISPLAY list (`share`, `defopts`, …) after mqweb 9.4
   compatibility testing; TLS channel attrs (`sslciph`, `sslcauth`) for drift.
 

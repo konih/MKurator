@@ -1,0 +1,13 @@
+apiVersion: messaging.kurator.dev/v1alpha1
+kind: Queue
+metadata:
+  name: orders-alias
+  namespace: kurator-system
+spec:
+  connectionRef:
+    name: qm1
+  queueName: APP.ORDERS.ALIAS
+  type: alias
+  attributes:
+    targq: APP.ORDERS
+    descr: Alias to APP.ORDERS intake queue

@@ -91,7 +91,7 @@ func TestClient_DefineAndGetQueue(t *testing.T) {
 	if params["maxdepth"] != float64(5000) && params["maxdepth"] != 5000 {
 		t.Fatalf("maxdepth param = %T(%v)", params["maxdepth"], params["maxdepth"])
 	}
-	state, err := c.GetQueue(context.Background(), "APP.ORDERS")
+	state, err := c.GetQueue(context.Background(), spec)
 	if err != nil {
 		t.Fatalf("GetQueue: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestClient_GetQueueNotFound(t *testing.T) {
 	defer srv.Close()
 
 	c := newTestClient(t, srv.URL, srv.Client())
-	_, err := c.GetQueue(context.Background(), "APP.MISSING")
+	_, err := c.GetQueue(context.Background(), mqadmin.QueueSpec{Name: "APP.MISSING", Type: mqadmin.QueueTypeLocal})
 	if err == nil {
 		t.Fatal("expected not found error")
 	}
@@ -207,7 +207,8 @@ func TestClient_DeleteQueue(t *testing.T) {
 	}))
 	defer srv.Close()
 	c := newTestClient(t, srv.URL, srv.Client())
-	if err := c.DeleteQueue(context.Background(), "APP.ORDERS"); err != nil {
+	spec := mqadmin.QueueSpec{Name: "APP.ORDERS", Type: mqadmin.QueueTypeLocal}
+	if err := c.DeleteQueue(context.Background(), spec); err != nil {
 		t.Fatalf("DeleteQueue: %v", err)
 	}
 }
@@ -225,7 +226,8 @@ func TestClient_DeleteQueueNotFound(t *testing.T) {
 	}))
 	defer srv.Close()
 	c := newTestClient(t, srv.URL, srv.Client())
-	if err := c.DeleteQueue(context.Background(), "APP.GONE"); err != nil {
+	spec := mqadmin.QueueSpec{Name: "APP.GONE", Type: mqadmin.QueueTypeLocal}
+	if err := c.DeleteQueue(context.Background(), spec); err != nil {
 		t.Fatalf("DeleteQueue not found should succeed: %v", err)
 	}
 }
@@ -240,7 +242,7 @@ func TestClient_DefineQueueUnsupportedType(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = c.DefineQueue(context.Background(), mqadmin.QueueSpec{
-		Name: "X", Type: mqadmin.QueueType("remote"),
+		Name: "X", Type: mqadmin.QueueType("model"),
 	})
 	if !errors.Is(err, mqadmin.ErrTerminal) {
 		t.Fatalf("expected terminal error, got %v", err)

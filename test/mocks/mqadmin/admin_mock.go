@@ -7,10 +7,9 @@ package mqadmintest
 import (
 	"context"
 
-	mock "github.com/stretchr/testify/mock"
-
 	"github.com/konradheimel/kurator/api/v1alpha1"
 	"github.com/konradheimel/kurator/internal/mqadmin"
+	mock "github.com/stretchr/testify/mock"
 )
 
 // NewMockFactory creates a new instance of MockFactory. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -364,16 +363,16 @@ func (_c *MockAdmin_DeleteChannel_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // DeleteQueue provides a mock function for the type MockAdmin
-func (_mock *MockAdmin) DeleteQueue(ctx context.Context, name string) error {
-	ret := _mock.Called(ctx, name)
+func (_mock *MockAdmin) DeleteQueue(ctx context.Context, spec mqadmin.QueueSpec) error {
+	ret := _mock.Called(ctx, spec)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteQueue")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, mqadmin.QueueSpec) error); ok {
+		r0 = returnFunc(ctx, spec)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -387,20 +386,20 @@ type MockAdmin_DeleteQueue_Call struct {
 
 // DeleteQueue is a helper method to define mock.On call
 //   - ctx context.Context
-//   - name string
-func (_e *MockAdmin_Expecter) DeleteQueue(ctx interface{}, name interface{}) *MockAdmin_DeleteQueue_Call {
-	return &MockAdmin_DeleteQueue_Call{Call: _e.mock.On("DeleteQueue", ctx, name)}
+//   - spec mqadmin.QueueSpec
+func (_e *MockAdmin_Expecter) DeleteQueue(ctx interface{}, spec interface{}) *MockAdmin_DeleteQueue_Call {
+	return &MockAdmin_DeleteQueue_Call{Call: _e.mock.On("DeleteQueue", ctx, spec)}
 }
 
-func (_c *MockAdmin_DeleteQueue_Call) Run(run func(ctx context.Context, name string)) *MockAdmin_DeleteQueue_Call {
+func (_c *MockAdmin_DeleteQueue_Call) Run(run func(ctx context.Context, spec mqadmin.QueueSpec)) *MockAdmin_DeleteQueue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 mqadmin.QueueSpec
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(mqadmin.QueueSpec)
 		}
 		run(
 			arg0,
@@ -415,7 +414,7 @@ func (_c *MockAdmin_DeleteQueue_Call) Return(err error) *MockAdmin_DeleteQueue_C
 	return _c
 }
 
-func (_c *MockAdmin_DeleteQueue_Call) RunAndReturn(run func(ctx context.Context, name string) error) *MockAdmin_DeleteQueue_Call {
+func (_c *MockAdmin_DeleteQueue_Call) RunAndReturn(run func(ctx context.Context, spec mqadmin.QueueSpec) error) *MockAdmin_DeleteQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -546,8 +545,8 @@ func (_c *MockAdmin_GetChannel_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // GetQueue provides a mock function for the type MockAdmin
-func (_mock *MockAdmin) GetQueue(ctx context.Context, name string) (*mqadmin.QueueState, error) {
-	ret := _mock.Called(ctx, name)
+func (_mock *MockAdmin) GetQueue(ctx context.Context, spec mqadmin.QueueSpec) (*mqadmin.QueueState, error) {
+	ret := _mock.Called(ctx, spec)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetQueue")
@@ -555,18 +554,18 @@ func (_mock *MockAdmin) GetQueue(ctx context.Context, name string) (*mqadmin.Que
 
 	var r0 *mqadmin.QueueState
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*mqadmin.QueueState, error)); ok {
-		return returnFunc(ctx, name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, mqadmin.QueueSpec) (*mqadmin.QueueState, error)); ok {
+		return returnFunc(ctx, spec)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *mqadmin.QueueState); ok {
-		r0 = returnFunc(ctx, name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, mqadmin.QueueSpec) *mqadmin.QueueState); ok {
+		r0 = returnFunc(ctx, spec)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*mqadmin.QueueState)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, name)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, mqadmin.QueueSpec) error); ok {
+		r1 = returnFunc(ctx, spec)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -580,20 +579,20 @@ type MockAdmin_GetQueue_Call struct {
 
 // GetQueue is a helper method to define mock.On call
 //   - ctx context.Context
-//   - name string
-func (_e *MockAdmin_Expecter) GetQueue(ctx interface{}, name interface{}) *MockAdmin_GetQueue_Call {
-	return &MockAdmin_GetQueue_Call{Call: _e.mock.On("GetQueue", ctx, name)}
+//   - spec mqadmin.QueueSpec
+func (_e *MockAdmin_Expecter) GetQueue(ctx interface{}, spec interface{}) *MockAdmin_GetQueue_Call {
+	return &MockAdmin_GetQueue_Call{Call: _e.mock.On("GetQueue", ctx, spec)}
 }
 
-func (_c *MockAdmin_GetQueue_Call) Run(run func(ctx context.Context, name string)) *MockAdmin_GetQueue_Call {
+func (_c *MockAdmin_GetQueue_Call) Run(run func(ctx context.Context, spec mqadmin.QueueSpec)) *MockAdmin_GetQueue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 mqadmin.QueueSpec
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(mqadmin.QueueSpec)
 		}
 		run(
 			arg0,
@@ -608,7 +607,7 @@ func (_c *MockAdmin_GetQueue_Call) Return(queueState *mqadmin.QueueState, err er
 	return _c
 }
 
-func (_c *MockAdmin_GetQueue_Call) RunAndReturn(run func(ctx context.Context, name string) (*mqadmin.QueueState, error)) *MockAdmin_GetQueue_Call {
+func (_c *MockAdmin_GetQueue_Call) RunAndReturn(run func(ctx context.Context, spec mqadmin.QueueSpec) (*mqadmin.QueueState, error)) *MockAdmin_GetQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -5,31 +5,54 @@ import (
 	"strings"
 )
 
+const (
+	attrKeyPub       = "pub"
+	attrKeySub       = "sub"
+	attrKeyGet       = "get"
+	attrKeyPut       = "put"
+	attrKeyDefpsist  = "defpsist"
+	attrKeyTrptype   = "trptype"
+	attrKeyMaxdepth  = "maxdepth"
+	attrKeyMaxmsglen = "maxmsglen"
+	attrKeyMaxmsgl   = "maxmsgl"
+	attrKeySharecnv  = "sharecnv"
+	attrKeyMaxinst   = "maxinst"
+	attrKeyMaxinstc  = "maxinstc"
+	attrKeyTopstr    = "topstr"
+	attrKeyTopicstr  = "topicstr"
+)
+
 var caseInsensitiveAttrKeys = map[string]struct{}{
-	"pub":      {},
-	"sub":      {},
-	"get":      {},
-	"put":      {},
-	"defpsist": {},
-	"trptype":  {},
+	attrKeyPub:      {},
+	attrKeySub:      {},
+	attrKeyGet:      {},
+	attrKeyPut:      {},
+	attrKeyDefpsist: {},
+	attrKeyTrptype:  {},
 }
 
 var numericAttrKeys = map[string]struct{}{
-	"maxdepth":  {},
-	"maxmsglen": {},
-	"maxmsgl":   {},
-	"sharecnv":  {},
-	"maxinst":   {},
-	"maxinstc":  {},
+	attrKeyMaxdepth:  {},
+	attrKeyMaxmsglen: {},
+	attrKeyMaxmsgl:   {},
+	attrKeySharecnv:  {},
+	attrKeyMaxinst:   {},
+	attrKeyMaxinstc:  {},
+}
+
+// NormalizeAttrKey lowercases MQSC attribute keys and applies mqweb aliases.
+func NormalizeAttrKey(key string) string {
+	key = strings.ToLower(key)
+	if key == attrKeyTopicstr {
+		return attrKeyTopstr
+	}
+	return key
 }
 
 // AttributeValueMatches reports whether desired and observed MQ attribute values
 // are equivalent for drift detection.
 func AttributeValueMatches(key, desired, observed string) bool {
-	key = strings.ToLower(key)
-	if key == "topicstr" {
-		key = "topstr"
-	}
+	key = NormalizeAttrKey(key)
 	if _, ok := caseInsensitiveAttrKeys[key]; ok {
 		return strings.EqualFold(strings.TrimSpace(desired), strings.TrimSpace(observed))
 	}
@@ -42,10 +65,7 @@ func AttributeValueMatches(key, desired, observed string) bool {
 // AttributesNeedUpdate returns true when any desired attribute differs from observed.
 func AttributesNeedUpdate(desired map[string]string, observed map[string]string) bool {
 	for k, v := range desired {
-		key := strings.ToLower(k)
-		if key == "topicstr" {
-			key = "topstr"
-		}
+		key := NormalizeAttrKey(k)
 		if !AttributeValueMatches(key, v, observed[key]) {
 			return true
 		}

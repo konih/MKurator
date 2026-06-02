@@ -20,16 +20,16 @@ and `internal/mqadmin/attrmatch.go` (value comparison). See
 
 | CRD | MQ object | `spec.type` |
 |-----|-----------|-------------|
-| `Queue` | `QLOCAL` | `local` only (default) |
+| `Queue` | `QLOCAL`, `QALIAS`, `QREMOTE` | `local` (default), `alias`, `remote` |
 | `Topic` | `TOPIC` | n/a |
 | `Channel` | `CHANNEL` | `svrconn` only (default) |
 | `QueueManagerConnection` | (connectivity, not MQSC) | n/a |
 
-Planned: `QALIAS`, `QREMOTE` ([ROADMAP.md](ROADMAP.md) Phase 4 follow-on); `SET AUTHREC` / `SET CHLAUTH` (Phase 5).
+Planned: `SET AUTHREC` / `SET CHLAUTH` (Phase 5).
 
 ## Attribute coverage by object
 
-### Queue (`QLOCAL`)
+### Queue — `type: local` (`QLOCAL`)
 
 | Attribute | DEFINE | Drift (DISPLAY) | Notes |
 |-----------|--------|-----------------|-------|
@@ -40,6 +40,23 @@ Planned: `QALIAS`, `QREMOTE` ([ROADMAP.md](ROADMAP.md) Phase 4 follow-on); `SET 
 | `maxmsglen` | yes | **no** | mqweb 9.4 rejects on DISPLAY (`MQWB0120E`) |
 | `share`, `defopts`, `bothresh`, `boqname`, `usage`, trigger fields | yes | **no** | Passthrough; not in safe DISPLAY list |
 | `cluster`, `clusnl` | yes | **no** | Clustering — future work |
+
+### Queue — `type: alias` (`QALIAS`)
+
+| Attribute | DEFINE | Drift (DISPLAY) | Notes |
+|-----------|--------|-----------------|-------|
+| `targq` | yes | yes | Target queue name |
+| `targtype` | yes | yes | `QUEUE` or `TOPIC` |
+| `descr` | yes | yes | |
+
+### Queue — `type: remote` (`QREMOTE`)
+
+| Attribute | DEFINE | Drift (DISPLAY) | Notes |
+|-----------|--------|-----------------|-------|
+| `rname` | yes | yes | Remote queue name (blank for QM alias) |
+| `rqmname` | yes | yes | Remote queue manager |
+| `xmitq` | yes | yes | Transmission queue |
+| `descr` | yes | yes | |
 
 ### Topic (`TOPIC`)
 

@@ -5,11 +5,13 @@ import (
 )
 
 // QueueType is the IBM MQ queue object type to manage.
-// +kubebuilder:validation:Enum=local
+// +kubebuilder:validation:Enum=local;alias;remote
 type QueueType string
 
 const (
-	QueueTypeLocal QueueType = "local"
+	QueueTypeLocal  QueueType = "local"
+	QueueTypeAlias  QueueType = "alias"
+	QueueTypeRemote QueueType = "remote"
 )
 
 // QueueSpec defines a queue to maintain on a referenced queue manager.
@@ -23,8 +25,7 @@ type QueueSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	QueueName string `json:"queueName"`
 
-	// Type is the queue kind to define. Only local queues are reconciled in v1alpha1.
-	// Alias and remote queues are planned; see docs/ROADMAP.md.
+	// Type is the queue kind to define: local (QLOCAL), alias (QALIAS), or remote (QREMOTE).
 	// +kubebuilder:default=local
 	// +optional
 	Type QueueType `json:"type,omitempty"`

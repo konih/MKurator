@@ -78,11 +78,12 @@ spec:
                 type: string
               type:
                 default: local
-                description: |-
-                  Type is the queue kind to define. Only local queues are reconciled in v1alpha1.
-                  Alias and remote queues are planned; see docs/ROADMAP.md.
+                description: 'Type is the queue kind to define: local (QLOCAL), alias
+                  (QALIAS), or remote (QREMOTE).'
                 enum:
                 - local
+                - alias
+                - remote
                 type: string
             required:
             - connectionRef

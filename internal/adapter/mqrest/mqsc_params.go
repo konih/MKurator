@@ -17,8 +17,16 @@ const attrTopicStr = "topicStr" // mqweb runCommandJSON name for TOPSTR
 // queueDisplayParameters lists attributes safe for runCommandJSON DISPLAY qlocal
 // on IBM MQ 9.4.x. Some keywords (e.g. maxmsglen) are rejected by mqweb with
 // MQWB0120E even though they are valid on DEFINE.
-var queueDisplayParameters = []string{
+var queueLocalDisplayParameters = []string{
 	attrMaxDepth, attrDescr, "defpsist", "get", "put",
+}
+
+var queueAliasDisplayParameters = []string{
+	"targq", "targtype", attrDescr,
+}
+
+var queueRemoteDisplayParameters = []string{
+	"rname", "rqmname", "xmitq", attrDescr,
 }
 
 // queueNumericParameters are coerced to JSON numbers for runCommandJSON DEFINE.
@@ -27,11 +35,17 @@ var queueNumericParameters = map[string]struct{}{
 	"maxmsglen":  {},
 }
 
+const (
+	attrSharecnv = "sharecnv"
+	attrMaxInst  = "maxinst"
+	attrMaxInstc = "maxinstc"
+)
+
 var channelNumericParameters = map[string]struct{}{
-	"sharecnv":  {},
-	attrMaxMsgl: {},
-	"maxinst":   {},
-	"maxinstc":  {},
+	attrSharecnv: {},
+	attrMaxMsgl:  {},
+	attrMaxInst:  {},
+	attrMaxInstc: {},
 }
 
 // topicDisplayParameters lists attributes safe for DISPLAY topic on IBM MQ 9.4.x
@@ -42,7 +56,7 @@ var topicDisplayParameters = []string{
 }
 
 var channelDisplayParameters = []string{
-	attrDescr, "trptype", "sharecnv", attrMaxMsgl, "mcauser", "maxinst", "maxinstc",
+	attrDescr, "trptype", attrSharecnv, attrMaxMsgl, "mcauser", attrMaxInst, attrMaxInstc,
 }
 
 func defineTopicParameters(spec mqadmin.TopicSpec) map[string]any {
@@ -100,6 +114,38 @@ func defineObjectParameters(
 
 func defineQueueParameters(spec mqadmin.QueueSpec) map[string]any {
 	return defineObjectParameters(spec.Attributes, queueNumericParameters)
+}
+
+func queueQualifier(qType mqadmin.QueueType) string {
+	switch mqadmin.NormalizeQueueType(qType) {
+	case mqadmin.QueueTypeAlias:
+		return qualifierQAlias
+	case mqadmin.QueueTypeRemote:
+		return qualifierQRemote
+	default:
+		return qualifierQLocal
+	}
+}
+
+func queueDisplayParameters(qType mqadmin.QueueType) []string {
+	switch mqadmin.NormalizeQueueType(qType) {
+	case mqadmin.QueueTypeAlias:
+		return append([]string(nil), queueAliasDisplayParameters...)
+	case mqadmin.QueueTypeRemote:
+		return append([]string(nil), queueRemoteDisplayParameters...)
+	default:
+		return append([]string(nil), queueLocalDisplayParameters...)
+	}
+}
+
+func queueDisplayRequest(spec mqadmin.QueueSpec) runCommandJSONRequest {
+	return runCommandJSONRequest{
+		Type:               mqscType,
+		Command:            mqscCommandDisplay,
+		Qualifier:          queueQualifier(spec.Type),
+		Name:               spec.Name,
+		ResponseParameters: queueDisplayParameters(spec.Type),
+	}
 }
 
 func channelDisplayRequest(name string, chlType mqadmin.ChannelType) runCommandJSONRequest {

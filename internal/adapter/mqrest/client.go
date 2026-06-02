@@ -27,6 +27,8 @@ const (
 	mqscCommandDelete  = "delete"
 	mqscReplaceYes     = "yes"
 	qualifierQLocal    = "qlocal"
+	qualifierQAlias    = "qalias"
+	qualifierQRemote   = "qremote"
 	qualifierTopic     = "topic"
 	qualifierChannel   = "channel"
 )
@@ -124,40 +126,27 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-// GetQueue returns observed attributes for a local queue.
-func (c *Client) GetQueue(ctx context.Context, name string) (*mqadmin.QueueState, error) {
+// GetQueue returns observed attributes for a queue (local, alias, or remote).
+func (c *Client) GetQueue(ctx context.Context, spec mqadmin.QueueSpec) (*mqadmin.QueueState, error) {
 	var err error
 	defer func() { metrics.RecordMQOperation(metrics.MQOpGetQueue, err) }()
 
-	resp, err := c.runCommandJSON(ctx, runCommandJSONRequest{
-		Type:               mqscType,
-		Command:            mqscCommandDisplay,
-		Qualifier:          qualifierQLocal,
-		Name:               name,
-		ResponseParameters: append([]string(nil), queueDisplayParameters...),
-	})
+	if err = validateQueueType(spec.Type); err != nil {
+		return nil, err
+	}
+
+	resp, err := c.runCommandJSON(ctx, queueDisplayRequest(spec))
 	if err != nil {
 		return nil, err
 	}
-	if len(resp.CommandResponse) == 0 {
-		err = &mqadmin.NotFoundError{Object: name}
+	attrs, err := resp.firstObjectAttributes()
+	if err != nil {
+		if nf := (*mqadmin.NotFoundError)(nil); errors.As(err, &nf) {
+			err = &mqadmin.NotFoundError{Object: spec.Name}
+		}
 		return nil, err
 	}
-	attrs := map[string]string{}
-	for _, cr := range resp.CommandResponse {
-		for k, v := range cr.Parameters {
-			attrs[strings.ToLower(k)] = fmt.Sprint(v)
-		}
-	}
-	if len(attrs) == 0 && resp.overallFailed() {
-		if resp.isObjectMissing() {
-			err = &mqadmin.NotFoundError{Object: name}
-			return nil, err
-		}
-		err = resp.terminalError("display queue")
-		return nil, err
-	}
-	return &mqadmin.QueueState{Name: name, Attributes: attrs}, nil
+	return &mqadmin.QueueState{Name: spec.Name, Attributes: attrs}, nil
 }
 
 // DefineQueue creates or updates a local queue (REPLACE).
@@ -165,18 +154,14 @@ func (c *Client) DefineQueue(ctx context.Context, spec mqadmin.QueueSpec) error 
 	var err error
 	defer func() { metrics.RecordMQOperation(metrics.MQOpDefineQueue, err) }()
 
-	if spec.Type != "" && spec.Type != mqadmin.QueueTypeLocal {
-		err = &mqadmin.TerminalError{
-			Reason:  "UnsupportedQueueType",
-			Message: fmt.Sprintf("queue type %q is not supported yet", spec.Type),
-		}
+	if err = validateQueueType(spec.Type); err != nil {
 		return err
 	}
 	params := defineQueueParameters(spec)
 	_, err = c.runCommandJSON(ctx, runCommandJSONRequest{
 		Type:       mqscType,
 		Command:    mqscCommandDefine,
-		Qualifier:  qualifierQLocal,
+		Qualifier:  queueQualifier(spec.Type),
 		Name:       spec.Name,
 		Parameters: params,
 	})
@@ -194,22 +179,38 @@ func (c *Client) RunMQSC(ctx context.Context, command string) error {
 	return err
 }
 
-// DeleteQueue removes a local queue.
-func (c *Client) DeleteQueue(ctx context.Context, name string) error {
+// DeleteQueue removes a queue (local, alias, or remote).
+func (c *Client) DeleteQueue(ctx context.Context, spec mqadmin.QueueSpec) error {
 	var err error
 	defer func() { metrics.RecordMQOperation(metrics.MQOpDeleteQueue, err) }()
+
+	if err = validateQueueType(spec.Type); err != nil {
+		return err
+	}
 
 	_, err = c.runCommandJSON(ctx, runCommandJSONRequest{
 		Type:      mqscType,
 		Command:   mqscCommandDelete,
-		Qualifier: qualifierQLocal,
-		Name:      name,
+		Qualifier: queueQualifier(spec.Type),
+		Name:      spec.Name,
 	})
 	if err != nil && errors.Is(err, mqadmin.ErrNotFound) {
 		err = nil
 		return nil
 	}
 	return err
+}
+
+func validateQueueType(qType mqadmin.QueueType) error {
+	switch mqadmin.NormalizeQueueType(qType) {
+	case mqadmin.QueueTypeLocal, mqadmin.QueueTypeAlias, mqadmin.QueueTypeRemote:
+		return nil
+	default:
+		return &mqadmin.TerminalError{
+			Reason:  "UnsupportedQueueType",
+			Message: fmt.Sprintf("queue type %q is not supported", qType),
+		}
+	}
 }
 
 // GetTopic returns the observed attributes of a topic.

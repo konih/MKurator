@@ -55,7 +55,9 @@ func TestIntegration_Queue_CreateGetDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = c.DeleteQueue(context.Background(), name) })
+	t.Cleanup(func() {
+		_ = c.DeleteQueue(context.Background(), mqadmin.QueueSpec{Name: name, Type: mqadmin.QueueTypeLocal})
+	})
 
 	spec := mqadmin.QueueSpec{
 		Name: name,
@@ -69,7 +71,7 @@ func TestIntegration_Queue_CreateGetDelete(t *testing.T) {
 		t.Fatalf("DefineQueue: %v", err)
 	}
 
-	state, err := c.GetQueue(ctx, name)
+	state, err := c.GetQueue(ctx, spec)
 	if err != nil {
 		t.Fatalf("GetQueue: %v", err)
 	}
@@ -80,11 +82,11 @@ func TestIntegration_Queue_CreateGetDelete(t *testing.T) {
 		t.Fatalf("maxdepth = %q", state.Attributes["maxdepth"])
 	}
 
-	if err := c.DeleteQueue(ctx, name); err != nil {
+	if err := c.DeleteQueue(ctx, mqadmin.QueueSpec{Name: name, Type: mqadmin.QueueTypeLocal}); err != nil {
 		t.Fatalf("DeleteQueue: %v", err)
 	}
 
-	_, err = c.GetQueue(ctx, name)
+	_, err = c.GetQueue(ctx, spec)
 	if err == nil {
 		t.Fatal("expected not found after delete")
 	}
@@ -102,7 +104,9 @@ func TestIntegration_Queue_UpdateViaReplace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = c.DeleteQueue(context.Background(), name) })
+	t.Cleanup(func() {
+		_ = c.DeleteQueue(context.Background(), mqadmin.QueueSpec{Name: name, Type: mqadmin.QueueTypeLocal})
+	})
 
 	define := func(maxdepth string) {
 		t.Helper()
@@ -118,8 +122,10 @@ func TestIntegration_Queue_UpdateViaReplace(t *testing.T) {
 		}
 	}
 
+	spec := mqadmin.QueueSpec{Name: name, Type: mqadmin.QueueTypeLocal}
+
 	define("100")
-	state, err := c.GetQueue(ctx, name)
+	state, err := c.GetQueue(ctx, spec)
 	if err != nil {
 		t.Fatalf("GetQueue: %v", err)
 	}
@@ -128,7 +134,7 @@ func TestIntegration_Queue_UpdateViaReplace(t *testing.T) {
 	}
 
 	define("200")
-	state, err = c.GetQueue(ctx, name)
+	state, err = c.GetQueue(ctx, spec)
 	if err != nil {
 		t.Fatalf("GetQueue after update: %v", err)
 	}
@@ -147,7 +153,7 @@ func TestIntegration_GetQueue_NotFound(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = c.GetQueue(ctx, name)
+	_, err = c.GetQueue(ctx, mqadmin.QueueSpec{Name: name, Type: mqadmin.QueueTypeLocal})
 	if err == nil {
 		t.Fatal("expected not found")
 	}
@@ -166,8 +172,89 @@ func TestIntegration_DeleteQueue_Idempotent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := c.DeleteQueue(ctx, name); err != nil {
+	if err := c.DeleteQueue(ctx, mqadmin.QueueSpec{Name: name, Type: mqadmin.QueueTypeLocal}); err != nil {
 		t.Fatalf("DeleteQueue on missing queue: %v", err)
+	}
+}
+
+func TestIntegration_Queue_Alias(t *testing.T) {
+	requireIntegration(t)
+	ctx := testContext(t)
+	target := queueNameForTest(t.Name() + ".TARGET")
+	alias := queueNameForTest(t.Name() + ".ALIAS")
+
+	c, err := newIntegrationClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = c.DeleteQueue(context.Background(), mqadmin.QueueSpec{Name: alias, Type: mqadmin.QueueTypeAlias})
+		_ = c.DeleteQueue(context.Background(), mqadmin.QueueSpec{Name: target, Type: mqadmin.QueueTypeLocal})
+	})
+
+	if err := c.DefineQueue(ctx, mqadmin.QueueSpec{
+		Name: target, Type: mqadmin.QueueTypeLocal, Attributes: map[string]string{"maxdepth": "100"},
+	}); err != nil {
+		t.Fatalf("define target: %v", err)
+	}
+
+	aliasSpec := mqadmin.QueueSpec{
+		Name: alias, Type: mqadmin.QueueTypeAlias,
+		Attributes: map[string]string{"targq": target, "descr": "integration alias"},
+	}
+	if err := c.DefineQueue(ctx, aliasSpec); err != nil {
+		t.Fatalf("define alias: %v", err)
+	}
+
+	state, err := c.GetQueue(ctx, aliasSpec)
+	if err != nil {
+		t.Fatalf("GetQueue alias: %v", err)
+	}
+	if state.Attributes["targq"] != target {
+		t.Fatalf("targq = %q", state.Attributes["targq"])
+	}
+}
+
+func TestIntegration_Queue_Remote(t *testing.T) {
+	requireIntegration(t)
+	ctx := testContext(t)
+	target := queueNameForTest(t.Name() + ".TARGET")
+	remote := queueNameForTest(t.Name() + ".REMOTE")
+
+	c, err := newIntegrationClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = c.DeleteQueue(context.Background(), mqadmin.QueueSpec{Name: remote, Type: mqadmin.QueueTypeRemote})
+		_ = c.DeleteQueue(context.Background(), mqadmin.QueueSpec{Name: target, Type: mqadmin.QueueTypeLocal})
+	})
+
+	if err := c.DefineQueue(ctx, mqadmin.QueueSpec{
+		Name: target, Type: mqadmin.QueueTypeLocal, Attributes: map[string]string{"maxdepth": "100"},
+	}); err != nil {
+		t.Fatalf("define target: %v", err)
+	}
+
+	remoteSpec := mqadmin.QueueSpec{
+		Name: remote, Type: mqadmin.QueueTypeRemote,
+		Attributes: map[string]string{
+			"rname":   target,
+			"rqmname": integrationQueueManager(),
+			"xmitq":   "SYSTEM.DEFAULT.XMIT.QUEUE",
+			"descr":   "integration remote",
+		},
+	}
+	if err := c.DefineQueue(ctx, remoteSpec); err != nil {
+		t.Fatalf("define remote: %v", err)
+	}
+
+	state, err := c.GetQueue(ctx, remoteSpec)
+	if err != nil {
+		t.Fatalf("GetQueue remote: %v", err)
+	}
+	if state.Attributes["rname"] != target {
+		t.Fatalf("rname = %q", state.Attributes["rname"])
 	}
 }
 
@@ -183,7 +270,7 @@ func TestIntegration_DefineQueue_UnsupportedType(t *testing.T) {
 
 	err = c.DefineQueue(ctx, mqadmin.QueueSpec{
 		Name: name,
-		Type: mqadmin.QueueType("remote"),
+		Type: mqadmin.QueueType("model"),
 	})
 	if !errors.Is(err, mqadmin.ErrTerminal) {
 		t.Fatalf("expected terminal error, got %v", err)
@@ -199,7 +286,9 @@ func TestIntegration_RunMQSC(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = c.DeleteQueue(context.Background(), name) })
+	t.Cleanup(func() {
+		_ = c.DeleteQueue(context.Background(), mqadmin.QueueSpec{Name: name, Type: mqadmin.QueueTypeLocal})
+	})
 
 	if err := c.DefineQueue(ctx, mqadmin.QueueSpec{
 		Name: name,

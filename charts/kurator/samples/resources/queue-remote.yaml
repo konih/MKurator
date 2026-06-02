@@ -1,0 +1,15 @@
+apiVersion: messaging.kurator.dev/v1alpha1
+kind: Queue
+metadata:
+  name: orders-remote
+  namespace: kurator-system
+spec:
+  connectionRef:
+    name: qm1
+  queueName: APP.ORDERS.REMOTE
+  type: remote
+  attributes:
+    rname: APP.ORDERS
+    rqmname: QM1
+    xmitq: SYSTEM.DEFAULT.XMIT.QUEUE
+    descr: Remote definition to APP.ORDERS on QM1 (local demo)

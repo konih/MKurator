@@ -66,7 +66,7 @@ func TestQueueReconciler_SyncedWithoutDefine(t *testing.T) {
 		Build()
 
 	mockAdmin := mqadmintest.NewMockAdmin(t)
-	mockAdmin.EXPECT().GetQueue(mock.Anything, "APP.ORDERS").Return(&mqadmin.QueueState{
+	mockAdmin.EXPECT().GetQueue(mock.Anything, mock.Anything).Return(&mqadmin.QueueState{
 		Attributes: map[string]string{"maxdepth": "5000"},
 	}, nil)
 
@@ -126,7 +126,7 @@ func TestQueueReconciler_Deletion(t *testing.T) {
 		Build()
 
 	mockAdmin := mqadmintest.NewMockAdmin(t)
-	mockAdmin.EXPECT().DeleteQueue(mock.Anything, "APP.ORDERS").Return(nil)
+	mockAdmin.EXPECT().DeleteQueue(mock.Anything, mock.Anything).Return(nil)
 
 	mockFactory := mqadmintest.NewMockFactory(t)
 	mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mockAdmin, nil)
@@ -182,7 +182,7 @@ func TestQueueReconciler_TransientError(t *testing.T) {
 		Build()
 
 	mockAdmin := mqadmintest.NewMockAdmin(t)
-	mockAdmin.EXPECT().GetQueue(mock.Anything, "APP.ORDERS").Return(nil, &mqadmin.TransientError{Message: "timeout"})
+	mockAdmin.EXPECT().GetQueue(mock.Anything, mock.Anything).Return(nil, &mqadmin.TransientError{Message: "timeout"})
 
 	mockFactory := mqadmintest.NewMockFactory(t)
 	mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mockAdmin, nil)
@@ -272,7 +272,7 @@ func TestQueueReconciler_UnsupportedType(t *testing.T) {
 		Spec: messagingv1alpha1.QueueSpec{
 			ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
 			QueueName:     "APP.ORDERS",
-			Type:          messagingv1alpha1.QueueType("alias"),
+			Type:          messagingv1alpha1.QueueType("model"),
 		},
 	}
 
@@ -282,8 +282,14 @@ func TestQueueReconciler_UnsupportedType(t *testing.T) {
 		WithObjects(conn, q).
 		Build()
 
+	mockAdmin := mqadmintest.NewMockAdmin(t)
+	mockAdmin.EXPECT().GetQueue(mock.Anything, mock.Anything).Return(nil, &mqadmin.TerminalError{
+		Reason:  "UnsupportedQueueType",
+		Message: `queue type "model" is not supported`,
+	})
+
 	mockFactory := mqadmintest.NewMockFactory(t)
-	mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mqadmintest.NewMockAdmin(t), nil)
+	mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mockAdmin, nil)
 
 	rec := &QueueReconciler{
 		Client:    cl,
@@ -333,7 +339,7 @@ func TestQueueReconciler_DefineOnDrift(t *testing.T) {
 		Build()
 
 	mockAdmin := mqadmintest.NewMockAdmin(t)
-	mockAdmin.EXPECT().GetQueue(mock.Anything, "APP.ORDERS").Return(&mqadmin.QueueState{
+	mockAdmin.EXPECT().GetQueue(mock.Anything, mock.Anything).Return(&mqadmin.QueueState{
 		Attributes: map[string]string{"maxdepth": "1000"},
 	}, nil)
 	mockAdmin.EXPECT().DefineQueue(mock.Anything, mock.Anything).Return(nil)

@@ -28,10 +28,23 @@ func TestDefineQueueParameters(t *testing.T) {
 
 func TestQueueDisplayParametersExcludeMaxmsglen(t *testing.T) {
 	t.Parallel()
-	for _, p := range queueDisplayParameters {
+	for _, p := range queueLocalDisplayParameters {
 		if p == "maxmsglen" {
 			t.Fatal("maxmsglen must not be in display parameters for mqweb 9.4")
 		}
+	}
+}
+
+func TestQueueQualifier(t *testing.T) {
+	t.Parallel()
+	if queueQualifier(mqadmin.QueueTypeLocal) != "qlocal" {
+		t.Fatal("local")
+	}
+	if queueQualifier(mqadmin.QueueTypeAlias) != "qalias" {
+		t.Fatal("alias")
+	}
+	if queueQualifier(mqadmin.QueueTypeRemote) != "qremote" {
+		t.Fatal("remote")
 	}
 }
 

@@ -16,9 +16,9 @@ type Factory interface {
 // Admin is the seam between reconcilers and IBM MQ.
 type Admin interface {
 	Ping(ctx context.Context) error
-	GetQueue(ctx context.Context, name string) (*QueueState, error)
+	GetQueue(ctx context.Context, spec QueueSpec) (*QueueState, error)
 	DefineQueue(ctx context.Context, spec QueueSpec) error
-	DeleteQueue(ctx context.Context, name string) error
+	DeleteQueue(ctx context.Context, spec QueueSpec) error
 	GetTopic(ctx context.Context, name string) (*TopicState, error)
 	DefineTopic(ctx context.Context, spec TopicSpec) error
 	DeleteTopic(ctx context.Context, name string) error
@@ -27,19 +27,12 @@ type Admin interface {
 	DeleteChannel(ctx context.Context, spec ChannelSpec) error
 }
 
-// QueueSpec is the domain shape for defining a local queue via MQSC.
+// QueueSpec is the domain shape for defining a queue via MQSC.
 type QueueSpec struct {
 	Name       string
 	Type       QueueType
 	Attributes map[string]string
 }
-
-// QueueType mirrors the CRD queue type (local only in v1alpha1).
-type QueueType string
-
-const (
-	QueueTypeLocal QueueType = "local"
-)
 
 // QueueState is the observed MQSC attributes of a queue.
 type QueueState struct {

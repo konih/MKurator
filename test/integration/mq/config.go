@@ -101,6 +101,10 @@ func objectNameForTest(tName string) string {
 
 func queueNameForTest(tName string) string { return objectNameForTest(tName) }
 
+func integrationQueueManager() string {
+	return envOr("KURATOR_INTEGRATION_MQ_QMGR", "QM1")
+}
+
 func topicNameForTest(tName string) string {
 	return fmt.Sprintf("KIT.T.%05d", testNameHash(tName)%100000)
 }

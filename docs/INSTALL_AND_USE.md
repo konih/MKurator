@@ -330,7 +330,7 @@ safely on IBM MQ 9.4.x (see [ATTRIBUTE_RECONCILIATION.md](ATTRIBUTE_RECONCILIATI
 |-------|----------|-------------|
 | `spec.connectionRef.name` | yes | `QueueManagerConnection` in the same namespace |
 | `spec.queueName` | yes | IBM MQ object name (e.g. `APP.ORDERS`) |
-| `spec.type` | no | Default `local`. Only `local` is valid in v1alpha1 (alias/remote planned) |
+| `spec.type` | no | `local` (default), `alias` (`QALIAS`), or `remote` (`QREMOTE`) |
 | `spec.attributes` | no | MQSC parameters for `DEFINE QLOCAL` (string keys/values) |
 
 **Common attributes** (lowercase keys in spec):
