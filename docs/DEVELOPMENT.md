@@ -143,10 +143,24 @@ without re-running `task generate && task manifests`. It is unrelated to
 
 **Task is the canonical entry point** ([ADR-0004](adr/0004-task-as-task-runner.md)):
 humans, pre-commit, and CI all run `task <target>`. The root `Makefile` is
-**Kubebuilder scaffold** — it ships with `kubebuilder init` and is still used
-by the default e2e suite (`task docker:build`, `task install:crds`,
-`task deploy:operator`). Prefer `task` for day-to-day work; ignore `make` unless
-you are running Kubebuilder scaffold targets as-is.
+**Kubebuilder scaffold** — kept for framework compatibility; overlapping targets
+delegate to Task so both produce the same artifacts.
+
+| `make` target | `task` equivalent | Notes |
+|---------------|-------------------|-------|
+| `manifests` | `task manifests` | CRDs, RBAC, webhooks |
+| `generate` | `task generate` | deepcopy + mocks |
+| `docker-build` | `task docker:build` | set `IMG` → `DOCKER_IMAGE` |
+| `install` | `task install:crds` | server-side CRD apply |
+| `deploy` | `task deploy:operator` | Kustomize apply only (no image build) |
+| `undeploy` | `task undeploy` | removes operator manifests |
+
+Prefer `task` for day-to-day work. Use `make` only when following Kubebuilder
+scaffold targets (`make test-e2e`, `make run`, …) or tooling that expects Make.
+
+**E2e deploy:** the suite builds the image in `BeforeSuite` (`task docker:build`)
+and deploys in `BeforeAll` via `task deploy` (`test/e2e/deploy_helpers.go` —
+build, kind load, CRDs, and operator manifests). Teardown uses `task undeploy:operator`.
 
 Build the manager binary (CGO-free, static):
 

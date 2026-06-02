@@ -1,3 +1,19 @@
+# Kubebuilder scaffold Makefile — kept for framework compatibility.
+# Day-to-day workflows use Task (ADR-0004): run `task --list`.
+#
+# Overlapping targets delegate to Task where they produce the same artifacts.
+# Pass KUBECONFIG explicitly when targeting a cluster other than ~/.kube/config
+# (Task defaults to hack/kind-cluster/.state/kubeconfig.yaml when unset).
+#
+# | make target    | task equivalent      | Notes                            |
+# |----------------|----------------------|----------------------------------|
+# | manifests      | task manifests       | CRDs, RBAC, webhooks             |
+# | generate       | task generate        | deepcopy + mocks                 |
+# | docker-build   | task docker:build    | IMG → DOCKER_IMAGE               |
+# | install        | task install:crds    | server-side CRD apply            |
+# | deploy         | task deploy:operator | Kustomize apply; no image build  |
+# | undeploy       | task undeploy        | removes operator manifests       |
+
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 # YEAR defines the year value used for substituting the YEAR placeholder in the boilerplate header.
@@ -44,12 +60,12 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	"$(CONTROLLER_GEN)" rbac:roleName=manager-role crd webhook paths="./api/...;./internal/controller/...;./internal/webhook/...;./cmd/..." output:crd:artifacts:config=config/crd/bases
+manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+	@task manifests
 
 .PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	"$(CONTROLLER_GEN)" object paths="./..."
+generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	@task generate
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -121,7 +137,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	$(CONTAINER_TOOL) build -t ${IMG} .
+	@DOCKER_IMAGE=$(IMG) task docker:build
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
@@ -158,20 +174,19 @@ endif
 
 .PHONY: install
 install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	"$(KUBECTL)" apply --server-side -f config/crd/bases
+	@KUBECONFIG="$${KUBECONFIG:-$$HOME/.kube/config}" task install:crds
 
 .PHONY: uninstall
 uninstall: manifests ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	"$(KUBECTL)" delete --ignore-not-found=$(ignore-not-found) -f config/crd/bases
 
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && "$(KUSTOMIZE)" edit set image controller=${IMG}
-	"$(KUSTOMIZE)" build config/default | "$(KUBECTL)" apply -f -
+deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	@DOCKER_IMAGE=$(IMG) KUBECONFIG="$${KUBECONFIG:-$$HOME/.kube/config}" task deploy:operator
 
 .PHONY: undeploy
-undeploy: kustomize ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	"$(KUSTOMIZE)" build config/default | "$(KUBECTL)" delete --ignore-not-found=$(ignore-not-found) -f -
+undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+	@KUBECONFIG="$${KUBECONFIG:-$$HOME/.kube/config}" task undeploy
 
 ##@ Dependencies
 

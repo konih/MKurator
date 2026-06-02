@@ -18,13 +18,13 @@
 | **Helm** | `webhooks.enabled` (default `true`), `webhook-service`, `validating-webhook-configuration`, cert-manager `Certificate`/`Issuer` templates; deployment mounts `webhook-server-cert`. |
 | **Unit tests** | Table-driven `internal/validation/*_test.go` including unknown-attribute warning case. |
 | **Envtest admission** | `internal/webhook/v1alpha1/suite_test.go` — deny missing QMC, deny alias without `targq`, deny QMC delete with dependents, allow valid Queue (included in `task test:run`). |
-| **E2e (code)** | `test/e2e/e2e_test.go` — `It("should reject invalid Queue at admission")` after `make deploy` (Kustomize path). |
+| **E2e (code)** | `test/e2e/e2e_test.go` — `It("should reject invalid Queue at admission")` after `task deploy` (Kustomize path; `test/e2e/deploy_helpers.go`). |
 | **Docs (repo)** | `docs/ROADMAP.md` Phase 4b mostly `[x]`; `docs/ARCHITECTURE.md`, `docs/INSTALL_AND_USE.md`, `docs/NON_FUNCTIONAL_REQUIREMENTS.md` (API-2) updated in `ea79a83`. |
 | **Module rename** | `github.com/konih/kurator` in `f527ba3`. |
 
 ### Remaining (optional before Phase 5)
 
-1. **E2e Kustomize path** — full `task ci:e2e` admission coverage via `make deploy` (Helm path verified separately in P1.2).
+1. **E2e Kustomize path** — full `task ci:e2e` admission coverage via `task deploy` (Helm path verified separately in P1.2).
 2. **Envtest admission warnings** — assert unknown-attribute warnings propagate to the client (K8s ≥ 1.27).
 3. **`GetEventRecorderFor` deprecation** — controller-runtime cleanup when upgrading.
 
@@ -42,8 +42,8 @@ Phase 4b is signed off.
 | | |
 |---|---|
 | **Goal** | Prove `ValidatingWebhookConfiguration` + TLS + denial path on the same stack CI uses. |
-| **Scope** | Full `task ci:e2e` (or `task cluster:up` → `hack/ci/wait-mqweb.sh` → `task test:e2e` with `CERT_MANAGER_INSTALL_SKIP=true`, `KURATOR_E2E_MQ=1`). E2e deploys via **`make deploy`** (Kustomize), not Helm. |
-| **Files** | None unless failures — likely `test/e2e/e2e_test.go`, `config/webhook/*`, `Makefile` `deploy` target. |
+| **Scope** | Full `task ci:e2e` (or `task cluster:up` → `hack/ci/wait-mqweb.sh` → `task test:e2e` with `CERT_MANAGER_INSTALL_SKIP=true`, `KURATOR_E2E_MQ=1`). E2e deploys via **`task deploy`** (Kustomize), not Helm. |
+| **Files** | None unless failures — likely `test/e2e/e2e_test.go`, `test/e2e/deploy_helpers.go`, `config/webhook/*`. |
 | **Acceptance** | Suite green; admission `It` passes; `kubectl get validatingwebhookconfiguration kurator-validating-webhook-configuration` exists; invalid `kubectl apply` fails with denied/Forbidden/Invalid. |
 | **Effort** | **M** (cluster time ~30–90 min). |
 
@@ -153,7 +153,7 @@ Phase 4b is signed off.
 | | |
 |---|---|
 | **Goal** | CI/local parity for the **primary** dev path (`task deploy:helm`). |
-| **Scope** | Second e2e context or job using `helm upgrade` instead of `make deploy`; same admission denial assertion. |
+| **Scope** | Second e2e context or job using `helm upgrade` instead of `task deploy`; same admission denial assertion. |
 | **Files** | `test/e2e/e2e_test.go`, `Taskfile.yml` / `.github/workflows/e2e.yaml` |
 | **Acceptance** | Admission test passes when operator installed via Helm chart. |
 | **Effort** | **L** |
@@ -237,7 +237,7 @@ Exit criteria: **met** — invalid manifests rejected by `kubectl apply` on kind
 
 ## 8. Acceptance for *this* follow-up plan
 
-- [ ] P0.1 `task ci:e2e` green locally (optional — Kustomize deploy path). **Deferred:** suite `BeforeAll` runs `make deploy`, which replaces a Helm `task local:up` stack; admission verified via P1.2 + webhook envtest instead.
+- [ ] P0.1 `task ci:e2e` green locally (optional — Kustomize deploy path). **Deferred:** suite `BeforeAll` runs `task deploy`, which replaces a Helm `task local:up` stack; admission verified via P1.2 + webhook envtest instead.
 - [x] P0.2 `verify` / `lint` / `test:run` green on tip.
 - [x] P1.1 Parent plan status = Implemented ([VALIDATING_WEBHOOKS.md](VALIDATING_WEBHOOKS.md)).
 - [x] P1.2 Helm/kind smoke recorded (2026-06-02): `kurator-serving-cert` Ready; `kurator-validating-webhook-configuration` (4 webhooks); invalid Queue rejected; valid sample admitted.

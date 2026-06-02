@@ -214,7 +214,7 @@ Run `task manifests` and `task verify`.
 | **Envtest warnings** | Unknown attr → create succeeds + warning in audit (if asserted) | Optional; K8s version in envtest must support admission warnings | — |
 | **Existing controller envtest** | No regression | Current reconciler tests unchanged | — |
 | **E2e** | One scenario: invalid CR rejected by API | `kubectl apply` invalid manifest → non-zero exit; valid samples still work | Real cluster + cert-manager (already installed on kind) |
-| **CI** | `task test:run` | Add webhook suite to Ginkgo/Makefile if split; envtest startup +2–5s | No new workflow required initially |
+| **CI** | `task test:run` | Add webhook suite to Ginkgo if split; envtest startup +2–5s | No new workflow required initially |
 | **Coverage** | `internal/validation` | Target **≥90%** on new package; keeps `internal/` ≥90% gate (`Taskfile.test.yml`) |
 
 ### envtest webhook install sketch
