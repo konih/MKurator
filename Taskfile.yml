@@ -188,6 +188,8 @@ tasks:
     desc: "Install operator + sample CRs on an existing local cluster (skip cluster:up)"
     cmds:
       - task: deploy:helm
+      - kubectl rollout restart deployment/kurator-controller-manager -n kurator-system
+      - kubectl rollout status deployment/kurator-controller-manager -n kurator-system --timeout=5m
       - task: deploy:samples
 
   local:info:

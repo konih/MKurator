@@ -146,7 +146,7 @@ spec:
 |-------|-------------|-------|
 | `connectionRef.name` | `qm1` | Must match a **Ready** `QueueManagerConnection` |
 | `topicName` | `RETAIL.ORDERS` | IBM MQ topic object name |
-| `attributes.topstr` | `retail/orders` | Topic string bound to this object |
+| `attributes.topstr` | `retail/orders` | Topic string (`TOPICSTR` in MQSC) |
 | `attributes.pub` / `sub` | `enabled` | Publish/subscribe policy on the topic node |
 
 Verify on MQ:

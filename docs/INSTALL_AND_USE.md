@@ -355,7 +355,7 @@ More MQSC context: [IBM_MQ_OBJECTS.md](IBM_MQ_OBJECTS.md).
 
 | Attribute | Example | Notes |
 |-----------|---------|-------|
-| `topstr` | `retail/orders` | Topic string for this object |
+| `topstr` | `retail/orders` | Topic string (`TOPICSTR` in MQSC; sent as `topicStr` to mqweb) |
 | `descr` | `"Retail orders"` | Description |
 | `pub` / `sub` | `enabled` | Publish/subscribe policy |
 | `defpsist` | `yes` | Default persistence |
