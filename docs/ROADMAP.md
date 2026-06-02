@@ -99,6 +99,8 @@ locally and in CI — **met**.
 
 Exit criteria: envtest + adapter tests + live queue on kind — **met**.
 
+## Phase 3 — E2E, CI & release
+
 - [x] e2e scaffold (`test/e2e`, build tag `e2e`) — controller pod, metrics, suite
   wiring on kind.
 - [x] MQ e2e scenarios (`test/e2e/mq_e2e_test.go`, `mq_helpers.go`) gated by
@@ -121,13 +123,34 @@ Exit criteria: envtest + adapter tests + live queue on kind — **met**.
 
 - [x] Helm install path for local and release publish (`charts/kurator`, `task helm:*`).
 - [x] `RunMQSC` helper on `mqrest` client (`runCommand` plaintext) + unit test —
-  groundwork for e2e fixtures and Phase 4 MQSC.
+  groundwork for e2e fixtures and Phase 5 MQSC.
 
 Exit criteria: `task test:e2e` green locally and in CI against a live Queue
 Manager; release pipeline produces a scanned, signed image with SBOM and install
 manifests — **met** (e2e in CI via `e2e.yaml`; signing/SBOM on release tags).
 
-## Phase 4 — User & authority management
+## Phase 4 — Additional MQ objects (Topic, Channel)
+
+Extend declarative management beyond local queues to other common MQSC object types
+before access-control work.
+
+- [ ] `Topic` CRD — DEFINE/DISPLAY/DELETE topic (`DEFINE TOPIC`, drift detection,
+  finalizers); map attributes per [IBM_MQ_OBJECTS.md](IBM_MQ_OBJECTS.md).
+- [ ] `Channel` CRD — server/sender/receiver channel types supported incrementally
+  (start with types covered by `mqweb` `/mqsc` in target MQ version).
+- [ ] Extend `MQAdmin` port and `mqrest` adapter for topic/channel operations;
+  table-driven adapter tests with `httptest`.
+- [ ] Thin reconcilers, RBAC, samples under `config/samples/` and
+  `charts/kurator/samples/resources/`.
+- [ ] Unit + envtest coverage; e2e scenarios on kind against live `QM1`.
+- [ ] Optional follow-on in this phase: alias and remote queue types (same patterns
+  as `Queue`).
+
+Exit criteria: at least **Topic** and one **Channel** kind reconcile end-to-end on
+kind with the same quality bar as Phase 2 (`verify`, ≥80% `internal/` coverage,
+e2e green).
+
+## Phase 5 — User & authority management
 
 - [x] [PHASE4_CHANNEL_AUTH.md](PHASE4_CHANNEL_AUTH.md) — CR sketch mapped from
   reference MQSC; e2e fixture [`test/e2e/fixtures/channel-auth-prereq.mqsc`](../test/e2e/fixtures/channel-auth-prereq.mqsc).
@@ -135,10 +158,15 @@ manifests — **met** (e2e in CI via `e2e.yaml`; signing/SBOM on release tags).
   user-style resources (exact CRDs decided when reached).
 - [ ] Corresponding `MQAdmin` operations, adapter support, and tests at all layers.
 
+Exit criteria: declarative channel auth (and at least one user/authority resource)
+reconciled on kind with e2e coverage.
+
 ## Repo visibility
 
 - [x] README badges — CI, MIT license, Codecov, Go module / pkg.go.dev
   ([konih/kurator](https://github.com/konih/kurator)).
+- [x] User guide — [INSTALL_AND_USE.md](INSTALL_AND_USE.md) + annotated
+  [config/samples/README.md](../config/samples/README.md).
 - [x] CI coverage export — `coverage.out` artifact, job summary, Codecov upload
   (`codecov.yml`; first green `main` run registers the project).
 - [ ] **Go Report Card** — request a scan at
@@ -150,7 +178,6 @@ manifests — **met** (e2e in CI via `e2e.yaml`; signing/SBOM on release tags).
 
 ## Later / candidate work
 
-- Additional object types (`Topic`, `Channel`, alias/remote queues).
 - Optional PCF adapter behind the existing `MQAdmin` port for environments
   without `mqweb`.
 - Metrics/dashboards and richer status reporting.

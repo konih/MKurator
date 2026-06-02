@@ -12,6 +12,8 @@ Start here, then drill into the topic you need:
 | Document | What it covers |
 |----------|----------------|
 | **AGENTS.md** (this file) | Project context, conventions, toolchain, workflow. |
+| [docs/INSTALL_AND_USE.md](docs/INSTALL_AND_USE.md) | **User guide:** install, connect, queues, samples, troubleshooting. |
+| [config/samples/README.md](config/samples/README.md) | Annotated sample Secret / Connection / Queue YAML. |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, runtime concerns, CRDs, reconcile flow, security. |
 | [docs/NON_FUNCTIONAL_REQUIREMENTS.md](docs/NON_FUNCTIONAL_REQUIREMENTS.md) | NFRs: security, reliability, observability, performance, supply chain. |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Prerequisites, tools, inner loop, local cluster, test tiers. |

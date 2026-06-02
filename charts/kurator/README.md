@@ -2,6 +2,10 @@
 
 Installs the Kurator operator (controller Deployment, RBAC, and CRDs).
 
+**Managing MQ queues after install:** see [docs/INSTALL_AND_USE.md](../../docs/INSTALL_AND_USE.md)
+and [samples/resources/README.md](samples/resources/README.md) (same content as
+[`config/samples/`](../../config/samples/README.md)).
+
 ## Prerequisites
 
 - Kubernetes 1.28+

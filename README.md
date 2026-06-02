@@ -25,7 +25,22 @@ IBM MQ Queue Manager** — queues today, users/authorities and more later.
 It does **not** deploy or operate Queue Manager installations; the Queue
 Manager is assumed to already exist and expose `mqweb`.
 
-## Local development (quick start)
+## Install and use
+
+**Start here:** [docs/INSTALL_AND_USE.md](docs/INSTALL_AND_USE.md) — install the
+operator (Release manifests, Helm), connect to your queue manager, manage queues,
+troubleshooting, and uninstall.
+
+Sample YAML with annotations:
+[config/samples/README.md](config/samples/README.md).
+
+```sh
+# After install — apply samples (see config/samples/README.md)
+kubectl apply -k config/samples/   # Connection + Queue (create Secret first)
+kubectl get qmc,queue -n kurator-system
+```
+
+## Local development (contributors)
 
 The repo ships a **kind + Terraform + IBM MQ** platform under
 [`hack/kind-cluster`](hack/kind-cluster/README.md). One command brings up the
@@ -84,6 +99,8 @@ Defaults match the local platform: Queue Manager **`QM1`**, mqweb
 
 ## Documentation
 
+- [docs/INSTALL_AND_USE.md](docs/INSTALL_AND_USE.md) — **install, use, samples, troubleshooting**.
+- [config/samples/README.md](config/samples/README.md) — annotated sample manifests.
 - [AGENTS.md](AGENTS.md) — context, conventions, toolchain, and doc map.
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — prerequisites, local platform, deploy, test tiers.
 - [hack/kind-cluster/README.md](hack/kind-cluster/README.md) — kind/Terraform/MQ platform only.
