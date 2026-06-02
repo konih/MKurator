@@ -34,3 +34,11 @@ supersedes the old one rather than editing history.
 | [0006](0006-project-name-kurator.md) | Project name and module identity (Kurator) | Accepted |
 | [0007](0007-structured-logging-logr-slog.md) | Structured logging with logr and slog | Accepted |
 | [0008](0008-changelog-git-cliff.md) | Generate changelogs with git-cliff | Accepted |
+| [0009](0009-validating-admission-webhooks.md) | Validating admission webhooks (no MQ at admission) | Accepted |
+| [0010](0010-drift-based-mq-reconciliation.md) | Drift-based MQ reconciliation (DEFINE + DISPLAY) | Accepted |
+| [0011](0011-layered-testing-strategy.md) | Layered testing strategy (mock → envtest → MQ → kind) | Accepted |
+| [0012](0012-operator-scope-existing-queue-manager.md) | Operator scope — existing Queue Manager only | Accepted |
+| [0013](0013-finalizers-and-deletion.md) | Finalizers and deletion (MQ object before CR removal) | Accepted |
+| [0014](0014-mq-error-taxonomy-and-requeue.md) | MQ error taxonomy and requeue strategy | Accepted |
+| [0015](0015-kubernetes-events-on-transitions.md) | Kubernetes Events on status transitions only | Accepted |
+| [0016](0016-release-supply-chain.md) | Release supply chain (image, SBOM, signing, scan) | Accepted |

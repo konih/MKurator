@@ -4,14 +4,15 @@ This document describes the design of **Kurator**: its
 components, the custom resources it manages, the reconcile flow, and the local
 development topology. For conventions and tooling see [DEVELOPMENT.md](DEVELOPMENT.md); for the delivery
 plan see [ROADMAP.md](ROADMAP.md). Attribute DEFINE vs drift behaviour:
-[ATTRIBUTE_RECONCILIATION.md](ATTRIBUTE_RECONCILIATION.md).
+[ATTRIBUTE_RECONCILIATION.md](ATTRIBUTE_RECONCILIATION.md) ([ADR-0010](adr/0010-drift-based-mq-reconciliation.md)).
 
 ## Scope
 
 The operator manages **administrative objects on an existing IBM MQ Queue
 Manager** declaratively. It is explicitly **not** responsible for deploying or
 operating Queue Manager installations. The Queue Manager already exists and
-exposes the IBM MQ Administrative REST API (`mqweb`).
+exposes the IBM MQ Administrative REST API (`mqweb`). See
+[ADR-0012](adr/0012-operator-scope-existing-queue-manager.md).
 
 The initial `v1alpha1` API targets:
 
@@ -57,7 +58,7 @@ flowchart TB
 | Component | Responsibility |
 |-----------|----------------|
 | **Manager** (`cmd/`) | Wires reconcilers, validating webhooks, caches, health/metrics, leader election. |
-| **Validating webhooks** (`internal/webhook`, `internal/validation`) | Reject invalid CR specs at admission (`failurePolicy: Fail`); same-namespace `connectionRef` and Secret checks only — **no mqweb**. |
+| **Validating webhooks** (`internal/webhook`, `internal/validation`) | Reject invalid CR specs at admission (`failurePolicy: Fail`); same-namespace `connectionRef` and Secret checks only — **no mqweb**. ([ADR-0009](adr/0009-validating-admission-webhooks.md)) |
 | **Reconcilers** (`internal/controller`) | Thin control loops for `QueueManagerConnection`, `Queue`, `Topic`, and `Channel`. Translate desired vs. observed state and call the `mqadmin.Admin` port. No HTTP/MQ details. |
 | **MQAdmin port** (`internal/mqadmin`) | Go interface (`Admin`) describing MQ operations (ping, queue/topic/channel define/inspect/delete) plus domain types. The seam that makes controllers testable and backends swappable. |
 | **mqrest adapter** (`internal/adapter/mqrest`) | The only `MQAdmin` implementation today. Talks to `mqweb` over HTTPS, posting MQSC commands and parsing responses. |
@@ -139,6 +140,7 @@ No wildcard verbs, no cluster-admin. RBAC drift is caught by `task verify`.
 
 Events supplement status conditions for `kubectl describe` and namespace-level
 auditing. They are emitted **on transitions only** (not every reconcile pass).
+See [ADR-0015](adr/0015-kubernetes-events-on-transitions.md).
 
 | Transition | Type | Reason | When |
 |------------|------|--------|------|
@@ -157,7 +159,7 @@ Kubernetes `NotFound` on connections/secrets, etc.). Implementation lives in
 ### Error handling & requeue strategy
 
 Errors are classified at the `MQAdmin` port boundary so controllers can react
-without string-parsing:
+without string-parsing ([ADR-0014](adr/0014-mq-error-taxonomy-and-requeue.md)):
 
 | Class | Examples | Reconciler response |
 |-------|----------|---------------------|
@@ -188,7 +190,8 @@ reconcilers depend only on typed Admin methods.
 - **Defense in logging**: structured logs scrub credentials; request/response
   bodies are not logged at default levels.
 - **Supply chain**: CGO-free static binary, distroless nonroot image,
-  `govulncheck` + image scanning in CI (see [CICD.md](CICD.md)).
+  `govulncheck` + image scanning in CI (see [CICD.md](CICD.md),
+  [ADR-0016](adr/0016-release-supply-chain.md)).
 
 Full requirements and rationale: [NON_FUNCTIONAL_REQUIREMENTS.md](NON_FUNCTIONAL_REQUIREMENTS.md).
 

@@ -344,6 +344,8 @@ task cluster:down    # full platform teardown
 
 ## Test tiers
 
+Design rationale: [adr/0011-layered-testing-strategy.md](adr/0011-layered-testing-strategy.md).
+
 ### What CI proves
 
 Same tiers as [README.md#what-ci-proves](../README.md#what-ci-proves) (summary table).

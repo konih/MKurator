@@ -4,8 +4,9 @@ Kurator applies IBM MQ objects through **mqweb `runCommandJSON`** (`DEFINE … R
 Reconcilers compare desired `spec.attributes` to **DISPLAY** results before re-applying.
 
 Implementation lives in `internal/adapter/mqrest/mqsc_params.go` (DISPLAY parameter lists)
-and `internal/mqadmin/attrmatch.go` (value comparison). See
-[IBM_MQ_OBJECTS.md](IBM_MQ_OBJECTS.md) for MQSC semantics.
+and `internal/mqadmin/attrmatch.go` (value comparison). Decision record:
+[adr/0010-drift-based-mq-reconciliation.md](adr/0010-drift-based-mq-reconciliation.md).
+See [IBM_MQ_OBJECTS.md](IBM_MQ_OBJECTS.md) for MQSC semantics.
 
 ## How it works
 

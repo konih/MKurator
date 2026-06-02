@@ -37,9 +37,9 @@ ones.
 - Multi-module `go.mod` per binary.
 - OpenSSF Scorecard and SLSA Level 3 dedicated builders.
 
-**Added (release pipeline, 2026):** OCI SBOM + SLSA provenance attestations on GHCR
-push, SPDX SBOM on GitHub Releases, and cosign keyless signing — scoped to tagged
-releases only, not full cert-manager-style KMS signing.
+**Added (release pipeline, 2026):** supply-chain controls on tagged releases —
+see [ADR-0016](0016-release-supply-chain.md) (OCI SBOM, SLSA provenance, SPDX file,
+cosign keyless, Trivy); not full cert-manager-style KMS signing.
 
 ## Consequences
 
