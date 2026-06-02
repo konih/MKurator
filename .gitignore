@@ -45,6 +45,11 @@ hack/kind-cluster/terraform/*.tfstate.*
 crash.log
 crash.*.log
 
+# Build output
+bin/
+dist/
+.task/
+
 # Editor/IDE
 # .idea/
 # .vscode/

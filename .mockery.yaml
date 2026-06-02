@@ -1,0 +1,6 @@
+# Mockery v3 config — targets expand in Phase 2 when MQAdmin is defined.
+# yaml-language-server: $schema=https://vektra.github.io/mockery/schema.json
+---
+template: testify
+force-file-write: true
+packages: {}

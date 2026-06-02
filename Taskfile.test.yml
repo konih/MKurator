@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+---
+version: "3"
+
+set:
+  - pipefail
+
+run: once
+
+env:
+  GOTOOLCHAIN: go1.26.0
+  SETUP_ENVTEST_K8S_VERSION: "1.35.x!"
+
+tasks:
+  .skip:
+    internal: true
+    silent: true
+    cmds: []
+
+  generate:
+    desc: Generate test mocks (mockery)
+    cmds:
+      - task: generate:mockery
+
+  generate:mockery:
+    internal: true
+    cmds:
+      - |
+        if ! grep -q 'packages:' .mockery.yaml 2>/dev/null || grep -q 'packages: {}' .mockery.yaml; then
+          echo "generate:mockery skipped (no mockery targets yet)"
+          exit 0
+        fi
+        go tool mockery
+
+  run:
+    desc: Run unit tests (excludes e2e build tag), with race detector
+    env:
+      CGO_ENABLED: "1"
+    cmds:
+      - |
+        set -euo pipefail
+        pkgs="$(go list ./... | grep -v /e2e)"
+        go test -race -coverprofile=coverage.out ${pkgs}
+
+  e2e:
+    desc: Run end-to-end tests (requires kind cluster + IBM MQ)
+    env:
+      CGO_ENABLED: "1"
+    cmds:
+      - go test -tags=e2e ./test/e2e/... -race -v

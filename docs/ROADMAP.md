@@ -26,21 +26,20 @@ quality bars, and [CICD.md](CICD.md) for the pipeline.
 
 ## Phase 1 — Scaffold & toolchain
 
-- Scaffold with
-  **Kubebuilder v4** (manager entrypoint, `PROJECT`, empty `api/v1alpha1`,
-  `internal/controller`).
-- `Taskfile.yml` + `Taskfile.test.yml` (install, format, lint, manifests,
+- [x] Scaffold with **Kubebuilder v4** (manager entrypoint, `PROJECT`, `api/v1alpha1`,
+  `internal/controller`, structured logging).
+- [x] `Taskfile.yml` + `Taskfile.test.yml` (install, format, lint, manifests,
   generate, **verify**, build, docker:build, cluster:up/down, deploy/undeploy,
   test:run, test:e2e), with Go tools pinned via `go.mod` `tool` directives.
-- `.golangci.yaml` (v2, linter set per AGENTS.md), `.mockery.yaml`,
-  `.pre-commit-config.yaml`, `.editorconfig`, distroless nonroot `Dockerfile`.
-- Manager wiring with leader election, health/readiness probes, and a protected
+- [x] `.golangci.yaml` (v2), `.mockery.yaml`, `.pre-commit-config.yaml`,
+  `.editorconfig`, distroless nonroot `Dockerfile`.
+- [x] Manager wiring with leader election, health/readiness probes, and a protected
   metrics endpoint (NFR REL-3/OBS-3).
-- GitHub Actions per [CICD.md](CICD.md): `verify` + lint + unit tests +
-  `govulncheck` on PRs; pinned action SHAs; dependency bot (Renovate/Dependabot).
+- [x] GitHub Actions per [CICD.md](CICD.md): `verify` + lint + unit tests +
+  `govulncheck` on PRs; pinned action SHAs; Renovate config.
 
-Exit criteria: `task build`, `task lint`, `task verify`, and an empty
-`task test:run` pass locally and in CI.
+Exit criteria: `task build`, `task lint`, `task verify`, and `task test:run` pass
+locally and in CI — **met**.
 
 ## Phase 2 — Core API, adapter & tests
 
