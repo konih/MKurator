@@ -21,6 +21,8 @@ Doc index: [README.md](README.md) · [../README.md](../README.md)
 | 📖 | [Resource reference](#resource-reference) |
 | 🔧 | [Sample resources](#sample-resources-in-this-repository) |
 | 📅 | [Day-2 operations](#day-2-operations) |
+| 📊 | [Metrics and monitoring](OBSERVABILITY.md) |
+| ⬆️ | [Upgrading Kurator](UPGRADE.md) |
 | 🆘 | [Troubleshooting](#troubleshooting) |
 | 🗑️ | [Uninstall](#uninstall) |
 | ➡️ | [Next steps](#next-steps) |
@@ -87,12 +89,12 @@ Pick one method. All paths install the same CRDs and controller.
 
 Download the release tag you intend to run from
 [GitHub Releases](https://github.com/konih/kurator/releases). The examples below
-use **`0.4.0`** (or the tag you downloaded from GitHub Releases). **`main`** and
-tags after `v0.4.0` add `ChannelAuthRule` and `AuthorityRecord`; check release
-notes before upgrading.
+use **`0.5.0`** (or the tag you downloaded from GitHub Releases). Older tags
+(before `v0.5.0`) do not include `ChannelAuthRule` and `AuthorityRecord`; check
+release notes before upgrading.
 
 ```sh
-VERSION=0.4.0   # replace with your release tag
+VERSION=0.5.0   # replace with your release tag
 curl -sLO "https://github.com/konih/kurator/releases/download/v${VERSION}/install-crds.yaml"
 curl -sLO "https://github.com/konih/kurator/releases/download/v${VERSION}/install.yaml"
 
@@ -113,7 +115,7 @@ The release `install.yaml` pins the controller image to
 ### Option B — Helm chart (GitHub Release tarball)
 
 ```sh
-VERSION=0.4.0
+VERSION=0.5.0
 curl -sLO "https://github.com/konih/kurator/releases/download/v${VERSION}/kurator-${VERSION}.tgz"
 
 helm upgrade --install kurator "kurator-${VERSION}.tgz" \
@@ -126,7 +128,7 @@ helm upgrade --install kurator "kurator-${VERSION}.tgz" \
 ### Option C — Helm chart (OCI registry on GHCR)
 
 ```sh
-VERSION=0.4.0
+VERSION=0.5.0
 helm upgrade --install kurator oci://ghcr.io/konih/kurator \
   --version "${VERSION}" \
   --namespace kurator-system \
@@ -494,6 +496,10 @@ Walkthrough with the web console and `runmqsc`: [IBM_MQ_101.md](IBM_MQ_101.md).
 
 ## Day-2 operations
 
+For version upgrades (CRDs, webhooks, cert-manager), see [UPGRADE.md](UPGRADE.md).
+For Prometheus scrape and alerting, see [OBSERVABILITY.md](OBSERVABILITY.md).
+For log level and format, see [LOGGING.md](LOGGING.md).
+
 ### Change queue attributes
 
 Edit the `Queue` spec and re-apply. The operator issues `DEFINE QLOCAL ... REPLACE`
@@ -628,6 +634,9 @@ kubectl delete -f install-crds.yaml
 
 ## Next steps
 
+- [UPGRADE.md](UPGRADE.md) — operator, CRD, and webhook upgrades  
+- [OBSERVABILITY.md](OBSERVABILITY.md) — metrics and ServiceMonitor  
+- [LOGGING.md](LOGGING.md) — structured logging  
 - [ROADMAP.md](ROADMAP.md) — auth resources and additional MQ types on the horizon  
 - [ARCHITECTURE.md](ARCHITECTURE.md) — reconcilers, security, error handling  
 - [IBM_MQ_REST_API.md](IBM_MQ_REST_API.md) — how the operator calls mqweb  
