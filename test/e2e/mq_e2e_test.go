@@ -13,6 +13,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/konradheimel/kurator/internal/mqadmin"
 	"github.com/konradheimel/kurator/test/utils"
 )
 
@@ -21,6 +22,11 @@ const (
 	mqQueueCRName    = "e2e-orders"
 	mqQueueObject    = "E2E.APP.ORDERS"
 )
+
+func e2eLocalQueueSpec() mqadmin.QueueSpec {
+	return mqadmin.QueueSpec{Name: mqQueueObject, Type: mqadmin.QueueTypeLocal}
+}
+
 
 var _ = Describe("IBM MQ integration", Serial, Label("mq"), func() {
 	BeforeEach(func() {
@@ -122,7 +128,7 @@ spec:
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 
-			state, err := client.GetQueue(ctx, mqQueueObject)
+			state, err := client.GetQueue(ctx, e2eLocalQueueSpec())
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.Attributes["maxdepth"]).To(Equal("1000"))
 
@@ -132,7 +138,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(func(g Gomega) {
-				_, err := client.GetQueue(ctx, mqQueueObject)
+				_, err := client.GetQueue(ctx, e2eLocalQueueSpec())
 				g.Expect(err).To(HaveOccurred())
 			}).WithTimeout(2 * time.Minute).WithPolling(3 * time.Second).Should(Succeed())
 		})
