@@ -38,18 +38,27 @@ func TestClassifyReconcileError(t *testing.T) {
 			wantMsg:    "bad mqsc",
 		},
 		{
-			name:       "connection not found",
-			err:        fmt.Errorf(`get connection "qm1": %w`, apierrors.NewNotFound(schema.GroupResource{Resource: "queuemanagerconnections"}, "qm1")),
+			name: "connection not found",
+			err: fmt.Errorf(
+				`get connection "qm1": %w`,
+				apierrors.NewNotFound(schema.GroupResource{Resource: "queuemanagerconnections"}, "qm1"),
+			),
 			wantReason: EventReasonConnectionNotFound,
 		},
 		{
-			name:       "credentials secret not found",
-			err:        fmt.Errorf("get credentials secret: %w", apierrors.NewNotFound(schema.GroupResource{Resource: "secrets"}, "mq-creds")),
+			name: "credentials secret not found",
+			err: fmt.Errorf(
+				"get credentials secret: %w",
+				apierrors.NewNotFound(schema.GroupResource{Resource: "secrets"}, "mq-creds"),
+			),
 			wantReason: EventReasonSecretNotFound,
 		},
 		{
-			name:       "ca secret not found",
-			err:        fmt.Errorf("get CA secret for cache key: %w", apierrors.NewNotFound(schema.GroupResource{Resource: "secrets"}, "mq-ca")),
+			name: "ca secret not found",
+			err: fmt.Errorf(
+				"get CA secret for cache key: %w",
+				apierrors.NewNotFound(schema.GroupResource{Resource: "secrets"}, "mq-ca"),
+			),
 			wantReason: EventReasonSecretNotFound,
 		},
 		{
@@ -82,13 +91,28 @@ func TestConditionChanged(t *testing.T) {
 		Reason: messagingv1alpha1.ReasonProgressing,
 	}}
 
-	if !conditionChanged(conditions, messagingv1alpha1.ConditionSynced, metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable) {
+	if !conditionChanged(
+		conditions,
+		messagingv1alpha1.ConditionSynced,
+		metav1.ConditionTrue,
+		messagingv1alpha1.ReasonAvailable,
+	) {
 		t.Fatal("expected changed on status transition")
 	}
-	if conditionChanged(conditions, messagingv1alpha1.ConditionSynced, metav1.ConditionFalse, messagingv1alpha1.ReasonProgressing) {
+	if conditionChanged(
+		conditions,
+		messagingv1alpha1.ConditionSynced,
+		metav1.ConditionFalse,
+		messagingv1alpha1.ReasonProgressing,
+	) {
 		t.Fatal("expected unchanged when status and reason match")
 	}
-	if !conditionChanged(nil, messagingv1alpha1.ConditionSynced, metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable) {
+	if !conditionChanged(
+		nil,
+		messagingv1alpha1.ConditionSynced,
+		metav1.ConditionTrue,
+		messagingv1alpha1.ReasonAvailable,
+	) {
 		t.Fatal("expected changed when condition missing")
 	}
 }

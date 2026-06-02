@@ -87,7 +87,8 @@ func (r *TopicReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return setSyncedError(ctx, r.Status(), r.Recorder, topic, topic.Generation, err)
 	}
 
-	if err := patchSyncedAvailable(ctx, r.Status(), r.Recorder, topic, topic.Generation, "Topic matches spec"); err != nil {
+	if err := patchSyncedAvailable(ctx, r.Status(), r.Recorder, topic, topic.Generation,
+		"Topic matches spec"); err != nil {
 		return ctrl.Result{}, fmt.Errorf("update status: %w", err)
 	}
 	logger.Info("Topic synced", "topic", topic.Spec.TopicName)
@@ -116,7 +117,8 @@ func (r *TopicReconciler) handleDeletion(
 	topic *messagingv1alpha1.Topic,
 	admin mqadmin.Admin,
 ) (ctrl.Result, error) {
-	if err := patchSyncedDeleting(ctx, r.Status(), r.Recorder, topic, topic.Generation, "Deleting topic from IBM MQ"); err != nil {
+	if err := patchSyncedDeleting(ctx, r.Status(), r.Recorder, topic, topic.Generation,
+		"Deleting topic from IBM MQ"); err != nil {
 		return ctrl.Result{}, err
 	}
 

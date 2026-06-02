@@ -76,6 +76,7 @@ func emitSyncedTransitionEvent(
 	}
 }
 
+//nolint:dupl // progressing vs deleting share the same per-kind status patch shape
 func patchSyncedProgressing(
 	ctx context.Context,
 	status client.StatusWriter,
@@ -180,6 +181,7 @@ func patchSyncedAvailable(
 	}
 }
 
+//nolint:dupl // progressing vs deleting share the same per-kind status patch shape
 func patchSyncedDeleting(
 	ctx context.Context,
 	status client.StatusWriter,

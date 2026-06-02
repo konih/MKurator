@@ -60,7 +60,14 @@ func (r *ChannelReconciler) reconcile(ctx context.Context, req ctrl.Request) (ct
 		return setSyncedError(ctx, r.Status(), r.Recorder, channel, channel.Generation, err)
 	}
 
-	waitResult, waitDone, waitErr := waitForConnectionReady(ctx, r.Status(), r.Recorder, channel, conn, channel.Generation)
+	waitResult, waitDone, waitErr := waitForConnectionReady(
+		ctx,
+		r.Status(),
+		r.Recorder,
+		channel,
+		conn,
+		channel.Generation,
+	)
 	if waitDone {
 		return waitResult, waitErr
 	}
@@ -94,7 +101,8 @@ func (r *ChannelReconciler) reconcile(ctx context.Context, req ctrl.Request) (ct
 		return setSyncedError(ctx, r.Status(), r.Recorder, channel, channel.Generation, err)
 	}
 
-	if err := patchSyncedAvailable(ctx, r.Status(), r.Recorder, channel, channel.Generation, "Channel matches spec"); err != nil {
+	if err := patchSyncedAvailable(ctx, r.Status(), r.Recorder, channel, channel.Generation,
+		"Channel matches spec"); err != nil {
 		return ctrl.Result{}, fmt.Errorf("update status: %w", err)
 	}
 	logger.Info("Channel synced", "channel", channel.Spec.ChannelName, "type", spec.Type)

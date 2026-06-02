@@ -235,7 +235,14 @@ func TestSetSyncedError_TerminalQueue(t *testing.T) {
 	}
 	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(q).WithObjects(q).Build()
 	recorder := record.NewFakeRecorder(1)
-	result, err := setSyncedError(ctx, cl.Status(), recorder, q, 1, &mqadmin.TerminalError{Reason: "MQSCError", Message: "bad"})
+	result, err := setSyncedError(
+		ctx,
+		cl.Status(),
+		recorder,
+		q,
+		1,
+		&mqadmin.TerminalError{Reason: "MQSCError", Message: "bad"},
+	)
 	if err != nil || result != (ctrl.Result{}) {
 		t.Fatalf("result=%+v err=%v", result, err)
 	}
