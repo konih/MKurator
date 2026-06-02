@@ -3,6 +3,7 @@ package validation
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -13,11 +14,15 @@ import (
 	messagingv1alpha1 "github.com/konih/kurator/api/v1alpha1"
 )
 
+const insecureTLSWithoutOptInMsg = "tls.insecureSkipVerify requires annotation " +
+	messagingv1alpha1.AllowInsecureTLSAnnotation + `="true" (dev/local only; do not use in production)`
+
 // ValidateQueueManagerConnectionSpec runs admission validation for QueueManagerConnection spec fields.
 func ValidateQueueManagerConnectionSpec(
 	ctx context.Context,
 	reader client.Reader,
 	namespace string,
+	annotations map[string]string,
 	spec *messagingv1alpha1.QueueManagerConnectionSpec,
 ) field.ErrorList {
 	var errs field.ErrorList
@@ -40,13 +45,27 @@ func ValidateQueueManagerConnectionSpec(
 			field.NewPath("spec").Child("credentialsSecretRef").Child("name"))...)
 	}
 
-	if spec.TLS != nil && spec.TLS.CASecretRef != nil && spec.TLS.CASecretRef.Name != "" {
-		errs = append(errs, validateSecretExists(ctx, reader, namespace,
-			spec.TLS.CASecretRef.Name,
-			field.NewPath("spec").Child("tls").Child("caSecretRef").Child("name"))...)
+	if spec.TLS != nil {
+		if spec.TLS.InsecureSkipVerify && !allowInsecureTLS(annotations) {
+			errs = append(errs, field.Invalid(field.NewPath("spec").Child("tls").Child("insecureSkipVerify"), true,
+				insecureTLSWithoutOptInMsg))
+		}
+		if spec.TLS.CASecretRef != nil && spec.TLS.CASecretRef.Name != "" {
+			errs = append(errs, validateSecretExists(ctx, reader, namespace,
+				spec.TLS.CASecretRef.Name,
+				field.NewPath("spec").Child("tls").Child("caSecretRef").Child("name"))...)
+		}
 	}
 
 	return errs
+}
+
+func allowInsecureTLS(annotations map[string]string) bool {
+	if annotations == nil {
+		return false
+	}
+	allowed, err := strconv.ParseBool(annotations[messagingv1alpha1.AllowInsecureTLSAnnotation])
+	return err == nil && allowed
 }
 
 // ValidateQueueManagerConnectionDelete denies delete when Queue, Topic, or Channel CRs

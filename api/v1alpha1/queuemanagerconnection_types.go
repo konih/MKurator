@@ -21,6 +21,9 @@ const (
 // QueueManagerConnectionFinalizer ensures MQ cleanup completes before removal.
 const QueueManagerConnectionFinalizer = "messaging.kurator.dev/connection"
 
+// AllowInsecureTLSAnnotation opts in to tls.insecureSkipVerify on QueueManagerConnection (dev only).
+const AllowInsecureTLSAnnotation = "messaging.kurator.dev/allow-insecure-tls"
+
 // QueueFinalizer ensures the MQ queue is deleted before the CR is removed.
 const QueueFinalizer = "messaging.kurator.dev/queue"
 

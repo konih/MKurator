@@ -158,6 +158,34 @@ var _ = Describe("Validating admission webhooks", func() {
 		Expect(webhookK8sClient.Create(ctx, q)).To(Succeed())
 	})
 
+	It("denies QueueManagerConnection with insecure TLS without opt-in annotation", func() {
+		ctx := context.Background()
+		Expect(webhookK8sClient.Create(ctx, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: ns},
+		})).To(Succeed())
+
+		conn := sampleWebhookConnection(ns, "insecure-qmc")
+		conn.Spec.TLS = &messagingv1alpha1.TLSConfig{InsecureSkipVerify: true}
+		err := webhookK8sClient.Create(ctx, conn)
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring(messagingv1alpha1.AllowInsecureTLSAnnotation))
+	})
+
+	It("allows QueueManagerConnection with insecure TLS when opt-in annotation is set", func() {
+		ctx := context.Background()
+		Expect(webhookK8sClient.Create(ctx, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: ns},
+		})).To(Succeed())
+
+		conn := sampleWebhookConnection(ns, "insecure-qmc-ok")
+		conn.Annotations = map[string]string{
+			messagingv1alpha1.AllowInsecureTLSAnnotation: "true",
+		}
+		conn.Spec.TLS = &messagingv1alpha1.TLSConfig{InsecureSkipVerify: true}
+		Expect(webhookK8sClient.Create(ctx, conn)).To(Succeed())
+	})
+
 	It("denies QueueManagerConnection delete when dependents exist", func() {
 		ctx := context.Background()
 		Expect(webhookK8sClient.Create(ctx, &corev1.Secret{

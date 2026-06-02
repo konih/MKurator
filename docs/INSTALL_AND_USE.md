@@ -201,7 +201,18 @@ spec:
 ```
 
 For **local development only**, you may set `tls.insecureSkipVerify: true`
-instead of `caSecretRef`. Do not use skip-verify in production.
+instead of `caSecretRef`. The admission webhook **denies** this unless you also
+set the opt-in annotation `messaging.kurator.dev/allow-insecure-tls: "true"`.
+Do not use skip-verify in production.
+
+```yaml
+metadata:
+  annotations:
+    messaging.kurator.dev/allow-insecure-tls: "true"
+spec:
+  tls:
+    insecureSkipVerify: true
+```
 
 The CA secret must contain PEM under `tls.crt`, `ca.crt`, or `ca.pem`.
 
@@ -389,9 +400,13 @@ Full matrix: [ATTRIBUTE_RECONCILIATION.md](ATTRIBUTE_RECONCILIATION.md). MQSC re
 | Condition | Meaning |
 |-----------|---------|
 | `Synced=True` | Queue exists on MQ with matching attributes |
-| `Synced=False`, `Reason=Progressing` | Waiting for connection `Ready` |
+| `Synced=False`, `Reason=Progressing` | Waiting for connection `Ready` (see `status.message`; includes QMC `Ready` reason when known) |
 | `Synced=False`, `Reason=Deleting` | Removing queue from MQ |
-| `Synced=False`, `Reason=Error` | MQ or configuration error (see message) |
+| `Synced=False`, `Reason=Error` | MQ or configuration error (see `status.message` and condition message) |
+
+**Extra status fields** (`Queue`, `Topic`, `Channel`): `status.message` (short summary),
+`status.lastSyncTime` (last successful sync), `status.mqObjectExists` (last GET on MQ).
+Manual MQ edits: [ATTRIBUTE_RECONCILIATION.md](ATTRIBUTE_RECONCILIATION.md#manual-and-out-of-band-mq-changes).
 
 ### Topic
 
@@ -591,8 +606,9 @@ kubectl get qmc,mq,tp,chl,car,auth -n kurator-system
 | `AuthorityRecord` | `auth` | `Synced` | `Synced=True`, `Reason=Available` |
 
 `Synced=False` with `Reason=Progressing` on a workload CR usually means the
-referenced `QueueManagerConnection` is not **Ready** yet. `Reason=Error` includes
-the mqweb/MQSC error in the condition **message**.
+referenced `QueueManagerConnection` is not **Ready** yet — check `status.message`
+on the workload CR for the QMC `Ready` reason/details. `Reason=Error` surfaces a
+classified mqweb/MQSC summary in `status.message` and the condition message.
 
 For **Queue** resources, `status.desiredMQSC` is a debug/GitOps aid (not
 authoritative): the `DEFINE QLOCAL|QALIAS|QREMOTE REPLACE` line equivalent to what

@@ -77,6 +77,8 @@ kind: QueueManagerConnection
 metadata:
   name: qm1
   namespace: kurator-system
+  annotations:
+    messaging.kurator.dev/allow-insecure-tls: "true"   # required when skipping TLS verify
 spec:
   queueManager: QM1
   endpoint: https://ibm-mq.ibm-mq.svc:9443
@@ -90,6 +92,7 @@ spec:
 |-------|-------------|---------------------|
 | `queueManager` | `QM1` | Must match your QM name exactly |
 | `endpoint` | In-cluster Service DNS | Public or corporate URL reachable from the operator pod |
+| `metadata.annotations` | `allow-insecure-tls: "true"` | Omit; required only with `insecureSkipVerify` |
 | `tls.insecureSkipVerify` | `true` | Remove; use `tls.caSecretRef` instead |
 | `credentialsSecretRef` | `mq-credentials` | Secret in the **same namespace** as this CR |
 

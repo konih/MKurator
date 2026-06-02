@@ -56,7 +56,7 @@ func (v *queueManagerConnectionCustomValidator) validate(
 	ctx context.Context,
 	conn *messagingv1alpha1.QueueManagerConnection,
 ) (admission.Warnings, error) {
-	errs := validation.ValidateQueueManagerConnectionSpec(ctx, v.Client, conn.Namespace, &conn.Spec)
+	errs := validation.ValidateQueueManagerConnectionSpec(ctx, v.Client, conn.Namespace, conn.Annotations, &conn.Spec)
 	if len(errs) > 0 {
 		return nil, validation.QueueManagerConnectionInvalid(validation.ObjectNameFromMeta(conn), errs)
 	}

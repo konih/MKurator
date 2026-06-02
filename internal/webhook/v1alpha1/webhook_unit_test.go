@@ -196,6 +196,28 @@ func TestQueueManagerConnectionWebhookValidateInvalidSpec(t *testing.T) {
 	}
 }
 
+func TestQueueManagerConnectionWebhookValidateInsecureTLS(t *testing.T) {
+	scheme := webhookTestScheme(t)
+	_ = corev1.AddToScheme(scheme)
+	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: "ns"}}
+	cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(secret).Build()
+	v := &queueManagerConnectionCustomValidator{Client: cl}
+
+	conn := sampleWebhookConn("ns")
+	conn.Spec.TLS = &messagingv1alpha1.TLSConfig{InsecureSkipVerify: true}
+
+	if _, err := v.ValidateCreate(context.Background(), conn); err == nil {
+		t.Fatal("expected deny without allow-insecure-tls annotation")
+	}
+
+	conn.Annotations = map[string]string{
+		messagingv1alpha1.AllowInsecureTLSAnnotation: "true",
+	}
+	if _, err := v.ValidateCreate(context.Background(), conn); err != nil {
+		t.Fatalf("ValidateCreate with opt-in annotation: %v", err)
+	}
+}
+
 func TestQueueManagerConnectionWebhookValidateDelete(t *testing.T) {
 	scheme := webhookTestScheme(t)
 	conn := sampleWebhookConn("ns")

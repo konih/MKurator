@@ -3,6 +3,8 @@ kind: QueueManagerConnection
 metadata:
   name: qm1
   namespace: kurator-system
+  annotations:
+    messaging.kurator.dev/allow-insecure-tls: "true"
 spec:
   queueManager: QM1
   endpoint: https://ibm-mq.ibm-mq.svc:9443
