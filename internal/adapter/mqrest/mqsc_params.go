@@ -10,6 +10,7 @@ import (
 
 const attrMaxDepth = "maxdepth"
 const attrDescr = "descr"
+const attrTargq = "targq"
 const attrMaxMsgl = "maxmsgl"
 const attrTopstr = "topstr"
 const attrTopicStr = "topicStr" // mqweb runCommandJSON name for TOPSTR
@@ -22,7 +23,7 @@ var queueLocalDisplayParameters = []string{
 }
 
 var queueAliasDisplayParameters = []string{
-	"targq", "targtype", attrDescr,
+	attrTargq, "targtype", attrDescr,
 }
 
 var queueRemoteDisplayParameters = []string{
@@ -88,8 +89,8 @@ func normalizeTopicAttributes(attrs map[string]string) {
 func normalizeQueueAttributes(attrs map[string]string, qType mqadmin.QueueType) {
 	switch mqadmin.NormalizeQueueType(qType) {
 	case mqadmin.QueueTypeAlias:
-		if v, ok := attrs["target"]; ok && attrs["targq"] == "" {
-			attrs["targq"] = v
+		if v, ok := attrs["target"]; ok && attrs[attrTargq] == "" {
+			attrs[attrTargq] = v
 		}
 	case mqadmin.QueueTypeRemote:
 		if v, ok := attrs["remotequeue"]; ok && attrs["rname"] == "" {

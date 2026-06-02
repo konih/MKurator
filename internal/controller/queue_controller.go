@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	messagingv1alpha1 "github.com/konih/kurator/api/v1alpha1"
+	"github.com/konih/kurator/internal/adapter/mqrest"
 	"github.com/konih/kurator/internal/metrics"
 	"github.com/konih/kurator/internal/mqadmin"
 )
@@ -83,6 +84,12 @@ func (r *QueueReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	spec := toMQQueueSpec(q)
+	desiredMQSC, formatErr := mqrest.FormatDefineQueueMQSC(spec)
+	if formatErr != nil {
+		return setSyncedError(ctx, r.Status(), r.Recorder, q, q.Generation, formatErr)
+	}
+	q.Status.DesiredMQSC = desiredMQSC
+
 	if err := r.ensureQueue(ctx, admin, spec); err != nil {
 		return setSyncedError(ctx, r.Status(), r.Recorder, q, q.Generation, err)
 	}

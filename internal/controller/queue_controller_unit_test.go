@@ -96,6 +96,62 @@ func TestQueueReconciler_SyncedWithoutDefine(t *testing.T) {
 	}
 }
 
+func TestQueueReconciler_SetsDesiredMQSCInStatus(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	ns := "kurator-system"
+	key := types.NamespacedName{Namespace: ns, Name: "orders"}
+	s := unitSchemeOrFatal(t)
+
+	conn := readyConnForUnit(ns)
+	q := &messagingv1alpha1.Queue{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "orders",
+			Namespace:  ns,
+			Finalizers: []string{messagingv1alpha1.QueueFinalizer},
+		},
+		Spec: messagingv1alpha1.QueueSpec{
+			ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+			QueueName:     "APP.ORDERS",
+			Type:          messagingv1alpha1.QueueTypeLocal,
+			Attributes:    map[string]string{"maxdepth": "5000", "descr": "orders"},
+		},
+	}
+
+	cl := fake.NewClientBuilder().
+		WithScheme(s).
+		WithStatusSubresource(q, conn).
+		WithObjects(conn, q).
+		Build()
+
+	mockAdmin := mqadmintest.NewMockAdmin(t)
+	mockAdmin.EXPECT().GetQueue(mock.Anything, mock.Anything).Return(&mqadmin.QueueState{
+		Attributes: map[string]string{"maxdepth": "5000", "descr": "orders"},
+	}, nil)
+
+	mockFactory := mqadmintest.NewMockFactory(t)
+	mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mockAdmin, nil)
+
+	rec := &QueueReconciler{
+		Client:    cl,
+		Scheme:    s,
+		MQFactory: mockFactory,
+	}
+
+	if _, err := rec.Reconcile(ctx, ctrl.Request{NamespacedName: key}); err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+
+	updated := &messagingv1alpha1.Queue{}
+	if err := cl.Get(ctx, key, updated); err != nil {
+		t.Fatal(err)
+	}
+	want := "DEFINE QLOCAL('APP.ORDERS') REPLACE DESCR('orders') MAXDEPTH(5000)"
+	if updated.Status.DesiredMQSC != want {
+		t.Fatalf("DesiredMQSC = %q, want %q", updated.Status.DesiredMQSC, want)
+	}
+}
+
 func TestQueueReconciler_AddsFinalizer(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -377,10 +433,6 @@ func TestQueueReconciler_UnsupportedType(t *testing.T) {
 		Build()
 
 	mockAdmin := mqadmintest.NewMockAdmin(t)
-	mockAdmin.EXPECT().GetQueue(mock.Anything, mock.Anything).Return(nil, &mqadmin.TerminalError{
-		Reason:  "UnsupportedQueueType",
-		Message: `queue type "model" is not supported`,
-	})
 
 	mockFactory := mqadmintest.NewMockFactory(t)
 	mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mockAdmin, nil)
@@ -401,6 +453,9 @@ func TestQueueReconciler_UnsupportedType(t *testing.T) {
 	}
 	if conditionStatus(updated.Status.Conditions, messagingv1alpha1.ConditionSynced) != metav1.ConditionFalse {
 		t.Fatalf("Synced = %v", updated.Status.Conditions)
+	}
+	if updated.Status.DesiredMQSC != "" {
+		t.Fatalf("DesiredMQSC should be empty on format error, got %q", updated.Status.DesiredMQSC)
 	}
 }
 

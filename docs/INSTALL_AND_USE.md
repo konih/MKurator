@@ -594,6 +594,15 @@ kubectl get qmc,mq,tp,chl,car,auth -n kurator-system
 referenced `QueueManagerConnection` is not **Ready** yet. `Reason=Error` includes
 the mqweb/MQSC error in the condition **message**.
 
+For **Queue** resources, `status.desiredMQSC` is a debug/GitOps aid (not
+authoritative): the `DEFINE QLOCAL|QALIAS|QREMOTE REPLACE` line equivalent to what
+the operator applies via mqweb. Inspect it without applying to the queue manager:
+
+```sh
+kubectl get queue orders -n kurator-system \
+  -o jsonpath='{.status.desiredMQSC}{"\n"}'
+```
+
 ### `kubectl describe` — what to look for
 
 `kubectl describe` prints **Status.Conditions** and the latest **Events** at the

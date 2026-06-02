@@ -54,6 +54,12 @@ type QueueStatus struct {
 	// ObservedGeneration reflects the generation last successfully synced.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// DesiredMQSC is a debug/GitOps aid: the DEFINE QLOCAL|QALIAS|QREMOTE REPLACE
+	// line equivalent to what the operator applies via mqweb. Not authoritative;
+	// do not use this field to drive cluster apply or drift detection.
+	// +optional
+	DesiredMQSC string `json:"desiredMQSC,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -62,6 +68,7 @@ type QueueStatus struct {
 // +kubebuilder:printcolumn:name="Synced",type=string,JSONPath=`.status.conditions[?(@.type=="Synced")].status`
 // +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.conditions[?(@.type=="Synced")].reason`
 // +kubebuilder:printcolumn:name="Queue",type=string,JSONPath=`.spec.queueName`
+// +kubebuilder:printcolumn:name="Desired MQSC",type=string,JSONPath=`.status.desiredMQSC`,priority=1
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // Queue maintains an IBM MQ queue on a referenced queue manager.

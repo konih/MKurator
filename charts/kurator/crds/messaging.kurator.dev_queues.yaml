@@ -26,6 +26,10 @@ spec:
     - jsonPath: .spec.queueName
       name: Queue
       type: string
+    - jsonPath: .status.desiredMQSC
+      name: Desired MQSC
+      priority: 1
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -152,6 +156,12 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              desiredMQSC:
+                description: |-
+                  DesiredMQSC is a debug/GitOps aid: the DEFINE QLOCAL|QALIAS|QREMOTE REPLACE
+                  line equivalent to what the operator applies via mqweb. Not authoritative;
+                  do not use this field to drive cluster apply or drift detection.
+                type: string
               observedGeneration:
                 description: ObservedGeneration reflects the generation last successfully
                   synced.

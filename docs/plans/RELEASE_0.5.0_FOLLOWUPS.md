@@ -49,6 +49,14 @@ issue `DISPLAY CHLAUTH` / `DISPLAY AUTHREC` MQSC via `runCommand`.
 - [ ] Path filters on integration/e2e workflows to skip when only docs change
 - [ ] Scheduled `govulncheck` workflow (if not already covered by Renovate weekly)
 
+## GitOps debugging
+
+Optional status fields and CLI aids for inspecting intended MQSC without applying to MQ.
+
+- [x] Queue `status.desiredMQSC` (Phase 1)
+- [ ] Topic, Channel, auth CRs desiredMQSC
+- [ ] Optional `kubectl kurator` plugin (future)
+
 ## Out of scope for 0.5.0
 
 - Additional CHLAUTH rule types beyond `ADDRESSMAP` (schema allows them; adapter validates at MQSC apply time)
