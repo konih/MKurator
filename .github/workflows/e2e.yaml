@@ -20,8 +20,6 @@ env:
   CERT_MANAGER_INSTALL_SKIP: "true"
   KURATOR_E2E_MQ: "1"
   GOTOOLCHAIN: go1.26.3
-  # Prefer our pinned kind binary over any preinstalled runner copy.
-  KIND: ${{ runner.tool_cache }}/bin/kind
 
 jobs:
   e2e:
@@ -52,6 +50,7 @@ jobs:
           chmod +x "${bindir}/kind" "${bindir}/mkcert"
           echo "${bindir}" >> "${GITHUB_PATH}"
           echo "PATH=${bindir}:${PATH}" >> "${GITHUB_ENV}"
+          echo "KIND=${bindir}/kind" >> "${GITHUB_ENV}"
           "${bindir}/kind" version
           "${bindir}/mkcert" -version
 
