@@ -7,6 +7,8 @@
 *.dll
 *.so
 *.dylib
+references/
+AGENT.md
 
 # Test binary, built with `go test -c`
 *.test
