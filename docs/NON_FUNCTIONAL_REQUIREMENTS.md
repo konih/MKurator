@@ -1,8 +1,7 @@
 # Non-Functional Requirements
 
-This document defines the **non-functional requirements (NFRs)** for the IBM
-**Kurator**: the cross-cutting quality attributes every release must
-satisfy. Functional behaviour lives in [ARCHITECTURE.md](ARCHITECTURE.md); the
+This document defines the **non-functional requirements (NFRs)** for
+**Kurator**: the cross-cutting quality attributes every release must satisfy. Functional behaviour lives in [ARCHITECTURE.md](ARCHITECTURE.md); the
 delivery order lives in [ROADMAP.md](ROADMAP.md).
 
 Each requirement has an ID (`NFR-x`), a priority (**MUST** / **SHOULD** /
