@@ -85,8 +85,8 @@ locally and in CI — **met**.
   `local:deploy` / `local:info` / `local:down`.
 - [x] README + [DEVELOPMENT.md](DEVELOPMENT.md) — full local setup documented;
   `hack/kind-cluster/README.md` cross-linked.
-- [x] [REFERENCES.md](REFERENCES.md) — IBM MQ samples map; optional `references/`
-  clones remain gitignored for vendored upstream trees.
+- [x] Optional local `docs/REFERENCES.md` + `references/` clones (both gitignored)
+  for vendored IBM MQ sample trees — not published in the repository.
 - [x] `setup-envtest` wired in `Taskfile.test.yml` (`KUBEBUILDER_ASSETS`).
 - [x] Manual validation on kind: `QueueManagerConnection` reaches **Ready** against
   live `QM1`; operator reaches mqweb in-cluster.

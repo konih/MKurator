@@ -156,7 +156,6 @@ contract:
 - [docs/IBM_MQ_101.md](docs/IBM_MQ_101.md) — verify Kurator on kind (`runmqsc`, console).
 - [docs/IBM_MQ_REST_API.md](docs/IBM_MQ_REST_API.md) — how mqweb REST is consumed.
 - [docs/IBM_MQ_OBJECTS.md](docs/IBM_MQ_OBJECTS.md) — MQSC research inventory (not the product API).
-- [docs/REFERENCES.md](docs/REFERENCES.md) — IBM samples map (`references/` clones are local/gitignored).
 
 ## License
 
