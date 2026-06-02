@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Release notes are generated from [Conventional Commits](https://www.conventionalcommits.org/)
 on the default branch using [git-cliff](https://git-cliff.org/).
 
+## [Unreleased]
+
+### Features
+
+- **webhook:** Deny QMC delete when dependents exist [a8fc034](https://github.com/konih/kurator/commit/a8fc034fea91bab5f9cc5401a4abef8801786c61)
+
 ## [0.3.0](https://github.com/konih/kurator/compare/v0.2.2..v0.3.0) - 2026-06-02
 
 ### Bug Fixes
