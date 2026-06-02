@@ -146,6 +146,7 @@ func (c *Client) GetQueue(ctx context.Context, spec mqadmin.QueueSpec) (*mqadmin
 		}
 		return nil, err
 	}
+	normalizeQueueAttributes(attrs, spec.Type)
 	return &mqadmin.QueueState{Name: spec.Name, Attributes: attrs}, nil
 }
 

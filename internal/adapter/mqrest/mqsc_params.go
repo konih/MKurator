@@ -84,6 +84,27 @@ func normalizeTopicAttributes(attrs map[string]string) {
 	}
 }
 
+// normalizeQueueAttributes maps mqweb DISPLAY names to CRD/MQSC keys.
+func normalizeQueueAttributes(attrs map[string]string, qType mqadmin.QueueType) {
+	switch mqadmin.NormalizeQueueType(qType) {
+	case mqadmin.QueueTypeAlias:
+		if v, ok := attrs["target"]; ok && attrs["targq"] == "" {
+			attrs["targq"] = v
+		}
+	case mqadmin.QueueTypeRemote:
+		if v, ok := attrs["remotequeue"]; ok && attrs["rname"] == "" {
+			attrs["rname"] = v
+		}
+		if v, ok := attrs["remotemanager"]; ok && attrs["rqmname"] == "" {
+			attrs["rqmname"] = v
+		}
+		if v, ok := attrs["transmissionqueue"]; ok && attrs["xmitq"] == "" {
+			attrs["xmitq"] = v
+		}
+	default:
+	}
+}
+
 func defineChannelParameters(spec mqadmin.ChannelSpec) map[string]any {
 	params := defineObjectParameters(spec.Attributes, channelNumericParameters)
 	if spec.Type != "" {
