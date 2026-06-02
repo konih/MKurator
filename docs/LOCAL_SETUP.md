@@ -36,11 +36,12 @@ separately — they ship via `go.mod` `tool` directives (see below).
 
 | Tool | Pinned version (CI) | Where defined |
 |------|---------------------|---------------|
-| Go | **1.26.3** | `go.mod`, `GOTOOLCHAIN` in Taskfile |
-| Task | **3.51.1** | `.github/workflows/ci.yaml` |
-| kind | **v0.27.0** | `.github/workflows/e2e.yaml` |
-| mkcert | **v1.4.4** | `.github/workflows/e2e.yaml` |
-| Terraform | **1.9.8** | `.github/workflows/e2e.yaml` |
+| Go | **1.26.3** | `go.mod` (Taskfile derives `GOTOOLCHAIN` from it) |
+| Task | **3.51.1** | `Taskfile.yml` (`TASK_VERSION`) + CI `arduino/setup-task` |
+| kind | **v0.27.0** | `Taskfile.yml` (`KIND_VERSION`) |
+| mkcert | **v1.4.4** | `Taskfile.yml` (`MKCERT_VERSION`) |
+| Terraform | **1.9.8** | `Taskfile.yml` (`TERRAFORM_VERSION`) |
+| git-cliff | **v2.13.1** | `Taskfile.yml` (`GIT_CLIFF_VERSION`) + release workflow |
 | Helm | latest from `azure/setup-helm` | `.github/workflows/e2e.yaml` |
 
 Helm and kubectl are not pinned to a specific minor in-repo; use a recent stable
@@ -48,8 +49,7 @@ release. Terraform must be **≥ 1.5.0** (`hack/kind-cluster/terraform/versions.
 
 ## Go toolchain (pinned in go.mod)
 
-Install Go **1.26.3** (or enable auto-download via `GOTOOLCHAIN` — the Taskfile
-sets `GOTOOLCHAIN=go1.26.3`).
+Install Go **1.26.3** (or enable auto-download — `task` sets `GOTOOLCHAIN` from `go.mod`).
 
 These tools are **already pinned** in `go.mod` and invoked with `go tool …` —
 no separate install step:

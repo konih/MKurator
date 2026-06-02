@@ -8,9 +8,10 @@ via Terraform + Helm, installs:
 - **cert-manager** (for future operator webhook certificates).
 - **Argo CD** (optional; `ENABLE_ARGOCD=true` on apply — GitOps UI, password in `.state/argocd.env`).
 - **kube-prometheus-stack** (Prometheus + **Grafana**).
-- **IBM MQ** queue manager (`QM1`) from the [upstream IBM MQ Helm chart](https://ibm-messaging.github.io/mq-helm),
-  with mqweb exposed through a Terraform-managed HAProxy Ingress (the upstream
-  chart's Ingress targets nginx and is not used).
+- **IBM MQ** queue manager (`QM1`) from the upstream Helm repo
+  ([`helm repo add ibm-messaging-mq https://ibm-messaging.github.io/mq-helm`](https://ibm-messaging.github.io/mq-helm)),
+  chart `ibm-mq`, with mqweb exposed through a Terraform-managed HAProxy Ingress
+  (the upstream chart's Ingress targets nginx and is not used).
 
 TLS uses a [mkcert](https://github.com/FiloSottile/mkcert) wildcard certificate
 for `*.localhost`.

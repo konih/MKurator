@@ -9,14 +9,20 @@ run: once
 
 env:
   CGO_ENABLED: "0"
-  GOTOOLCHAIN: go1.26.3
+  GOTOOLCHAIN:
+    sh: echo "go$(sed -n 's/^go //p' go.mod | head -1)"
 
 vars:
   BIN_DIR: bin
+  # renovate: datasource=github-releases depName=go-task/task
   TASK_VERSION: "3.51.1"
+  # renovate: datasource=github-releases depName=kubernetes-sigs/kind
   KIND_VERSION: v0.27.0
+  # renovate: datasource=github-releases depName=FiloSottile/mkcert
   MKCERT_VERSION: v1.4.4
+  # renovate: datasource=github-releases depName=hashicorp/terraform
   TERRAFORM_VERSION: "1.9.8"
+  # renovate: datasource=github-releases depName=orhun/git-cliff
   GIT_CLIFF_VERSION: v2.13.1
   GIT_CLIFF_BIN: "{{.BIN_DIR}}/git-cliff"
   MANAGER_BINARY: "{{.BIN_DIR}}/manager"

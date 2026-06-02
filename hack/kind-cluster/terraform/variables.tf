@@ -65,9 +65,17 @@ variable "mq_namespace" {
 }
 
 variable "mq_chart_version" {
-  description = "Version of the upstream IBM MQ Helm chart (https://ibm-messaging.github.io/mq-helm)."
+  description = "Version of the upstream IBM MQ Helm chart (helm repo add ibm-messaging-mq https://ibm-messaging.github.io/mq-helm)."
   type        = string
+  # renovate: datasource=helm depName=ibm-mq registryUrl=https://ibm-messaging.github.io/mq-helm
   default     = "12.0.1"
+}
+
+variable "mq_image_tag" {
+  description = "IBM MQ container image tag (icr.io/ibm-messaging/mq)."
+  type        = string
+  # renovate: datasource=docker depName=icr.io/ibm-messaging/mq
+  default     = "9.4.2.0-r1"
 }
 
 variable "mq_queue_manager_name" {

@@ -1,6 +1,6 @@
 {
   "name": "Kurator DevContainer",
-  "image": "golang:1.26-bookworm",
+  "image": "golang:1.26.3-bookworm",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": true,
@@ -31,7 +31,6 @@
 
   "remoteEnv": {
     "GO111MODULE": "on",
-    "GOTOOLCHAIN": "go1.26.3",
     "CGO_ENABLED": "0",
     "PATH": "${containerWorkspaceFolder}/bin:/usr/local/go/bin:/usr/local/bin:${containerEnv:PATH}",
     "KUBECONFIG": "${containerWorkspaceFolder}/hack/kind-cluster/.state/kubeconfig.yaml",

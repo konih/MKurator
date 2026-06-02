@@ -9,9 +9,64 @@
   "schedule": ["before 6am on Monday"],
   "ignorePaths": [
     "**/references/**",
-    "hack/kind-cluster/charts/**",
     "bin/**",
     ".task/**"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Taskfile platform tool versions",
+      "managerFilePatterns": ["/Taskfile\\.yml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+KIND_VERSION: (?<currentValue>\\S+)",
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+MKCERT_VERSION: (?<currentValue>\\S+)",
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+TASK_VERSION: \"(?<currentValue>\\S+)\"",
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+TERRAFORM_VERSION: \"(?<currentValue>\\S+)\"",
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+GIT_CLIFF_VERSION: (?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "envtest Kubernetes API version",
+      "managerFilePatterns": ["/Taskfile\\.test\\.yml$/"],
+      "matchStrings": [
+        "# renovate: datasource=kubernetes-api depName=kubernetes\\n\\s+SETUP_ENVTEST_K8S_VERSION: \"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "IBM MQ helm chart version (terraform variable default)",
+      "managerFilePatterns": ["/hack/kind-cluster/terraform/variables\\.tf$/"],
+      "matchStrings": [
+        "# renovate: datasource=helm depName=ibm-mq registryUrl=https://ibm-messaging.github.io/mq-helm\\n\\s+default\\s+= \"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "ibm-mq",
+      "datasourceTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "IBM MQ container image tag",
+      "managerFilePatterns": [
+        "/hack/kind-cluster/terraform/variables\\.tf$/",
+        "/hack/mq-docker/docker-compose\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=docker depName=icr.io/ibm-messaging/mq\\n\\s+default\\s+= \"(?<currentValue>[^\"]+)\"",
+        "# renovate: datasource=docker depName=icr.io/ibm-messaging/mq\\n\\s+image: icr\\.io/ibm-messaging/mq:(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "icr.io/ibm-messaging/mq",
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Devcontainer Go base image",
+      "managerFilePatterns": ["/\\.devcontainer/devcontainer\\.json$/"],
+      "matchStrings": [
+        "\"image\": \"golang:(?<currentValue>\\d+\\.\\d+\\.\\d+)-bookworm\""
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "golang"
+    }
   ],
   "packageRules": [
     {
@@ -39,6 +94,24 @@
     {
       "matchManagers": ["pre-commit"],
       "groupName": "pre-commit hooks"
+    },
+    {
+      "description": "Group platform CLI tool bumps (Taskfile + CI action inputs)",
+      "matchManagers": ["regex", "github-actions"],
+      "matchPackageNames": [
+        "go-task/task",
+        "kubernetes-sigs/kind",
+        "FiloSottile/mkcert",
+        "hashicorp/terraform",
+        "orhun/git-cliff"
+      ],
+      "groupName": "platform tools"
+    },
+    {
+      "description": "Group IBM MQ chart and container image bumps",
+      "matchManagers": ["regex", "docker-compose", "terraform"],
+      "matchPackageNames": ["ibm-mq", "icr.io/ibm-messaging/mq"],
+      "groupName": "ibm mq"
     }
   ]
 }

@@ -17,7 +17,6 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: kurator
-  GOTOOLCHAIN: go1.26.3
 
 jobs:
   release:

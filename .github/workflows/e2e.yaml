@@ -19,7 +19,6 @@ env:
   KUBECONFIG: ${{ github.workspace }}/hack/kind-cluster/.state/kubeconfig.yaml
   CERT_MANAGER_INSTALL_SKIP: "true"
   KURATOR_E2E_MQ: "1"
-  GOTOOLCHAIN: go1.26.3
 
 jobs:
   e2e:
@@ -39,26 +38,20 @@ jobs:
         with:
           version: 3.51.1
 
-      - name: Install kind and mkcert
+      - name: Install platform tools (kind, mkcert, terraform)
+        run: task tools:install
+
+      - name: Expose platform tools on PATH
         run: |
-          bindir="${RUNNER_TOOL_CACHE}/bin"
-          mkdir -p "${bindir}"
-          curl -fsSL -o "${bindir}/kind" \
-            "https://kind.sigs.k8s.io/dl/v0.27.0/kind-linux-amd64"
-          curl -fsSL -o "${bindir}/mkcert" \
-            "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64"
-          chmod +x "${bindir}/kind" "${bindir}/mkcert"
+          bindir="${{ github.workspace }}/bin"
           echo "${bindir}" >> "${GITHUB_PATH}"
           echo "PATH=${bindir}:${PATH}" >> "${GITHUB_ENV}"
           echo "KIND=${bindir}/kind" >> "${GITHUB_ENV}"
           "${bindir}/kind" version
           "${bindir}/mkcert" -version
+          "${bindir}/terraform" version
 
       - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
-
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
-        with:
-          terraform_version: 1.9.8
 
       - name: Bring up kind + IBM MQ platform
         run: task cluster:up

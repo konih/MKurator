@@ -54,7 +54,7 @@ resource "helm_release" "ibm_mq" {
 
       image = {
         repository = "icr.io/ibm-messaging/mq"
-        tag        = "9.4.2.0-r1"
+        tag        = var.mq_image_tag
       }
 
       queueManager = {

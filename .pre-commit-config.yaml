@@ -12,11 +12,11 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(references/|hack/kind-cluster/charts/)
+        exclude: ^references/
       - id: end-of-file-fixer
-        exclude: ^(references/|hack/kind-cluster/charts/)
+        exclude: ^references/
       - id: check-yaml
-        exclude: ^(references/|hack/kind-cluster/charts/|config/)
+        exclude: ^(references/|config/)
       - id: check-added-large-files
         args: [--maxkb=1000]
 

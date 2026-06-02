@@ -13,9 +13,6 @@ concurrency:
   group: integration-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  GOTOOLCHAIN: go1.26.3
-
 jobs:
   integration:
     name: integration

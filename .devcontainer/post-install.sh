@@ -36,12 +36,16 @@ if ! command -v helm >/dev/null 2>&1; then
 fi
 
 echo ""
-echo "Installing CI-pinned tools into bin/..."
+echo "Installing CI-pinned platform tools into bin/ (via Taskfile.yml)..."
 mkdir -p "${ROOT}/bin"
-bash hack/install-external-tool.sh kind v0.27.0 bin/kind
-bash hack/install-external-tool.sh mkcert v1.4.4 bin/mkcert
-bash hack/install-external-tool.sh task v3.51.1 bin/task
-bash hack/install-external-tool.sh terraform 1.9.8 bin/terraform
+
+if ! command -v task >/dev/null 2>&1; then
+  TASK_VERSION="$(sed -n 's/^  TASK_VERSION: "\(.*\)"/\1/p' Taskfile.yml | head -1)"
+  bash hack/install-external-tool.sh task "v${TASK_VERSION}" "${ROOT}/bin/task"
+fi
+
+export PATH="${ROOT}/bin:${PATH}"
+task tools:install
 chown -R vscode:vscode "${ROOT}/bin" 2>/dev/null || true
 
 echo ""
@@ -63,8 +67,6 @@ fi
 
 echo ""
 echo "Go modules and tool check..."
-export PATH="${ROOT}/bin:${PATH}"
-export GOTOOLCHAIN=go1.26.3
 task install
 task tools:check
 
