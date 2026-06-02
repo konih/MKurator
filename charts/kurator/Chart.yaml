@@ -6,6 +6,7 @@ version: 0.4.0
 appVersion: "0.4.0"
 kubeVersion: ">=1.28.0-0"
 home: https://github.com/konih/kurator
+icon: https://raw.githubusercontent.com/konih/kurator/main/docs/images/kurator-logo.png
 sources:
   - https://github.com/konih/kurator
 keywords:

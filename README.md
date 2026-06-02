@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/kurator-logo.png" alt="Kurator logo" width="200">
+</p>
+
 # Kurator
 
 [![CI](https://github.com/konih/kurator/actions/workflows/ci.yaml/badge.svg)](https://github.com/konih/kurator/actions/workflows/ci.yaml)
