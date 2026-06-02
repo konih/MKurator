@@ -27,6 +27,8 @@ const (
 	mqTopicObject     = "E2E.RETAIL.ORDERS"
 	mqChannelCRName   = "e2e-orders-app"
 	mqChannelObject   = "E2E.ORDERS.APP"
+	mqChannelAuthCRName = "e2e-dev-app-addressmap"
+	mqAuthorityCRName   = "e2e-app-orders-get-put"
 )
 
 func e2eLocalQueueSpec() mqadmin.QueueSpec {
@@ -329,6 +331,161 @@ spec:
 
 			Eventually(func(g Gomega) {
 				ok, err := svrconnChannelExists(ctx, client, mqChannelObject)
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(ok).To(BeFalse())
+			}).WithTimeout(2 * time.Minute).WithPolling(3 * time.Second).Should(Succeed())
+		})
+	})
+
+	Context("Auth reconciliation", Ordered, func() {
+		BeforeAll(func() {
+			if !mqE2EEnabled() {
+				return
+			}
+			ensureOperatorForMQE2E()
+		})
+
+		BeforeEach(func() {
+			if !mqE2EEnabled() {
+				return
+			}
+			cmd := exec.Command("kubectl", "create", "secret", "generic", "mq-credentials",
+				"-n", namespace,
+				"--from-literal=username=admin",
+				fmt.Sprintf("--from-literal=mqAdminPassword=%s", envOr("KURATOR_E2E_MQ_PASSWORD", "passw0rd")),
+				"--dry-run=client", "-o", "yaml",
+			)
+			manifest, err := utils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+			apply := exec.Command("kubectl", "apply", "-f", "-")
+			apply.Stdin = strings.NewReader(manifest)
+			_, err = utils.Run(apply)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			_ = exec.Command("kubectl", "delete", "channelauthrule", mqChannelAuthCRName, "-n", namespace, "--ignore-not-found").Run()
+			_ = exec.Command("kubectl", "delete", "authorityrecord", mqAuthorityCRName, "-n", namespace, "--ignore-not-found").Run()
+			_ = exec.Command("kubectl", "delete", "queue", mqQueueCRName, "-n", namespace, "--ignore-not-found").Run()
+			_ = exec.Command("kubectl", "delete", "queuemanagerconnection", mqConnectionName, "-n", namespace, "--ignore-not-found").Run()
+		})
+
+		It("reconciles a ChannelAuthRule CR against the kind IBM MQ queue manager", func() {
+			Expect(kubectlApply(connectionManifest())).To(Succeed())
+
+			client, err := newMQClient()
+			Expect(err).NotTo(HaveOccurred())
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cancel()
+
+			Expect(applyMQSCFixture(ctx, client, "channel-auth-prereq.mqsc")).To(Succeed())
+
+			carYAML := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
+kind: ChannelAuthRule
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  channelName: %s
+  ruleType: ADDRESSMAP
+  address: "*"
+  userSource: CHANNEL
+  checkClient: REQUIRED
+  description: e2e address map rule
+`, mqChannelAuthCRName, namespace, mqConnectionName, e2eChannelName)
+			Expect(kubectlApply(carYAML)).To(Succeed())
+
+			Eventually(func(g Gomega) {
+				cmd := exec.Command("kubectl", "get", "channelauthrule", mqChannelAuthCRName, "-n", namespace,
+					"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+				out, err := utils.Run(cmd)
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(out).To(Equal("True"))
+			}).WithTimeout(3 * time.Minute).WithPolling(5 * time.Second).Should(Succeed())
+
+			ok, err := chlauthRuleExists(ctx, client, e2eChannelName)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ok).To(BeTrue())
+
+			cmd := exec.Command("kubectl", "delete", "channelauthrule", mqChannelAuthCRName, "-n", namespace, "--wait=true")
+			_, err = utils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(func(g Gomega) {
+				ok, err := chlauthRuleExists(ctx, client, e2eChannelName)
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(ok).To(BeFalse())
+			}).WithTimeout(2 * time.Minute).WithPolling(3 * time.Second).Should(Succeed())
+		})
+
+		It("reconciles an AuthorityRecord CR against the kind IBM MQ queue manager", func() {
+			Expect(kubectlApply(connectionManifest())).To(Succeed())
+
+			queueYAML := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
+kind: Queue
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  queueName: %s
+  type: local
+  attributes:
+    maxdepth: "%s"
+`, mqQueueCRName, namespace, mqConnectionName, mqQueueObject, mqQueueMaxDepthV1)
+			Expect(kubectlApply(queueYAML)).To(Succeed())
+
+			Eventually(func(g Gomega) {
+				cmd := exec.Command("kubectl", "get", "queue", mqQueueCRName, "-n", namespace,
+					"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+				out, err := utils.Run(cmd)
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(out).To(Equal("True"))
+			}).WithTimeout(3 * time.Minute).WithPolling(5 * time.Second).Should(Succeed())
+
+			authYAML := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
+kind: AuthorityRecord
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  profile: %s
+  objectType: QUEUE
+  principal: app
+  authorities:
+    - GET
+    - PUT
+`, mqAuthorityCRName, namespace, mqConnectionName, mqQueueObject)
+			Expect(kubectlApply(authYAML)).To(Succeed())
+
+			Eventually(func(g Gomega) {
+				cmd := exec.Command("kubectl", "get", "authorityrecord", mqAuthorityCRName, "-n", namespace,
+					"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+				out, err := utils.Run(cmd)
+				g.Expect(err).NotTo(HaveOccurred())
+				g.Expect(out).To(Equal("True"))
+			}).WithTimeout(3 * time.Minute).WithPolling(5 * time.Second).Should(Succeed())
+
+			client, err := newMQClient()
+			Expect(err).NotTo(HaveOccurred())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			ok, err := authorityRecordExists(ctx, client, mqQueueObject, "QUEUE", "app")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ok).To(BeTrue())
+
+			cmd := exec.Command("kubectl", "delete", "authorityrecord", mqAuthorityCRName, "-n", namespace, "--wait=true")
+			_, err = utils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(func(g Gomega) {
+				ok, err := authorityRecordExists(ctx, client, mqQueueObject, "QUEUE", "app")
 				g.Expect(err).NotTo(HaveOccurred())
 				g.Expect(ok).To(BeFalse())
 			}).WithTimeout(2 * time.Minute).WithPolling(3 * time.Second).Should(Succeed())

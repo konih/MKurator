@@ -8,6 +8,13 @@ source "${ROOT}/hack/ci/step.sh"
 
 cd "${ROOT}"
 
+# Prefer the kind cluster kubeconfig when present so kubectl never falls back to
+# a stale default context (e.g. localhost:8080) during BeforeSuite cert-manager install.
+KIND_KUBECONFIG="${ROOT}/hack/kind-cluster/.state/kubeconfig.yaml"
+if [[ -f "${KIND_KUBECONFIG}" ]]; then
+  export KUBECONFIG="${KIND_KUBECONFIG}"
+fi
+
 ci_step "E2E tests (build image, load kind, deploy operator — output streams below)"
 
 echo "KUBECONFIG=${KUBECONFIG:-<unset>}"

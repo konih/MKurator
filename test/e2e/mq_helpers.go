@@ -142,12 +142,48 @@ func svrconnChannelExists(ctx context.Context, client *mqrest.Client, name strin
 
 // channelExists returns true when DISPLAY CHANNEL succeeds for the named SVRCONN channel.
 func channelExists(ctx context.Context, client *mqrest.Client, name string) (bool, error) {
-	cmd := fmt.Sprintf("DISPLAY CHANNEL('%s') CHLTYPE(SVRCONN)", name)
+	cmd := fmt.Sprintf("DISPLAY CHANNEL('%s') CHLTYPE(SVRCONN)", strings.ReplaceAll(name, "'", "''"))
 	err := client.RunMQSC(ctx, cmd)
 	if err == nil {
 		return true, nil
 	}
 	if strings.Contains(strings.ToUpper(err.Error()), "AMQ8147") ||
+		strings.Contains(strings.ToLower(err.Error()), "not found") {
+		return false, nil
+	}
+	return false, err
+}
+
+func chlauthRuleExists(ctx context.Context, client *mqrest.Client, channelName string) (bool, error) {
+	cmd := fmt.Sprintf("DISPLAY CHLAUTH('%s') TYPE(ADDRESSMAP)", strings.ReplaceAll(channelName, "'", "''"))
+	err := client.RunMQSC(ctx, cmd)
+	if err == nil {
+		return true, nil
+	}
+	if strings.Contains(strings.ToUpper(err.Error()), "AMQ8147") ||
+		strings.Contains(strings.ToUpper(err.Error()), "AMQ8958") ||
+		strings.Contains(strings.ToLower(err.Error()), "not found") {
+		return false, nil
+	}
+	return false, err
+}
+
+func authorityRecordExists(
+	ctx context.Context,
+	client *mqrest.Client,
+	profile, objectType, principal string,
+) (bool, error) {
+	cmd := fmt.Sprintf("DISPLAY AUTHREC PROFILE('%s') OBJTYPE(%s) PRINCIPAL('%s')",
+		strings.ReplaceAll(profile, "'", "''"),
+		objectType,
+		strings.ReplaceAll(principal, "'", "''"),
+	)
+	err := client.RunMQSC(ctx, cmd)
+	if err == nil {
+		return true, nil
+	}
+	if strings.Contains(strings.ToUpper(err.Error()), "AMQ8147") ||
+		strings.Contains(strings.ToUpper(err.Error()), "AMQ8958") ||
 		strings.Contains(strings.ToLower(err.Error()), "not found") {
 		return false, nil
 	}
