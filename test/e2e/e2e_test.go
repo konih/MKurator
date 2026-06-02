@@ -162,6 +162,36 @@ var _ = Describe("Manager", Serial, Ordered, func() {
 			Eventually(verifyControllerUp).Should(Succeed())
 		})
 
+		It("should reject invalid Queue at admission", func() {
+			By("validating that ValidatingWebhookConfiguration is installed")
+			cmd := exec.Command("kubectl", "get", "validatingwebhookconfiguration",
+				"kurator-validating-webhook-configuration")
+			_, err := utils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred(), "ValidatingWebhookConfiguration should exist")
+
+			By("applying an alias Queue without targq and missing connectionRef target")
+			invalidQueue := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
+kind: Queue
+metadata:
+  name: webhook-e2e-invalid
+  namespace: %s
+spec:
+  connectionRef:
+    name: missing-qmc-webhook-e2e
+  queueName: APP.INVALID
+  type: alias
+`, namespace)
+			apply := exec.Command("kubectl", "apply", "-f", "-")
+			apply.Stdin = strings.NewReader(invalidQueue)
+			_, err = utils.Run(apply)
+			Expect(err).To(HaveOccurred(), "invalid Queue should be rejected by admission")
+			Expect(err.Error()).To(Or(
+				ContainSubstring("denied"),
+				ContainSubstring("Forbidden"),
+				ContainSubstring("Invalid"),
+			))
+		})
+
 		It("should ensure the metrics endpoint is serving metrics", func() {
 			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
 			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName,

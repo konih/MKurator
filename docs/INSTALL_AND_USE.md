@@ -307,15 +307,19 @@ flowchart LR
   op -->|"HTTPS mqweb /mqsc"| qm["IBM MQ Queue Manager"]
 ```
 
-1. **`QueueManagerConnection` reconciler** loads the credentials Secret, builds
+1. **Validating admission webhooks** (enabled by default; TLS via cert-manager)
+   reject invalid specs before reconcile — for example a missing `connectionRef`,
+   an alias queue without `targq`, or an invalid MQ object name. Unknown attribute
+   keys may produce **warnings** but are not blocked. Webhooks never call IBM MQ.
+2. **`QueueManagerConnection` reconciler** loads the credentials Secret, builds
    an mqweb client, and **pings** the queue manager. Status **`Ready`** means
    the operator can administer that manager.
-2. **`Queue` reconciler** waits until `connectionRef` is **Ready**, then
+3. **`Queue` reconciler** waits until `connectionRef` is **Ready**, then
    **displays** the queue. If it is missing or attributes differ, it **defines**
    the queue with `REPLACE`. Status **`Synced`** means MQ matches spec.
-3. **`Topic` and `Channel` reconcilers** follow the same pattern for
+4. **`Topic` and `Channel` reconcilers** follow the same pattern for
    `DEFINE TOPIC` and `DEFINE CHANNEL` … `CHLTYPE(SVRCONN)`.
-4. On **delete**, finalizers run `DELETE` on MQ before the CR is removed.
+5. On **delete**, finalizers run `DELETE` on MQ before the CR is removed.
 
 Connection details live on `QueueManagerConnection` so many queues, topics, and
 channels can share one endpoint and credential set. See [ADR-0003](adr/0003-connection-model.md).

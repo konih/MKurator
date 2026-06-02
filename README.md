@@ -36,7 +36,7 @@ resources (Phase 5 — see [PHASE5_AUTH_SKETCH.md](docs/PHASE5_AUTH_SKETCH.md)).
 
 | Tier | Scope |
 |------|-------|
-| Unit + envtest | Reconcilers and adapter (mocked MQ); Queue, Topic, Channel, and QMC envtest |
+| Unit + envtest | Reconcilers and adapter (mocked MQ); validating admission (envtest); Queue, Topic, Channel, and QMC |
 | Docker integration | Queue (local/alias/remote), Topic, Channel against live mqweb |
 | kind e2e (`KURATOR_E2E_MQ=1`) | Queue, Topic, and Channel CR reconcile + delete on live `QM1` |
 

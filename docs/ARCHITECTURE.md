@@ -27,6 +27,7 @@ flowchart TB
     secret["Secret (mqweb creds)"]
     subgraph operator [Operator Pod]
       mgr["controller-runtime Manager"]
+      wh["validating webhooks"]
       crec["QueueManagerConnectionReconciler"]
       qrec["QueueReconciler"]
       trec["TopicReconciler"]
@@ -37,7 +38,9 @@ flowchart TB
   end
   qm["Existing Queue Manager + mqweb"]
 
+  apiserver -->|"admission"| wh
   apiserver --> mgr
+  wh --> mgr
   mgr --> crec
   mgr --> qrec
   mgr --> trec
@@ -53,7 +56,8 @@ flowchart TB
 
 | Component | Responsibility |
 |-----------|----------------|
-| **Manager** (`cmd/`) | Wires reconcilers, caches, health/metrics, leader election. |
+| **Manager** (`cmd/`) | Wires reconcilers, validating webhooks, caches, health/metrics, leader election. |
+| **Validating webhooks** (`internal/webhook`, `internal/validation`) | Reject invalid CR specs at admission (`failurePolicy: Fail`); same-namespace `connectionRef` and Secret checks only — **no mqweb**. |
 | **Reconcilers** (`internal/controller`) | Thin control loops for `QueueManagerConnection`, `Queue`, `Topic`, and `Channel`. Translate desired vs. observed state and call the `mqadmin.Admin` port. No HTTP/MQ details. |
 | **MQAdmin port** (`internal/mqadmin`) | Go interface (`Admin`) describing MQ operations (ping, queue/topic/channel define/inspect/delete) plus domain types. The seam that makes controllers testable and backends swappable. |
 | **mqrest adapter** (`internal/adapter/mqrest`) | The only `MQAdmin` implementation today. Talks to `mqweb` over HTTPS, posting MQSC commands and parsing responses. |
