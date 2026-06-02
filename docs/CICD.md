@@ -57,8 +57,9 @@ finding or formatting diff.
 profile (`coverage.out`). envtest control-plane binaries come from
 `setup-envtest` (pinned K8s API version). CI uploads `coverage.out` as a workflow
 artifact, prints a **job summary** (`go tool cover -func`), and publishes to
-[Codecov](https://codecov.io/gh/konih/kurator) (`codecov.yml`). A regression is
-investigated, not ignored.
+[Codecov](https://codecov.io/gh/konih/kurator) (`codecov.yml`) via
+`codecov/codecov-action` using the repository secret `CODECOV_TOKEN`. A
+regression is investigated, not ignored.
 
 ### `build`
 `task build` — static `CGO_ENABLED=0` binary; later `task docker:build` for a

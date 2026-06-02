@@ -95,8 +95,10 @@ jobs:
             coverage.out
             coverage-summary.txt
           if-no-files-found: error
-      - uses: codecov/codecov-action@e96185f4044c2f0cedf0f022454acf9811cf8057 # v5.4.0
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@e96185f4044c2f0cedf0f022454acf9811cf8057 # v5.4.0
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.out
           fail_ci_if_error: false
 
