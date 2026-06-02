@@ -191,3 +191,17 @@ func TestQueueDisplayRequestUsesQualifier(t *testing.T) {
 		t.Fatalf("request = %+v", req)
 	}
 }
+
+func TestChannelDisplayRequestIncludesChltype(t *testing.T) {
+	t.Parallel()
+	req := channelDisplayRequest("ORDERS.APP", mqadmin.ChannelTypeSvrconn)
+	if req.Qualifier != "channel" || req.Name != "ORDERS.APP" {
+		t.Fatalf("request = %+v", req)
+	}
+	if req.Parameters["chltype"] != "svrconn" {
+		t.Fatalf("chltype = %v", req.Parameters["chltype"])
+	}
+	if len(req.ResponseParameters) == 0 {
+		t.Fatal("expected response parameters")
+	}
+}

@@ -43,3 +43,22 @@ type AuthoritySpec struct {
 	Group       string
 	Authorities []string
 }
+
+// ChannelAuthState is the observed attributes of a CHLAUTH rule.
+type ChannelAuthState struct {
+	ChannelName string
+	RuleType    ChannelAuthRuleType
+	Address     string
+	UserSource  string
+	CheckClient string
+	Description string
+}
+
+// AuthorityState is the observed OAM authorities for a profile/principal or group.
+type AuthorityState struct {
+	Profile     string
+	ObjectType  AuthorityObjectType
+	Principal   string
+	Group       string
+	Authorities []string
+}

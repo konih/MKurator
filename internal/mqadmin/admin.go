@@ -28,8 +28,10 @@ type Admin interface {
 	DefineChannel(ctx context.Context, spec ChannelSpec) error
 	DeleteChannel(ctx context.Context, spec ChannelSpec) error
 	SetChannelAuth(ctx context.Context, spec ChannelAuthSpec) error
+	GetChannelAuth(ctx context.Context, spec ChannelAuthSpec) (*ChannelAuthState, error)
 	DeleteChannelAuth(ctx context.Context, spec ChannelAuthSpec) error
 	SetAuthority(ctx context.Context, spec AuthoritySpec) error
+	GetAuthority(ctx context.Context, spec AuthoritySpec) (*AuthorityState, error)
 	DeleteAuthority(ctx context.Context, spec AuthoritySpec) error
 }
 

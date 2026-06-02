@@ -647,6 +647,74 @@ func (_c *MockAdmin_DeleteTopic_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// GetAuthority provides a mock function for the type MockAdmin
+func (_mock *MockAdmin) GetAuthority(ctx context.Context, spec mqadmin.AuthoritySpec) (*mqadmin.AuthorityState, error) {
+	ret := _mock.Called(ctx, spec)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAuthority")
+	}
+
+	var r0 *mqadmin.AuthorityState
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, mqadmin.AuthoritySpec) (*mqadmin.AuthorityState, error)); ok {
+		return returnFunc(ctx, spec)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, mqadmin.AuthoritySpec) *mqadmin.AuthorityState); ok {
+		r0 = returnFunc(ctx, spec)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*mqadmin.AuthorityState)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, mqadmin.AuthoritySpec) error); ok {
+		r1 = returnFunc(ctx, spec)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAdmin_GetAuthority_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAuthority'
+type MockAdmin_GetAuthority_Call struct {
+	*mock.Call
+}
+
+// GetAuthority is a helper method to define mock.On call
+//   - ctx context.Context
+//   - spec mqadmin.AuthoritySpec
+func (_e *MockAdmin_Expecter) GetAuthority(ctx interface{}, spec interface{}) *MockAdmin_GetAuthority_Call {
+	return &MockAdmin_GetAuthority_Call{Call: _e.mock.On("GetAuthority", ctx, spec)}
+}
+
+func (_c *MockAdmin_GetAuthority_Call) Run(run func(ctx context.Context, spec mqadmin.AuthoritySpec)) *MockAdmin_GetAuthority_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 mqadmin.AuthoritySpec
+		if args[1] != nil {
+			arg1 = args[1].(mqadmin.AuthoritySpec)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAdmin_GetAuthority_Call) Return(authorityState *mqadmin.AuthorityState, err error) *MockAdmin_GetAuthority_Call {
+	_c.Call.Return(authorityState, err)
+	return _c
+}
+
+func (_c *MockAdmin_GetAuthority_Call) RunAndReturn(run func(ctx context.Context, spec mqadmin.AuthoritySpec) (*mqadmin.AuthorityState, error)) *MockAdmin_GetAuthority_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetChannel provides a mock function for the type MockAdmin
 func (_mock *MockAdmin) GetChannel(ctx context.Context, spec mqadmin.ChannelSpec) (*mqadmin.ChannelState, error) {
 	ret := _mock.Called(ctx, spec)
@@ -711,6 +779,74 @@ func (_c *MockAdmin_GetChannel_Call) Return(channelState *mqadmin.ChannelState, 
 }
 
 func (_c *MockAdmin_GetChannel_Call) RunAndReturn(run func(ctx context.Context, spec mqadmin.ChannelSpec) (*mqadmin.ChannelState, error)) *MockAdmin_GetChannel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetChannelAuth provides a mock function for the type MockAdmin
+func (_mock *MockAdmin) GetChannelAuth(ctx context.Context, spec mqadmin.ChannelAuthSpec) (*mqadmin.ChannelAuthState, error) {
+	ret := _mock.Called(ctx, spec)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetChannelAuth")
+	}
+
+	var r0 *mqadmin.ChannelAuthState
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, mqadmin.ChannelAuthSpec) (*mqadmin.ChannelAuthState, error)); ok {
+		return returnFunc(ctx, spec)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, mqadmin.ChannelAuthSpec) *mqadmin.ChannelAuthState); ok {
+		r0 = returnFunc(ctx, spec)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*mqadmin.ChannelAuthState)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, mqadmin.ChannelAuthSpec) error); ok {
+		r1 = returnFunc(ctx, spec)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAdmin_GetChannelAuth_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetChannelAuth'
+type MockAdmin_GetChannelAuth_Call struct {
+	*mock.Call
+}
+
+// GetChannelAuth is a helper method to define mock.On call
+//   - ctx context.Context
+//   - spec mqadmin.ChannelAuthSpec
+func (_e *MockAdmin_Expecter) GetChannelAuth(ctx interface{}, spec interface{}) *MockAdmin_GetChannelAuth_Call {
+	return &MockAdmin_GetChannelAuth_Call{Call: _e.mock.On("GetChannelAuth", ctx, spec)}
+}
+
+func (_c *MockAdmin_GetChannelAuth_Call) Run(run func(ctx context.Context, spec mqadmin.ChannelAuthSpec)) *MockAdmin_GetChannelAuth_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 mqadmin.ChannelAuthSpec
+		if args[1] != nil {
+			arg1 = args[1].(mqadmin.ChannelAuthSpec)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAdmin_GetChannelAuth_Call) Return(channelAuthState *mqadmin.ChannelAuthState, err error) *MockAdmin_GetChannelAuth_Call {
+	_c.Call.Return(channelAuthState, err)
+	return _c
+}
+
+func (_c *MockAdmin_GetChannelAuth_Call) RunAndReturn(run func(ctx context.Context, spec mqadmin.ChannelAuthSpec) (*mqadmin.ChannelAuthState, error)) *MockAdmin_GetChannelAuth_Call {
 	_c.Call.Return(run)
 	return _c
 }

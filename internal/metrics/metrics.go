@@ -34,8 +34,10 @@ const (
 	MQOpDefineChannel     = "define_channel"
 	MQOpDeleteChannel     = "delete_channel"
 	MQOpSetChannelAuth    = "set_channel_auth"
+	MQOpGetChannelAuth    = "get_channel_auth"
 	MQOpDeleteChannelAuth = "delete_channel_auth"
 	MQOpSetAuthority      = "set_authority"
+	MQOpGetAuthority      = "get_authority"
 	MQOpDeleteAuthority   = "delete_authority"
 	MQOpRunMQSC           = "run_mqsc"
 )

@@ -68,6 +68,129 @@ func (c *Client) DeleteAuthority(ctx context.Context, spec mqadmin.AuthoritySpec
 	return err
 }
 
+// GetChannelAuth returns observed CHLAUTH attributes via DISPLAY MQSC.
+func (c *Client) GetChannelAuth(ctx context.Context, spec mqadmin.ChannelAuthSpec) (*mqadmin.ChannelAuthState, error) {
+	var err error
+	defer func() { metrics.RecordMQOperation(metrics.MQOpGetChannelAuth, err) }()
+
+	cmd, buildErr := buildDisplayChannelAuthMQSC(spec)
+	if buildErr != nil {
+		err = buildErr
+		return nil, err
+	}
+	resp, err := c.runDisplayMQSC(ctx, cmd, spec.ChannelName)
+	if err != nil {
+		return nil, err
+	}
+	return channelAuthStateFromAttributes(spec, resp), nil
+}
+
+// GetAuthority returns observed OAM authorities via DISPLAY AUTHREC MQSC.
+func (c *Client) GetAuthority(ctx context.Context, spec mqadmin.AuthoritySpec) (*mqadmin.AuthorityState, error) {
+	var err error
+	defer func() { metrics.RecordMQOperation(metrics.MQOpGetAuthority, err) }()
+
+	cmd, buildErr := buildDisplayAuthorityMQSC(spec)
+	if buildErr != nil {
+		err = buildErr
+		return nil, err
+	}
+	resp, err := c.runDisplayMQSC(ctx, cmd, spec.Profile)
+	if err != nil {
+		return nil, err
+	}
+	return authorityStateFromAttributes(spec, resp), nil
+}
+
+func (c *Client) runDisplayMQSC(ctx context.Context, command, object string) (map[string]string, error) {
+	body := runCommandRequest{Type: "runCommand"}
+	body.Parameters.Command = command
+	parsed, err := c.postMQSC(ctx, body)
+	if err != nil {
+		if nf := (*mqadmin.NotFoundError)(nil); errors.As(err, &nf) {
+			return nil, &mqadmin.NotFoundError{Object: object}
+		}
+		return nil, err
+	}
+	attrs, err := parsed.firstObjectAttributes()
+	if err != nil {
+		if nf := (*mqadmin.NotFoundError)(nil); errors.As(err, &nf) {
+			return nil, &mqadmin.NotFoundError{Object: object}
+		}
+		return nil, err
+	}
+	return attrs, nil
+}
+
+func channelAuthStateFromAttributes(
+	spec mqadmin.ChannelAuthSpec,
+	attrs map[string]string,
+) *mqadmin.ChannelAuthState {
+	return &mqadmin.ChannelAuthState{
+		ChannelName: spec.ChannelName,
+		RuleType:    spec.RuleType,
+		Address:     attrs["address"],
+		UserSource:  attrs["usersrc"],
+		CheckClient: attrs["chckclnt"],
+		Description: attrs["descr"],
+	}
+}
+
+func authorityStateFromAttributes(
+	spec mqadmin.AuthoritySpec,
+	attrs map[string]string,
+) *mqadmin.AuthorityState {
+	state := &mqadmin.AuthorityState{
+		Profile:    spec.Profile,
+		ObjectType: spec.ObjectType,
+		Principal:  spec.Principal,
+		Group:      spec.Group,
+	}
+	if authlist := attrs["authlist"]; authlist != "" {
+		for part := range strings.SplitSeq(authlist, ",") {
+			part = strings.TrimSpace(part)
+			if part != "" {
+				state.Authorities = append(state.Authorities, part)
+			}
+		}
+	}
+	return state
+}
+
+func buildDisplayChannelAuthMQSC(spec mqadmin.ChannelAuthSpec) (string, error) {
+	if spec.ChannelName == "" {
+		return "", &mqadmin.TerminalError{Reason: invalidSpecReason, Message: "channel name is required"}
+	}
+	if spec.RuleType == "" {
+		return "", &mqadmin.TerminalError{Reason: invalidSpecReason, Message: "rule type is required"}
+	}
+	return fmt.Sprintf("DISPLAY CHLAUTH('%s') TYPE(%s)", mqscQuote(spec.ChannelName), spec.RuleType), nil
+}
+
+func buildDisplayAuthorityMQSC(spec mqadmin.AuthoritySpec) (string, error) {
+	if spec.Profile == "" {
+		return "", &mqadmin.TerminalError{Reason: invalidSpecReason, Message: "profile is required"}
+	}
+	if spec.ObjectType == "" {
+		return "", &mqadmin.TerminalError{Reason: invalidSpecReason, Message: "object type is required"}
+	}
+	if spec.Principal == "" && spec.Group == "" {
+		return "", &mqadmin.TerminalError{Reason: invalidSpecReason, Message: "principal or group is required"}
+	}
+	if spec.Principal != "" && spec.Group != "" {
+		return "", &mqadmin.TerminalError{Reason: invalidSpecReason, Message: "specify principal or group, not both"}
+	}
+	parts := []string{
+		fmt.Sprintf("DISPLAY AUTHREC PROFILE('%s') OBJTYPE(%s)", mqscQuote(spec.Profile), spec.ObjectType),
+	}
+	if spec.Principal != "" {
+		parts = append(parts, fmt.Sprintf("PRINCIPAL('%s')", mqscQuote(spec.Principal)))
+	} else {
+		parts = append(parts, fmt.Sprintf("GROUP('%s')", mqscQuote(spec.Group)))
+	}
+	return strings.Join(parts, " "), nil
+}
+
 func (c *Client) runMQSCAllowNotFound(ctx context.Context, command string) error {
 	err := c.RunMQSC(ctx, command)
 	if err == nil {
