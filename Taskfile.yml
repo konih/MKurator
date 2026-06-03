@@ -144,6 +144,8 @@ tasks:
     deps: [install]
     cmds:
       - bash hack/goformat.sh
+      # Generated artifacts (controller-gen, mockery) are owned by task verify, not goimports.
+      - git checkout -- api/*/zz_generated.deepcopy.go test/mocks/
       - git diff --exit-code -- '*.go'
 
   deploy:
