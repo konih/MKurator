@@ -98,7 +98,7 @@ duplicate `~/go/pkg/mod` restores.
 
 | Action | Cache key (primary) | Paths | Used in |
 |--------|---------------------|-------|---------|
-| [`go-cache`](../.github/actions/go-cache/) | `${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}` | `~/.cache/go-build`, `~/go/pkg/mod`; optional envtest: `~/.local/share/kubebuilder-envtest` keyed by `go.mod`+`go.sum` | `ci`, `preflight`, `integration`, `e2e`, `nightly` |
+| [`go-cache`](../.github/actions/go-cache/) | `${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}` | `~/.cache/go-build`, `~/go/pkg/mod`; optional envtest: `~/.local/share/kubebuilder-envtest` keyed by `go.mod`+`go.sum` | `ci`, `preflight`, `release-gate`, `integration`, `e2e`, `nightly` |
 | [`tools-bin`](../.github/actions/tools-bin/) | `${{ runner.os }}-tools-${{ hashFiles('Taskfile.yml', 'hack/install-external-tool.sh') }}` | `bin/kind`, `bin/mkcert`, `bin/terraform` | `e2e`, `nightly` (e2e jobs) |
 | [`mq-docker-image`](../.github/actions/mq-docker-image/) | `${{ runner.os }}-ibm-mq-${{ hashFiles('hack/mq-docker/docker-compose.yml', 'hack/kind-cluster/terraform/variables.tf') }}` | `/tmp/ibm-mq-image.tar` (`docker save`/`load` of `icr.io/ibm-messaging/mq:…`) | `integration`, `e2e`, `nightly` |
 | [`helm-cache`](../.github/actions/helm-cache/) | `${{ runner.os }}-helm-${{ hashFiles('hack/kind-cluster/terraform/variables.tf') }}` | `~/.cache/helm` | `e2e`, `nightly` (e2e jobs) |
@@ -415,7 +415,7 @@ above:
 |--------|---------------|
 | preflight | `go mod tidy && git diff --exit-code go.sum` then `task verify` |
 | gitleaks | `task secrets:scan` |
-| verify | `task verify` |
+| verify | `task verify` (includes `task test:schema` / `make test-schema`) |
 | lint | `task format:check` then `task lint` |
 | test | `task test:run` then `task vuln:check` |
 | build | `task build` |

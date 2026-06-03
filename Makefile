@@ -5,14 +5,19 @@
 # Pass KUBECONFIG explicitly when targeting a cluster other than ~/.kube/config
 # (Task defaults to hack/kind-cluster/.state/kubeconfig.yaml when unset).
 #
-# | make target    | task equivalent      | Notes                            |
-# |----------------|----------------------|----------------------------------|
-# | manifests      | task manifests       | CRDs, RBAC, webhooks             |
-# | generate       | task generate        | deepcopy + mocks                 |
-# | docker-build   | task docker:build    | IMG → DOCKER_IMAGE               |
-# | install        | task install:crds    | server-side CRD apply            |
-# | deploy         | task deploy:operator | Kustomize apply; no image build  |
-# | undeploy       | task undeploy        | removes operator manifests       |
+# | make target         | task equivalent           | Notes                            |
+# |---------------------|---------------------------|----------------------------------|
+# | manifests           | task manifests            | CRDs, RBAC, webhooks             |
+# | generate            | task generate             | deepcopy + mocks                 |
+# | test-schema         | task test:schema          | CRD OpenAPI fragment contract    |
+# | test-schema-update  | task test:schema:update   | Rewrite test/schema/golden       |
+# | docker-build        | task docker:build         | IMG → DOCKER_IMAGE               |
+# | install             | task install:crds         | server-side CRD apply            |
+# | deploy              | task deploy:operator      | Kustomize apply; no image build  |
+# | undeploy            | task undeploy             | removes operator manifests       |
+#
+# Scheduled / maintainer workflows (no Makefile targets): nightly.yaml (Mon 03:00 UTC),
+# preflight.yaml (fail-fast verify), release-gate.yaml — see docs/CICD.md.
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -74,6 +79,13 @@ fmt: ## Run go fmt against code.
 .PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
+
+.PHONY: test-schema test-schema-update
+test-schema: ## Run CRD OpenAPI spec fragment contract tests (no cluster).
+	@task test:schema
+
+test-schema-update: ## Regenerate test/schema/golden from config/crd/bases.
+	@task test:schema:update
 
 .PHONY: test
 test: manifests generate fmt vet setup-envtest ## Run tests.

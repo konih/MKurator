@@ -68,6 +68,8 @@ Platform-only commands live under `task cluster:*` (see
 | `task mq:cli` | Interactive `runmqsc` on QM1 |
 | `task mq:runmqsc` | One-shot `runmqsc` (pass MQSC as args) |
 | `task test:run` | Unit + envtest (`-race`) |
+| `task test:schema` | CRD OpenAPI fragment contract (also in `task verify`; `make test-schema`) |
+| `task test:schema:update` | Rewrite `test/schema/golden/` (`make test-schema-update`) |
 | `task test:integration` | MQ integration tests vs Docker mqweb (`KURATOR_INTEGRATION_MQ=1`) |
 | `task test:integration:local` | Docker MQ up + wait + integration tests |
 | `task ci:integration` | Same as GitHub Actions integration job |

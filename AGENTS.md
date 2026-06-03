@@ -276,6 +276,8 @@ via `hack/ci/suite-lock.sh` — only one suite at a time per host.
 | `task manifests` | Generate CRDs + RBAC via controller-gen |
 | `task generate` | Generate deepcopy + mocks |
 | `task verify` | Fail if generated artifacts (manifests/deepcopy/mocks) are stale |
+| `task test:schema` | CRD OpenAPI spec fragment contract (also run inside `task verify`) |
+| `task test:schema:update` | Regenerate `test/schema/golden/` from `config/crd/bases` |
 | `task secrets:scan` | Scan git history for secrets (gitleaks) |
 | `task vuln:check` | Run govulncheck against code and dependencies |
 | `task build` | Build the manager binary (CGO-free, static) |
@@ -303,8 +305,10 @@ via `hack/ci/suite-lock.sh` — only one suite at a time per host.
 | `task changelog:release` | Print changelog section for the latest tag |
 
 **Makefile (Kubebuilder scaffold):** overlapping targets (`manifests`, `generate`,
-`docker-build`, `install`, `deploy`, `undeploy`) delegate to the Task equivalents
-above so both entry points produce the same artifacts. Prefer `task` for humans,
+`test-schema`, `test-schema-update`, `docker-build`, `install`, `deploy`, `undeploy`)
+delegate to the Task equivalents above so both entry points produce the same artifacts.
+Maintainer workflows `preflight.yaml`, `nightly.yaml`, and `release-gate.yaml` are in
+[docs/CICD.md](docs/CICD.md) (no Makefile targets). Prefer `task` for humans,
 pre-commit, and CI ([ADR-0004](docs/adr/0004-task-as-task-runner.md)). E2e deploys
 via `task deploy` in `test/e2e/deploy_helpers.go`. See [DEVELOPMENT.md](docs/DEVELOPMENT.md#task-vs-makefile).
 

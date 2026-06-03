@@ -1,7 +1,7 @@
 {
-  "push_allowed": false,
+  "push_allowed": true,
   "pipeline_check_in_progress": false,
   "lock_holder": null,
-  "last_updated": "2026-06-03T03:03:47Z",
-  "notes": "Coordinator poll 2026-06-03T03:03:47Z. HEAD=6e24af2 test(e2e) parallel MQ lanes. 7fb1323 ci preflight: Preflight@26860964824 success, CI@26860964820 success, Integration@26860964816 success, E2E@26860964818 cancelled (superseded before jobs started; d54e19d/6e24af2 queued). 6e24af2: Preflight@26861032158 success, CI@26861032163 success, Integration@26861032150 in_progress, E2E@26861032136 pending (triggered; wait e2e kustomize+helm). No e2e fix/trigger needed for 6e24af2. Prior HEAD chain: d54e19d auth tests E2E@26860968574 in_progress; 67d2d35 E2E@26860699024 failure both jobs; 5da75e5 coordinator E2E failure. Renovate on main through 988623c — do not merge more without notes. Release last dispatch success@26857061146. exclusive-test.lock cleared; lock_holder null. push_allowed false until 6e24af2 Integration+E2E green."
+  "last_updated": "2026-06-03T03:25:00Z",
+  "notes": "Push window 77e49d4 (d64835c..77e49d4, 7 commits) landed 2026-06-03T03:16Z. Preflight@26861517370 success; Integration@26861517373 success (GROUP fix ea8690c held); CI@26861517385 failure (lint/format events_envtest_test.go golines — fix pending); E2E@26861517380 failure class=deploy/spec duplicate SynchronizedBeforeSuite e2e_suite_test.go:41+71 (kustomize+helm; not metrics/CHLAUTH). Follow-on on main: 3aeeb69 e2e merge, 9ec4c40 integration ordering, 54c6a33 schema, fc694b1 docs HEAD. E2E agent: watch fc694b1/d781eb2 runs; do not 90m watch. push_allowed true for doc/schema agents after 77e49d4 push."
 }

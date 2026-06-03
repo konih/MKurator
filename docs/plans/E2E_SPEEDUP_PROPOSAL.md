@@ -274,7 +274,7 @@ var _ = Describe("MQ reconcile", Label("mq"), func() {
 
 // run-e2e.sh (conceptual):
 // go test -tags=e2e ./test/e2e/... -ginkgo.v -ginkgo.nodes=3 \
-//   -ginkgo.label-filter='!slow'   # PR optional
+//   -ginkgo.label-filter='(smoke || mq) && !slow'   # PR CI (manager smoke + MQ paths)
 ```
 
 ---
