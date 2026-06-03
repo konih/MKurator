@@ -40,6 +40,9 @@ func (v *authorityRecordCustomValidator) ValidateUpdate(
 	_ *messagingv1alpha1.AuthorityRecord,
 	newAuth *messagingv1alpha1.AuthorityRecord,
 ) (admission.Warnings, error) {
+	if newAuth.DeletionTimestamp != nil {
+		return nil, nil
+	}
 	return validateCreateUpdate(ctx, v.Client, newAuth, v.validateRecord, validation.AuthorityRecordInvalid)
 }
 

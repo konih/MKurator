@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -196,6 +197,11 @@ var _ = Describe("AuthorityRecordReconciler", func() {
 			NamespacedName: types.NamespacedName{Namespace: ns, Name: key},
 		})
 		Expect(err).NotTo(HaveOccurred())
+
+		Eventually(func(g Gomega) {
+			err := k8sClient.Get(ctx, types.NamespacedName{Namespace: ns, Name: key}, &messagingv1alpha1.AuthorityRecord{})
+			g.Expect(k8serrors.IsNotFound(err)).To(BeTrue())
+		}).Should(Succeed())
 	})
 })
 

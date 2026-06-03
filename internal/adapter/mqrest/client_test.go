@@ -736,8 +736,9 @@ func TestClient_SetAndDeleteChannelAuth(t *testing.T) {
 	if err := c.DeleteChannelAuth(context.Background(), spec); err != nil {
 		t.Fatalf("DeleteChannelAuth: %v", err)
 	}
-	if !strings.Contains(lastCmd, "ACTION(REMOVE)") {
-		t.Fatalf("command = %q", lastCmd)
+	wantRemove := "SET CHLAUTH('DEV.APP.SVRCONN.0TLS') TYPE(ADDRESSMAP) ADDRESS('*') ACTION(REMOVE)"
+	if lastCmd != wantRemove {
+		t.Fatalf("command = %q, want %q", lastCmd, wantRemove)
 	}
 }
 

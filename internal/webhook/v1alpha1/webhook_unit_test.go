@@ -350,6 +350,31 @@ func TestChannelAuthRuleWebhookValidateUpdateDuringDeleteSkipsSpec(t *testing.T)
 	}
 }
 
+func TestAuthorityRecordWebhookValidateUpdateDuringDeleteSkipsSpec(t *testing.T) {
+	scheme := webhookTestScheme(t)
+	cl := fake.NewClientBuilder().WithScheme(scheme).Build()
+	v := &authorityRecordCustomValidator{Client: cl}
+	now := metav1.Now()
+	auth := &messagingv1alpha1.AuthorityRecord{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "auth1",
+			Namespace:         "ns",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{messagingv1alpha1.AuthorityRecordFinalizer},
+		},
+		Spec: messagingv1alpha1.AuthorityRecordSpec{
+			ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+			Profile:       "APP.ORDERS",
+			ObjectType:    messagingv1alpha1.AuthorityObjectTypeQueue,
+			Principal:     "app",
+			Authorities:   []string{"GET", "PUT"},
+		},
+	}
+	if _, err := v.ValidateUpdate(context.Background(), auth, auth); err != nil {
+		t.Fatalf("ValidateUpdate during delete: %v", err)
+	}
+}
+
 func TestAuthorityRecordWebhookValidateUpdateDelete(t *testing.T) {
 	scheme := webhookTestScheme(t)
 	cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(sampleWebhookConn("ns")).Build()
