@@ -1,0 +1,264 @@
+# Release gate — run before tagging vX.Y.Z.
+#
+# Dispatched on a commit SHA (default: latest main). This workflow:
+#   1. Re-runs task verify, task test:run, and Docker MQ integration on that SHA.
+#   2. Polls GitHub check-runs on the same SHA until CI, Integration, and E2E
+#      (kustomize) jobs from the standard workflows report success.
+#
+# E2E is not executed inside this workflow (~90 min); the poll step requires an
+# existing green E2E (kustomize) run on the SHA. If check-runs are missing (e.g.
+# paths-ignore skipped workflows), the poll job fails with a manual checklist.
+#
+# Helm e2e (e2e.yaml job "e2e (helm)") is optional for tagging; see RELEASE.md.
+#
+# Limitations: the Checks API reflects job names, not workflow files. Private
+# forks need checks:read. Re-run ci.yaml / integration.yaml / e2e.yaml on the
+# SHA if the poll times out before tagging.
+name: Release gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit SHA to gate (empty = latest main HEAD)"
+        required: false
+        type: string
+        default: ""
+      poll_timeout_minutes:
+        description: "Minutes to wait for external CI / integration / e2e check-runs"
+        required: false
+        type: number
+        default: 120
+
+permissions:
+  contents: read
+  checks: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  resolve-sha:
+    name: resolve sha
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      short_sha: ${{ steps.resolve.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Resolve commit SHA
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${INPUT_SHA}" ]]; then
+            full="$(git rev-parse "${INPUT_SHA}^{commit}")"
+          else
+            full="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)"
+          fi
+          echo "sha=${full}" >> "${GITHUB_OUTPUT}"
+          echo "short_sha=${full:0:7}" >> "${GITHUB_OUTPUT}"
+          echo "Release gate SHA: ${full}"
+
+  verify:
+    name: verify (release gate)
+    needs: resolve-sha
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.resolve-sha.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+        with:
+          version: 3.51.1
+      - name: Verify generated artifacts
+        run: task verify
+        env:
+          CI: "true"
+
+  test:
+    name: test (release gate)
+    needs: resolve-sha
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.resolve-sha.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.local/share/kubebuilder-envtest
+          key: ${{ runner.os }}-envtest-1.35.x-${{ hashFiles('go.mod', 'go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-envtest-1.35.x-
+      - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+        with:
+          version: 3.51.1
+      - name: Unit and envtest
+        run: task test:run
+        env:
+          CI: "true"
+
+  integration:
+    name: integration (release gate)
+    needs: resolve-sha
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.resolve-sha.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+        with:
+          version: 3.51.1
+      - name: Bring up Docker IBM MQ
+        run: task mq:integration:up
+        env:
+          CI: "true"
+      - name: Wait for mqweb
+        run: task mq:integration:wait
+        env:
+          CI: "true"
+      - name: Run integration tests
+        run: task test:integration
+        env:
+          CI: "true"
+      - name: Tear down IBM MQ
+        if: always()
+        run: task mq:integration:down
+        env:
+          CI: "true"
+
+  poll-external-checks:
+    name: poll CI / integration / e2e on SHA
+    needs: [resolve-sha, verify, test, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.poll_timeout_minutes }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ needs.resolve-sha.outputs.sha }}
+          persist-credentials: false
+      - name: Wait for required check-runs on commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          POLL_TIMEOUT_MINUTES: ${{ inputs.poll_timeout_minutes }}
+        run: bash hack/ci/wait-release-gate-checks.sh "${{ needs.resolve-sha.outputs.sha }}"
+
+  # Fails with a copy-paste checklist when poll-external-checks did not succeed.
+  # Tag only after a green E2E (kustomize) workflow run whose headSha matches the
+  # release SHA (record the run ID in your release notes / checklist).
+  manual-e2e-checklist:
+    name: manual e2e checklist (on poll failure)
+    needs: [resolve-sha, poll-external-checks]
+    if: ${{ always() && needs.poll-external-checks.result != 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm E2E on exact SHA before tag
+        env:
+          RELEASE_SHA: ${{ needs.resolve-sha.outputs.sha }}
+          SHORT_SHA: ${{ needs.resolve-sha.outputs.short_sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## Release gate — manual E2E confirmation required"
+            echo ""
+            echo "Commit: \`${RELEASE_SHA}\` (\`${SHORT_SHA}\`)"
+            echo ""
+            echo "Before \`git tag vX.Y.Z\`, confirm **E2E (kustomize)** succeeded on this SHA:"
+            echo ""
+            echo '```sh'
+            echo "gh run list --workflow e2e.yaml --commit ${RELEASE_SHA} --limit 5"
+            echo "gh run view <e2e-run-id> --json headSha,conclusion,status,url"
+            echo '```'
+            echo ""
+            echo "The tag must match a **green** E2E run whose \`headSha\` equals \`${RELEASE_SHA}\`."
+            echo "Re-dispatch **Release gate** after CI / Integration / E2E are green, or fix failures first."
+            echo ""
+            echo "See [docs/RELEASE.md](https://github.com/${{ github.repository }}/blob/main/docs/RELEASE.md#automated-release-gate-workflow)."
+          } >> "${GITHUB_STEP_SUMMARY}"
+          exit 1
+
+  gate:
+    name: release gate
+    needs:
+      - resolve-sha
+      - verify
+      - test
+      - integration
+      - poll-external-checks
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate result
+        env:
+          RESOLVE: ${{ needs.resolve-sha.result }}
+          VERIFY: ${{ needs.verify.result }}
+          TEST: ${{ needs.test.result }}
+          INTEGRATION: ${{ needs.integration.result }}
+          POLL: ${{ needs.poll-external-checks.result }}
+          SHA: ${{ needs.resolve-sha.outputs.sha }}
+          SHORT: ${{ needs.resolve-sha.outputs.short_sha }}
+        run: |
+          set -euo pipefail
+          fail=0
+          for label in RESOLVE VERIFY TEST INTEGRATION POLL; do
+            val="${!label}"
+            if [[ "${val}" != "success" ]]; then
+              echo "job ${label}=${val}" >&2
+              fail=1
+            fi
+          done
+          {
+            echo "## Release gate"
+            echo ""
+            if [[ "${fail}" -eq 0 ]]; then
+              echo "All checks passed for \`${SHA}\` (\`${SHORT}\`). Safe to prepare the release tag on this commit."
+              echo ""
+              echo "Record the green E2E (kustomize) run URL or run ID when tagging for audit."
+            else
+              echo "Gate **failed** for \`${SHA}\`. Do not tag until CI, Integration, E2E, and this workflow are green on the SHA."
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+          exit "${fail}"

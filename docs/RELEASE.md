@@ -58,6 +58,29 @@ task ci:e2e            # kind + IBM MQ — workflow e2e.yaml (slow)
 task vuln:check        # same as CI test job
 ```
 
+**Before tag:** confirm **E2E** and **Integration** (and full **CI**) are green on
+`${RELEASE_SHA}` — not only “latest green on `main`” from an older push.
+
+### Automated release gate workflow
+
+Use [`.github/workflows/release-gate.yaml`](../.github/workflows/release-gate.yaml)
+(**Actions → Release gate → Run workflow**) on the commit you will tag:
+
+| Input | Meaning |
+|-------|---------|
+| `sha` | Full or short commit (empty = latest `main` HEAD) |
+| `poll_timeout_minutes` | How long to wait for external check-runs (default 120) |
+
+The workflow re-runs `task verify`, `task test:run`, and Docker MQ integration on
+that SHA, then polls GitHub check-runs until **CI**, **Integration**, and **E2E
+(kustomize)** jobs succeeded on the same SHA. E2E is not run inside this workflow
+(~90 min); you must already have (or wait for) a green **E2E** workflow run whose
+`headSha` matches `${RELEASE_SHA}`. Record the E2E run ID or URL when tagging.
+
+If polling fails (timeout, skipped workflows, API limits), the **manual e2e
+checklist** job fails with `gh run list` / `gh run view` commands — do not tag
+until E2E is green on the exact SHA.
+
 ### CI gate on the exact SHA
 
 Do **not** tag until all three workflow runs succeeded on **`${RELEASE_SHA}`**
