@@ -38,22 +38,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-        with:
-          go-version-file: go.mod
-
-      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+      - uses: ./.github/actions/go-cache
 
       - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
         with:
           version: 3.51.1
+
+      - uses: ./.github/actions/mq-docker-image
 
       - name: Run integration (CI parity + suite lock)
         run: bash hack/ci/suite-lock.sh exclusive-test task ci:integration
@@ -93,31 +84,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-        with:
-          go-version-file: go.mod
+      - uses: ./.github/actions/go-cache
 
       - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
         with:
           version: 3.51.1
 
-      - name: Install platform tools (kind, mkcert, terraform)
-        run: task tools:install
+      - uses: ./.github/actions/tools-bin
 
-      - name: Expose platform tools on PATH
-        run: |
-          bindir="${{ github.workspace }}/bin"
-          echo "${bindir}" >> "${GITHUB_PATH}"
-          echo "PATH=${bindir}:${PATH}" >> "${GITHUB_ENV}"
-          echo "KIND=${bindir}/kind" >> "${GITHUB_ENV}"
+      - uses: ./.github/actions/mq-docker-image
 
       - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+
+      - uses: ./.github/actions/helm-cache
 
       - name: E2E platform and suite (kustomize, suite lock)
         run: |
           set -euo pipefail
           bash hack/ci/suite-lock.sh exclusive-test bash -c '
-            task cluster:up
+            bash hack/ci/cluster-up-with-mq-image.sh
             bash hack/ci/wait-mqweb.sh
             task test:e2e
           '
@@ -165,31 +150,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-        with:
-          go-version-file: go.mod
+      - uses: ./.github/actions/go-cache
 
       - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
         with:
           version: 3.51.1
 
-      - name: Install platform tools (kind, mkcert, terraform)
-        run: task tools:install
+      - uses: ./.github/actions/tools-bin
 
-      - name: Expose platform tools on PATH
-        run: |
-          bindir="${{ github.workspace }}/bin"
-          echo "${bindir}" >> "${GITHUB_PATH}"
-          echo "PATH=${bindir}:${PATH}" >> "${GITHUB_ENV}"
-          echo "KIND=${bindir}/kind" >> "${GITHUB_ENV}"
+      - uses: ./.github/actions/mq-docker-image
 
       - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+
+      - uses: ./.github/actions/helm-cache
 
       - name: E2E platform and suite (Helm deploy, suite lock)
         run: |
           set -euo pipefail
           bash hack/ci/suite-lock.sh exclusive-test bash -c '
-            task cluster:up
+            bash hack/ci/cluster-up-with-mq-image.sh
             bash hack/ci/wait-mqweb.sh
             task test:e2e:helm
           '

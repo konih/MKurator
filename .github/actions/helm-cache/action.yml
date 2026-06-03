@@ -1,0 +1,14 @@
+name: Restore Helm cache
+description: >-
+  Cache Helm repository/chart data for Terraform ibm-mq chart installs on kind.
+runs:
+  using: composite
+  steps:
+    - name: Restore Helm cache
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: |
+          ~/.cache/helm
+        key: ${{ runner.os }}-helm-${{ hashFiles('hack/kind-cluster/terraform/variables.tf') }}
+        restore-keys: |
+          ${{ runner.os }}-helm-

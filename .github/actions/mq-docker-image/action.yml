@@ -1,0 +1,31 @@
+name: Restore IBM MQ container image
+description: >-
+  Load icr.io/ibm-messaging/mq from the Actions cache or pull, docker save, and
+  leave the image on the host daemon for compose/kind.
+runs:
+  using: composite
+  steps:
+    - name: Resolve IBM MQ image reference
+      id: mqref
+      run: echo "image=$(bash hack/ci/mq-image-ref.sh)" >> "${GITHUB_OUTPUT}"
+      shell: bash
+    - name: Restore IBM MQ image tarball
+      id: mqimage
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: /tmp/ibm-mq-image.tar
+        key: ${{ runner.os }}-ibm-mq-${{ hashFiles('hack/mq-docker/docker-compose.yml', 'hack/kind-cluster/terraform/variables.tf') }}
+        restore-keys: |
+          ${{ runner.os }}-ibm-mq-
+    - name: Load IBM MQ image from cache
+      if: steps.mqimage.outputs.cache-hit == 'true'
+      run: docker load -i /tmp/ibm-mq-image.tar
+      shell: bash
+    - name: Pull and save IBM MQ image
+      if: steps.mqimage.outputs.cache-hit != 'true'
+      run: |
+        set -euo pipefail
+        image="${{ steps.mqref.outputs.image }}"
+        docker pull "${image}"
+        docker save "${image}" -o /tmp/ibm-mq-image.tar
+      shell: bash

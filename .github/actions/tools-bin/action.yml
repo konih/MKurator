@@ -1,0 +1,30 @@
+name: Cache and install platform tools
+description: >-
+  Restore kind, mkcert, and terraform under bin/ (pinned in Taskfile.yml), install
+  on cache miss, and prepend bin/ to PATH.
+runs:
+  using: composite
+  steps:
+    - name: Restore platform tool binaries
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: |
+          bin/kind
+          bin/mkcert
+          bin/terraform
+        key: ${{ runner.os }}-tools-${{ hashFiles('Taskfile.yml', 'hack/install-external-tool.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-tools-
+    - name: Install platform tools (kind, mkcert, terraform)
+      run: task tools:install
+      shell: bash
+    - name: Expose platform tools on PATH
+      run: |
+        bindir="${{ github.workspace }}/bin"
+        echo "${bindir}" >> "${GITHUB_PATH}"
+        echo "PATH=${bindir}:${PATH}" >> "${GITHUB_ENV}"
+        echo "KIND=${bindir}/kind" >> "${GITHUB_ENV}"
+        "${bindir}/kind" version
+        "${bindir}/mkcert" -version
+        "${bindir}/terraform" version
+      shell: bash
