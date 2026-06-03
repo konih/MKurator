@@ -36,7 +36,7 @@ func e2eLocalQueueSpec() mqadmin.QueueSpec {
 	return mqadmin.QueueSpec{Name: mqQueueObject, Type: mqadmin.QueueTypeLocal}
 }
 
-var _ = Describe("IBM MQ integration", Serial, Label("mq"), func() {
+var _ = Describe("Post-manager IBM MQ integration", Serial, Label("mq"), func() {
 	BeforeEach(func() {
 		if !mqE2EEnabled() {
 			Skip("IBM MQ e2e disabled; set KURATOR_E2E_MQ=1 and run task cluster:up")
@@ -51,7 +51,9 @@ var _ = Describe("IBM MQ integration", Serial, Label("mq"), func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 			defer cancel()
 
-			Expect(applyMQSCFixture(ctx, client, "channel-auth-prereq.mqsc")).To(Succeed())
+			Eventually(func(g Gomega) {
+				g.Expect(applyMQSCFixture(ctx, client, "channel-auth-prereq.mqsc")).To(Succeed())
+			}).WithTimeout(2 * time.Minute).WithPolling(5 * time.Second).Should(Succeed())
 
 			Eventually(func(g Gomega) {
 				ok, err := channelExists(ctx, client, e2eChannelName)
@@ -70,6 +72,8 @@ var _ = Describe("IBM MQ integration", Serial, Label("mq"), func() {
 		})
 
 		BeforeEach(func() {
+			waitForControllerAndWebhookReady()
+
 			By("creating mq-credentials secret for QueueManagerConnection")
 			cmd := exec.Command("kubectl", "create", "secret", "generic", "mq-credentials",
 				"-n", namespace,
@@ -346,6 +350,8 @@ spec:
 			if !mqE2EEnabled() {
 				return
 			}
+			waitForControllerAndWebhookReady()
+
 			cmd := exec.Command("kubectl", "create", "secret", "generic", "mq-credentials",
 				"-n", namespace,
 				"--from-literal=username=admin",

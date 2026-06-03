@@ -15,6 +15,8 @@ import (
 	"github.com/konih/kurator/test/utils"
 )
 
+const metricsCurlImage = "curlimages/curl:latest"
+
 var (
 	// managerImage is the manager image to be built and loaded for testing.
 	managerImage = "kurator-controller-manager:dev"
@@ -46,6 +48,13 @@ var _ = BeforeSuite(func() {
 	By("loading the manager image on Kind")
 	err = utils.LoadImageToKindClusterWithName(managerImage)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to load the manager image into Kind")
+
+	By("loading the curl image for metrics tests")
+	pull := exec.Command("docker", "pull", metricsCurlImage)
+	_, err = utils.Run(pull)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to pull curl image for metrics e2e")
+	err = utils.LoadImageToKindClusterWithName(metricsCurlImage)
+	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to load curl image into Kind")
 
 	configureKubectlKubeRC()
 	setupCertManager()
