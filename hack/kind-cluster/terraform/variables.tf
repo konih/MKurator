@@ -75,7 +75,7 @@ variable "mq_image_tag" {
   description = "IBM MQ container image tag (icr.io/ibm-messaging/mq)."
   type        = string
   # renovate: datasource=docker depName=icr.io/ibm-messaging/mq
-  default     = "9.4.2.0-r1"
+  default     = "9.4.5.1-r1"
 }
 
 variable "mq_queue_manager_name" {
