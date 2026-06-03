@@ -20,6 +20,7 @@ const attrTopicStr = "topicStr" // mqweb runCommandJSON name for TOPSTR
 // MQWB0120E even though they are valid on DEFINE.
 var queueLocalDisplayParameters = []string{
 	attrMaxDepth, attrDescr, "defpsist", "get", "put",
+	"share", "defopts", "bothresh", "boqname", "usage",
 }
 
 var queueAliasDisplayParameters = []string{
@@ -58,6 +59,7 @@ var topicDisplayParameters = []string{
 
 var channelDisplayParameters = []string{
 	attrDescr, "trptype", attrSharecnv, attrMaxMsgl, "mcauser", attrMaxInst, attrMaxInstc,
+	"sslciph", "sslcauth",
 }
 
 func defineTopicParameters(spec mqadmin.TopicSpec) map[string]any {
@@ -183,4 +185,19 @@ func channelDisplayRequest(name string, chlType mqadmin.ChannelType) runCommandJ
 		Parameters:         params,
 		ResponseParameters: append([]string(nil), channelDisplayParameters...),
 	}
+}
+
+// QueueDriftCheckKeys returns DISPLAY-safe queue attribute keys used for drift detection.
+func QueueDriftCheckKeys(qType mqadmin.QueueType) []string {
+	return queueDisplayParameters(qType)
+}
+
+// TopicDriftCheckKeys returns DISPLAY-safe topic attribute keys used for drift detection.
+func TopicDriftCheckKeys() []string {
+	return append([]string(nil), topicDisplayParameters...)
+}
+
+// ChannelDriftCheckKeys returns DISPLAY-safe channel attribute keys used for drift detection.
+func ChannelDriftCheckKeys() []string {
+	return append([]string(nil), channelDisplayParameters...)
 }

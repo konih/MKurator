@@ -69,7 +69,7 @@ func TestDefineChannelParameters(t *testing.T) {
 
 func TestChannelDisplayParametersIncludeConnectionLimits(t *testing.T) {
 	t.Parallel()
-	want := map[string]struct{}{"maxinst": {}, "maxinstc": {}}
+	want := map[string]struct{}{"maxinst": {}, "maxinstc": {}, "sslciph": {}, "sslcauth": {}}
 	for k := range want {
 		found := false
 		for _, p := range channelDisplayParameters {
@@ -81,6 +81,35 @@ func TestChannelDisplayParametersIncludeConnectionLimits(t *testing.T) {
 		if !found {
 			t.Fatalf("%q missing from channelDisplayParameters", k)
 		}
+	}
+}
+
+func TestQueueLocalDisplayParametersIncludeExtendedAttrs(t *testing.T) {
+	t.Parallel()
+	for _, p := range []string{"share", "defopts", "bothresh", "boqname", "usage"} {
+		found := false
+		for _, q := range queueLocalDisplayParameters {
+			if q == p {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("%q missing from queueLocalDisplayParameters", p)
+		}
+	}
+}
+
+func TestDriftCheckKeyExports(t *testing.T) {
+	t.Parallel()
+	if len(QueueDriftCheckKeys(mqadmin.QueueTypeLocal)) == 0 {
+		t.Fatal("expected local queue drift keys")
+	}
+	if len(TopicDriftCheckKeys()) == 0 {
+		t.Fatal("expected topic drift keys")
+	}
+	if len(ChannelDriftCheckKeys()) == 0 {
+		t.Fatal("expected channel drift keys")
 	}
 }
 

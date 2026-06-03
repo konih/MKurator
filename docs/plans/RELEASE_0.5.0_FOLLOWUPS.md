@@ -33,7 +33,7 @@ issue `DISPLAY CHLAUTH` / `DISPLAY AUTHREC` MQSC via `runCommand`.
 - [x] `GetChannelAuth` / `GetAuthority` on `mqadmin.Admin` + `mqrest` adapter
 - [x] Unit tests (`auth_test.go`, `client_test.go`, `mqsc_params_test.go`)
 - [x] Docker integration tests (`test/integration/mq/auth_integration_test.go`)
-- [ ] Wire GET paths into auth reconcilers for drift-aware reconcile (replace-on-diff)
+- [x] Wire GET paths into auth reconcilers for drift-aware reconcile (replace-on-diff)
 - [ ] Extend e2e helpers to use adapter GET instead of raw `RunMQSC` DISPLAY
 
 ## Release mechanics
@@ -62,17 +62,18 @@ Optional status fields and CLI aids for inspecting intended MQSC without applyin
 From [repository audit plan](https://github.com/konih/kurator) — robustness items 1–5:
 
 - [x] Status UX — `status.message`, `lastSyncTime`, `mqObjectExists` on Queue/Topic/Channel
+- [x] Status UX — same fields on ChannelAuthRule and AuthorityRecord
 - [x] Connection summary on dependents — QMC `Ready` reason/message in `status.message` while waiting
 - [x] Orphan / external drift — documented in ATTRIBUTE_RECONCILIATION + INSTALL_AND_USE
 - [x] `MaxConcurrentReconciles` — `--max-concurrent-reconciles` / `KURATOR_MAX_CONCURRENT_RECONCILES`
-- [ ] Operator NotReady when no QMC can ping (deferred; needs QMC health aggregation)
+- [x] Operator NotReady when no QMC can ping — `/readyz` aggregates QMC `Ready` via `internal/health`; no QMCs → ready (install/admission-only clusters)
 
-Future (not started):
+## Drift policy and Phase 4 DISPLAY extensions
 
-- [ ] `messaging.kurator.dev/drift-policy=observe-only` reconcile mode
+- [x] `messaging.kurator.dev/drift-policy=observe-only` reconcile mode
+- [x] Phase 4 optional DISPLAY drift — queue `share`/`defopts`/…; channel TLS (`sslciph`, `sslcauth`)
 
 ## Out of scope for 0.5.0
 
 - Additional CHLAUTH rule types beyond `ADDRESSMAP` (schema allows them; adapter validates at MQSC apply time)
-- TLS channel drift (`sslciph`, `sslcauth`) — remains Phase 4 optional item
 - PCF adapter, OCI Helm registry push

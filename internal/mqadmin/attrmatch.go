@@ -1,6 +1,7 @@
 package mqadmin
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -29,6 +30,10 @@ var caseInsensitiveAttrKeys = map[string]struct{}{
 	attrKeyPut:      {},
 	attrKeyDefpsist: {},
 	attrKeyTrptype:  {},
+	"share":         {},
+	"defopts":       {},
+	"usage":         {},
+	"sslcauth":      {},
 }
 
 var numericAttrKeys = map[string]struct{}{
@@ -38,6 +43,14 @@ var numericAttrKeys = map[string]struct{}{
 	attrKeySharecnv:  {},
 	attrKeyMaxinst:   {},
 	attrKeyMaxinstc:  {},
+	"bothresh":       {},
+}
+
+// AttributeDrift describes one drift-checked attribute that differs from spec.
+type AttributeDrift struct {
+	Key      string
+	Desired  string
+	Observed string
 }
 
 // NormalizeAttrKey lowercases MQSC attribute keys and applies mqweb aliases.
@@ -62,15 +75,47 @@ func AttributeValueMatches(key, desired, observed string) bool {
 	return strings.TrimSpace(desired) == strings.TrimSpace(observed)
 }
 
-// AttributesNeedUpdate returns true when any desired attribute differs from observed.
-func AttributesNeedUpdate(desired map[string]string, observed map[string]string) bool {
+// AttributesNeedUpdate returns true when any desired drift-checked attribute differs from observed.
+func AttributesNeedUpdate(desired map[string]string, observed map[string]string, checkKeys []string) bool {
+	return len(AttributeDriftsForKeys(desired, observed, checkKeys)) > 0
+}
+
+// AttributeDriftsForKeys returns drift details for desired keys in the check list.
+func AttributeDriftsForKeys(desired, observed map[string]string, checkKeys []string) []AttributeDrift {
+	allowed := driftCheckKeySet(checkKeys)
+	var drifts []AttributeDrift
 	for k, v := range desired {
 		key := NormalizeAttrKey(k)
-		if !AttributeValueMatches(key, v, observed[key]) {
-			return true
+		if _, ok := allowed[key]; !ok {
+			continue
 		}
+		obs := observed[key]
+		if AttributeValueMatches(key, v, obs) {
+			continue
+		}
+		drifts = append(drifts, AttributeDrift{Key: key, Desired: v, Observed: obs})
 	}
-	return false
+	return drifts
+}
+
+// FormatAttributeDriftMessage summarizes attribute drift for status conditions.
+func FormatAttributeDriftMessage(drifts []AttributeDrift) string {
+	if len(drifts) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(drifts))
+	for _, d := range drifts {
+		parts = append(parts, fmt.Sprintf("%s: desired %q observed %q", d.Key, d.Desired, d.Observed))
+	}
+	return "attribute drift: " + strings.Join(parts, "; ")
+}
+
+func driftCheckKeySet(checkKeys []string) map[string]struct{} {
+	allowed := make(map[string]struct{}, len(checkKeys))
+	for _, k := range checkKeys {
+		allowed[NormalizeAttrKey(k)] = struct{}{}
+	}
+	return allowed
 }
 
 func normalizeNumericString(s string) string {

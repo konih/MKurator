@@ -398,6 +398,39 @@ func TestPatchSyncedAvailable_ChannelAuthRule(t *testing.T) {
 	}
 }
 
+func TestPatchSyncedDrift_MQObjects(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	ns := "kurator-system"
+	s := unitSchemeOrFatal(t)
+	exists := true
+	opts := syncStatusOpts{mqObjectExists: &exists}
+	cases := []client.Object{
+		&messagingv1alpha1.Queue{ObjectMeta: metav1.ObjectMeta{Name: "q1", Namespace: ns, Generation: 1}},
+		&messagingv1alpha1.Topic{ObjectMeta: metav1.ObjectMeta{Name: "t1", Namespace: ns, Generation: 1}},
+		&messagingv1alpha1.Channel{ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: ns, Generation: 1}},
+		&messagingv1alpha1.ChannelAuthRule{ObjectMeta: metav1.ObjectMeta{Name: "car1", Namespace: ns, Generation: 1}},
+		&messagingv1alpha1.AuthorityRecord{ObjectMeta: metav1.ObjectMeta{Name: "auth1", Namespace: ns, Generation: 1}},
+	}
+	for _, obj := range cases {
+		cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
+		if err := patchSyncedDrift(ctx, cl.Status(), nil, obj, 1, "drift", opts); err != nil {
+			t.Fatalf("%T: %v", obj, err)
+		}
+	}
+}
+
+func TestPatchSyncedDrift_UnsupportedType(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	conn := &messagingv1alpha1.QueueManagerConnection{
+		ObjectMeta: metav1.ObjectMeta{Name: "qm1", Namespace: "ns"},
+	}
+	if err := patchSyncedDrift(ctx, nil, nil, conn, 1, "drift", syncStatusOpts{}); err == nil {
+		t.Fatal("expected error for unsupported type")
+	}
+}
+
 func TestSetSyncedError_AuthorityRecord(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

@@ -40,8 +40,9 @@ Shipped: `SET AUTHREC` / `SET CHLAUTH` via `AuthorityRecord` and `ChannelAuthRul
 | `descr` | yes | yes | |
 | `defpsist` | yes | yes | Case-insensitive match |
 | `get`, `put` | yes | yes | Case-insensitive |
+| `share`, `defopts`, `bothresh`, `boqname`, `usage` | yes | yes | Extended Phase 4 DISPLAY; `share`/`defopts`/`usage` case-insensitive |
 | `maxmsglen` | yes | **no** | mqweb 9.4 rejects on DISPLAY (`MQWB0120E`) |
-| `share`, `defopts`, `bothresh`, `boqname`, `usage`, trigger fields | yes | **no** | Passthrough; not in safe DISPLAY list |
+| trigger fields | yes | **no** | Passthrough; not in safe DISPLAY list |
 | `cluster`, `clusnl` | yes | **no** | Clustering — future work |
 
 ### Queue — `type: alias` (`QALIAS`)
@@ -82,7 +83,7 @@ Shipped: `SET AUTHREC` / `SET CHLAUTH` via `AuthorityRecord` and `ChannelAuthRul
 | `sharecnv` | yes | yes | Numeric |
 | `mcauser` | yes | yes | |
 | `maxinst`, `maxinstc` | yes | yes | Numeric |
-| `sslciph`, `sslcauth` | yes | **no** | TLS — passthrough; not in DISPLAY list (Phase 5 / gitops samples) |
+| `sslciph`, `sslcauth` | yes | yes | TLS — Phase 4 DISPLAY drift; `sslcauth` case-insensitive |
 
 ## Out of scope (not CRDs today)
 
@@ -110,15 +111,29 @@ Kurator is **declarative**: the operator drives IBM MQ toward what your CRs spec
 outside the operator (MQ console, `runmqsc`, another tool) are handled as follows:
 
 - **Drift-checked attributes** (see tables above) — on the next reconcile, DISPLAY shows a
-  difference and the operator issues **DEFINE … REPLACE** to match the CR.
+  difference and the operator issues **DEFINE … REPLACE** to match the CR (unless observe-only;
+  see below).
 - **Define-only attributes** — manual edits are **not** detected; the CR must change (or you
   must alter a drift-checked field) to trigger a new DEFINE.
 - **Objects with no CR** — Kurator does not delete queues, topics, or channels it does not
   manage; it only creates/updates/deletes objects backed by a CR with a finalizer.
 
-There is no observe-only mode today. A future annotation
-`messaging.kurator.dev/drift-policy=observe-only` may allow reporting drift without apply — not
-implemented in v1alpha1.
+## Observe-only drift policy
+
+Set annotation `messaging.kurator.dev/drift-policy=observe-only` on a `Queue`, `Topic`, or
+`Channel` to **report drift without applying** DEFINE/ALTER to IBM MQ:
+
+| Behaviour | Default (annotation absent) | `observe-only` |
+|-----------|----------------------------|----------------|
+| DISPLAY / GET | yes | yes |
+| DEFINE on missing object | yes | **no** — `Synced=False`, `Reason=DriftDetected` |
+| DEFINE on attribute drift | yes | **no** — `Synced=False`, `Reason=DriftDetected`, drift message in `status.message` |
+| `Synced=True` | object exists and drift-checked attrs match | same |
+| Deletion | finalizer still deletes MQ object | unchanged |
+
+Drift comparison uses only DISPLAY-safe keys per object type (define-only attributes such as
+`maxmsglen` are ignored for drift detection). Implementation:
+`internal/controller/drift_policy.go`, `internal/mqadmin/attrmatch.go`.
 
 ## Known limitations
 

@@ -90,7 +90,7 @@ func (r *QueueReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 	q.Status.DesiredMQSC = desiredMQSC
 
-	mqExists, err := r.ensureQueue(ctx, admin, spec)
+	mqExists, driftMsg, err := r.ensureQueue(ctx, admin, spec, isObserveOnly(q))
 	if err != nil {
 		return setSyncedError(
 			ctx,
@@ -102,6 +102,13 @@ func (r *QueueReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			syncStatusOpts{mqObjectExists: &mqExists},
 		)
 	}
+	if driftMsg != "" {
+		opts := syncStatusOpts{mqObjectExists: boolPtr(mqExists)}
+		if patchErr := patchSyncedDrift(ctx, r.Status(), r.Recorder, q, q.Generation, driftMsg, opts); patchErr != nil {
+			return ctrl.Result{}, fmt.Errorf("update status: %w", patchErr)
+		}
+		return ctrl.Result{}, nil
+	}
 
 	if err := patchSyncedAvailable(ctx, r.Status(), r.Recorder, q, q.Generation, "Queue matches spec",
 		syncStatusOpts{mqObjectExists: boolPtr(true)}); err != nil {
@@ -111,23 +118,38 @@ func (r *QueueReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return ctrl.Result{}, nil
 }
 
-func (r *QueueReconciler) ensureQueue(ctx context.Context, admin mqadmin.Admin, spec mqadmin.QueueSpec) (bool, error) {
+func (r *QueueReconciler) ensureQueue(
+	ctx context.Context,
+	admin mqadmin.Admin,
+	spec mqadmin.QueueSpec,
+	observeOnly bool,
+) (bool, string, error) {
 	observed, err := admin.GetQueue(ctx, spec)
 	if err != nil && !errors.Is(err, mqadmin.ErrNotFound) {
-		return false, err
+		return false, "", err
 	}
 	exists := observed != nil
-	if observed == nil || needsUpdate(spec, observed) {
-		if err := admin.DefineQueue(ctx, spec); err != nil {
-			return exists, err
-		}
-		return true, nil
+	var observedAttrs map[string]string
+	if observed != nil {
+		observedAttrs = observed.Attributes
 	}
-	return exists, nil
+	return reconcileMQObjectState(
+		observeOnly,
+		exists,
+		observedAttrs,
+		spec.Attributes,
+		mqrest.QueueDriftCheckKeys(spec.Type),
+		fmt.Sprintf("queue %q", spec.Name),
+		func() error { return admin.DefineQueue(ctx, spec) },
+	)
 }
 
 func needsUpdate(desired mqadmin.QueueSpec, observed *mqadmin.QueueState) bool {
-	return mqadmin.AttributesNeedUpdate(desired.Attributes, observed.Attributes)
+	return mqadmin.AttributesNeedUpdate(
+		desired.Attributes,
+		observed.Attributes,
+		mqrest.QueueDriftCheckKeys(desired.Type),
+	)
 }
 
 func (r *QueueReconciler) handleDeletion(

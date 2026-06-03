@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	messagingv1alpha1 "github.com/konih/kurator/api/v1alpha1"
+	"github.com/konih/kurator/internal/adapter/mqrest"
 	"github.com/konih/kurator/internal/metrics"
 	"github.com/konih/kurator/internal/mqadmin"
 )
@@ -83,10 +84,19 @@ func (r *TopicReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	spec := toMQTopicSpec(topic)
-	mqExists, err := r.ensureTopic(ctx, admin, spec)
+	mqExists, driftMsg, err := r.ensureTopic(ctx, admin, spec, isObserveOnly(topic))
 	if err != nil {
 		return setSyncedError(ctx, r.Status(), r.Recorder, topic, topic.Generation, err,
 			syncStatusOpts{mqObjectExists: &mqExists})
+	}
+	if driftMsg != "" {
+		opts := syncStatusOpts{mqObjectExists: boolPtr(mqExists)}
+		if patchErr := patchSyncedDrift(
+			ctx, r.Status(), r.Recorder, topic, topic.Generation, driftMsg, opts,
+		); patchErr != nil {
+			return ctrl.Result{}, fmt.Errorf("update status: %w", patchErr)
+		}
+		return ctrl.Result{}, nil
 	}
 
 	if err := patchSyncedAvailable(ctx, r.Status(), r.Recorder, topic, topic.Generation,
@@ -97,23 +107,38 @@ func (r *TopicReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	return ctrl.Result{}, nil
 }
 
-func (r *TopicReconciler) ensureTopic(ctx context.Context, admin mqadmin.Admin, spec mqadmin.TopicSpec) (bool, error) {
+func (r *TopicReconciler) ensureTopic(
+	ctx context.Context,
+	admin mqadmin.Admin,
+	spec mqadmin.TopicSpec,
+	observeOnly bool,
+) (bool, string, error) {
 	observed, err := admin.GetTopic(ctx, spec.Name)
 	if err != nil && !errors.Is(err, mqadmin.ErrNotFound) {
-		return false, err
+		return false, "", err
 	}
 	exists := observed != nil
-	if observed == nil || topicNeedsUpdate(spec, observed) {
-		if err := admin.DefineTopic(ctx, spec); err != nil {
-			return exists, err
-		}
-		return true, nil
+	var observedAttrs map[string]string
+	if observed != nil {
+		observedAttrs = observed.Attributes
 	}
-	return exists, nil
+	return reconcileMQObjectState(
+		observeOnly,
+		exists,
+		observedAttrs,
+		spec.Attributes,
+		mqrest.TopicDriftCheckKeys(),
+		fmt.Sprintf("topic %q", spec.Name),
+		func() error { return admin.DefineTopic(ctx, spec) },
+	)
 }
 
 func topicNeedsUpdate(desired mqadmin.TopicSpec, observed *mqadmin.TopicState) bool {
-	return mqadmin.AttributesNeedUpdate(desired.Attributes, observed.Attributes)
+	return mqadmin.AttributesNeedUpdate(
+		desired.Attributes,
+		observed.Attributes,
+		mqrest.TopicDriftCheckKeys(),
+	)
 }
 
 func (r *TopicReconciler) handleDeletion(

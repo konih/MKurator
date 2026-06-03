@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	messagingv1alpha1 "github.com/konih/kurator/api/v1alpha1"
+	"github.com/konih/kurator/internal/adapter/mqrest"
 	"github.com/konih/kurator/internal/metrics"
 	"github.com/konih/kurator/internal/mqadmin"
 )
@@ -97,10 +98,19 @@ func (r *ChannelReconciler) reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	spec := toMQChannelSpec(channel)
-	mqExists, err := r.ensureChannel(ctx, admin, spec)
+	mqExists, driftMsg, err := r.ensureChannel(ctx, admin, spec, isObserveOnly(channel))
 	if err != nil {
 		return setSyncedError(ctx, r.Status(), r.Recorder, channel, channel.Generation, err,
 			syncStatusOpts{mqObjectExists: &mqExists})
+	}
+	if driftMsg != "" {
+		opts := syncStatusOpts{mqObjectExists: boolPtr(mqExists)}
+		if patchErr := patchSyncedDrift(
+			ctx, r.Status(), r.Recorder, channel, channel.Generation, driftMsg, opts,
+		); patchErr != nil {
+			return ctrl.Result{}, fmt.Errorf("update status: %w", patchErr)
+		}
+		return ctrl.Result{}, nil
 	}
 
 	if err := patchSyncedAvailable(ctx, r.Status(), r.Recorder, channel, channel.Generation,
@@ -115,23 +125,34 @@ func (r *ChannelReconciler) ensureChannel(
 	ctx context.Context,
 	admin mqadmin.Admin,
 	spec mqadmin.ChannelSpec,
-) (bool, error) {
+	observeOnly bool,
+) (bool, string, error) {
 	observed, err := admin.GetChannel(ctx, spec)
 	if err != nil && !errors.Is(err, mqadmin.ErrNotFound) {
-		return false, err
+		return false, "", err
 	}
 	exists := observed != nil
-	if observed == nil || channelNeedsUpdate(spec, observed) {
-		if err := admin.DefineChannel(ctx, spec); err != nil {
-			return exists, err
-		}
-		return true, nil
+	var observedAttrs map[string]string
+	if observed != nil {
+		observedAttrs = observed.Attributes
 	}
-	return exists, nil
+	return reconcileMQObjectState(
+		observeOnly,
+		exists,
+		observedAttrs,
+		spec.Attributes,
+		mqrest.ChannelDriftCheckKeys(),
+		fmt.Sprintf("channel %q", spec.Name),
+		func() error { return admin.DefineChannel(ctx, spec) },
+	)
 }
 
 func channelNeedsUpdate(desired mqadmin.ChannelSpec, observed *mqadmin.ChannelState) bool {
-	return mqadmin.AttributesNeedUpdate(desired.Attributes, observed.Attributes)
+	return mqadmin.AttributesNeedUpdate(
+		desired.Attributes,
+		observed.Attributes,
+		mqrest.ChannelDriftCheckKeys(),
+	)
 }
 
 func (r *ChannelReconciler) handleDeletion(

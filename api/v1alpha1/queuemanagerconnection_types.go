@@ -12,11 +12,18 @@ const (
 
 // Condition reasons shared across resources.
 const (
-	ReasonAvailable   = "Available"
-	ReasonProgressing = "Progressing"
-	ReasonError       = "Error"
-	ReasonDeleting    = "Deleting"
+	ReasonAvailable     = "Available"
+	ReasonProgressing   = "Progressing"
+	ReasonError         = "Error"
+	ReasonDeleting      = "Deleting"
+	ReasonDriftDetected = "DriftDetected"
 )
+
+// DriftPolicyAnnotation selects how the operator responds to spec vs IBM MQ drift.
+const DriftPolicyAnnotation = "messaging.kurator.dev/drift-policy"
+
+// DriftPolicyObserveOnly reports drift without issuing DEFINE/ALTER to correct MQ.
+const DriftPolicyObserveOnly = "observe-only"
 
 // QueueManagerConnectionFinalizer ensures MQ cleanup completes before removal.
 const QueueManagerConnectionFinalizer = "messaging.kurator.dev/connection"
