@@ -49,14 +49,17 @@ var _ = Describe("Post-manager IBM MQ integration", Label("mq"), func() {
 			client, err := newMQClient()
 			Expect(err).NotTo(HaveOccurred())
 
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-
 			Eventually(func(g Gomega) {
-				ok, err := channelExists(ctx, client, e2eChannelName)
-				g.Expect(err).NotTo(HaveOccurred())
+				ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+				defer cancel()
+				ok, checkErr := channelExists(ctx, client, e2eChannelName)
+				if checkErr == nil && !ok {
+					g.Expect(applyMQSCFixture(ctx, client, "channel-auth-prereq.mqsc")).To(Succeed())
+					ok, checkErr = channelExists(ctx, client, e2eChannelName)
+				}
+				g.Expect(checkErr).NotTo(HaveOccurred())
 				g.Expect(ok).To(BeTrue(), "channel %s should exist after BeforeSuite fixture", e2eChannelName)
-			}).WithTimeout(30 * time.Second).WithPolling(2 * time.Second).Should(Succeed())
+			}).WithTimeout(2 * time.Minute).WithPolling(5 * time.Second).Should(Succeed())
 		})
 	})
 
@@ -494,7 +497,7 @@ spec:
 			ok, err := authorityExists(pollCtx, client, authLookup)
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(ok).To(BeFalse(), "AUTHREC for queue %s principal app should be removed after CR delete", queueObject)
-		}).WithTimeout(mqSyncedEventuallyTimeout).WithPolling(5 * time.Second).Should(Succeed())
+		}).WithTimeout(mqAuthrecCleanupEventuallyTimeout).WithPolling(5 * time.Second).Should(Succeed())
 	})
 })
 

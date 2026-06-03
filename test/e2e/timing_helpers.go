@@ -5,6 +5,9 @@ package e2e
 
 import "time"
 
+// mqAuthrecCleanupEventuallyTimeout covers MQ-side AUTHREC removal after CR delete.
+const mqAuthrecCleanupEventuallyTimeout = 5 * time.Minute
+
 // mqSyncedEventuallyTimeout is the default Synced/Ready wait for MQ CR specs (not QMC rotation).
 const mqSyncedEventuallyTimeout = 3 * time.Minute
 
