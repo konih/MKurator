@@ -120,20 +120,27 @@ outside the operator (MQ console, `runmqsc`, another tool) are handled as follow
 
 ## Observe-only drift policy
 
-Set annotation `messaging.kurator.dev/drift-policy=observe-only` on a `Queue`, `Topic`, or
-`Channel` to **report drift without applying** DEFINE/ALTER to IBM MQ:
+Set annotation `messaging.kurator.dev/drift-policy=observe-only` on a `Queue`,
+`Topic`, `Channel`, `ChannelAuthRule`, or `AuthorityRecord` to **report drift
+without applying** DEFINE/ALTER (or auth GET/replace) to IBM MQ:
 
 | Behaviour | Default (annotation absent) | `observe-only` |
 |-----------|----------------------------|----------------|
 | DISPLAY / GET | yes | yes |
 | DEFINE on missing object | yes | **no** — `Synced=False`, `Reason=DriftDetected` |
 | DEFINE on attribute drift | yes | **no** — `Synced=False`, `Reason=DriftDetected`, drift message in `status.message` |
+| Auth replace (`SET CHLAUTH` / `SET AUTHREC`) | yes — reconcile applies desired rule | **no** — GET may still run; manual MQ changes are reported, not overwritten |
 | `Synced=True` | object exists and drift-checked attrs match | same |
 | Deletion | finalizer still deletes MQ object | unchanged |
 
-Drift comparison uses only DISPLAY-safe keys per object type (define-only attributes such as
-`maxmsglen` are ignored for drift detection). Implementation:
-`internal/controller/drift_policy.go`, `internal/mqadmin/attrmatch.go`.
+For `ChannelAuthRule` and `AuthorityRecord`, drift detection uses GET against
+mqweb (not DISPLAY attribute matrices). Observe-only skips replace-on-reconcile
+when the observed rule differs from `spec`.
+
+Drift comparison for queues, topics, and channels uses only DISPLAY-safe keys per
+object type (define-only attributes such as `maxmsglen` are ignored for drift
+detection). Implementation: `internal/controller/drift_policy.go`,
+`internal/mqadmin/attrmatch.go`.
 
 ## Known limitations
 

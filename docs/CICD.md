@@ -110,7 +110,11 @@ the image builds on every PR and `main` push; **no registry push** (push, scan,
 and signing run only in `release.yaml` on tags).
 
 ### `helm-lint`
-`task helm:lint` — `helm lint ./charts/kurator` on the publishable Helm chart.
+`task helm:lint` — `helm lint ./charts/kurator` on the publishable Helm chart,
+then [`hack/helm-verify-admission.sh`](../hack/helm-verify-admission.sh) and
+[`hack/helm-verify-rbac.sh`](../hack/helm-verify-rbac.sh) to assert rendered
+webhook and manager ClusterRole templates stay aligned with
+`config/webhook/manifests.yaml` and `config/rbac/role.yaml`.
 Runs in parallel with other `ci.yaml` jobs; no cluster or MQ required.
 
 ### `integration`
@@ -146,7 +150,9 @@ via [`hack/assemble-release-notes.sh`](../hack/assemble-release-notes.sh). Check
 uses `fetch-depth: 0` so tag ranges resolve correctly.
 
 Maintainer steps: [RELEASE.md](RELEASE.md). Before tagging: `task changelog` (preview),
-bump `charts/kurator/Chart.yaml`, `task changelog:write`, commit, then
+bump `charts/kurator/Chart.yaml`, `task changelog:write`, commit, then confirm
+**CI, integration, and e2e are green on the exact commit SHA** you will tag
+(release is a supply-chain gate — do not tag ahead of a red pipeline).
 `git tag vX.Y.Z && git push origin vX.Y.Z`. Rationale: [ADR-0008](adr/0008-changelog-git-cliff.md).
 Supply chain: [ADR-0016](adr/0016-release-supply-chain.md).
 

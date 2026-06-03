@@ -89,12 +89,12 @@ Pick one method. All paths install the same CRDs and controller.
 
 Download the release tag you intend to run from
 [GitHub Releases](https://github.com/konih/kurator/releases). The examples below
-use **`0.5.0`** (or the tag you downloaded from GitHub Releases). Older tags
+use **`0.5.2`** (or the tag you downloaded from GitHub Releases). Older tags
 (before `v0.5.0`) do not include `ChannelAuthRule` and `AuthorityRecord`; check
 release notes before upgrading.
 
 ```sh
-VERSION=0.5.0   # replace with your release tag
+VERSION=0.5.2   # replace with your release tag
 curl -sLO "https://github.com/konih/kurator/releases/download/v${VERSION}/install-crds.yaml"
 curl -sLO "https://github.com/konih/kurator/releases/download/v${VERSION}/install.yaml"
 
@@ -115,7 +115,7 @@ The release `install.yaml` pins the controller image to
 ### Option B — Helm chart (GitHub Release tarball)
 
 ```sh
-VERSION=0.5.0
+VERSION=0.5.2
 curl -sLO "https://github.com/konih/kurator/releases/download/v${VERSION}/kurator-${VERSION}.tgz"
 
 helm upgrade --install kurator "kurator-${VERSION}.tgz" \
@@ -128,7 +128,7 @@ helm upgrade --install kurator "kurator-${VERSION}.tgz" \
 ### Option C — Helm chart (OCI registry on GHCR)
 
 ```sh
-VERSION=0.5.0
+VERSION=0.5.2
 helm upgrade --install kurator oci://ghcr.io/konih/kurator \
   --version "${VERSION}" \
   --namespace kurator-system \
@@ -561,7 +561,7 @@ only — it does not own MQ objects on the queue manager).
 ## Upgrading from a previous release
 
 When moving from an older Kurator release (for example **v0.3.x** or **v0.4.x**) to the
-current chart (**0.5.0**), apply updates in this order:
+current chart (**0.5.2**), apply updates in this order:
 
 1. **CRDs** — `install-crds.yaml` or `charts/kurator/crds/` (new kinds and schema changes
    land here first).

@@ -19,7 +19,7 @@ more later.
 
 > Status: **Phase 5 (auth) shipped on `main`** — `ChannelAuthRule` and
 > `AuthorityRecord` reconcile via mqweb MQSC, with Docker integration and kind e2e
-> coverage. Latest release: **`v0.5.1`**. Remaining Phase 5 items (extended rule
+> coverage. Latest release: **`v0.5.2`**. Remaining Phase 5 items (extended rule
 > types, CI proof on tag) are in the [roadmap](docs/ROADMAP.md#phase-5--user--authority-management).
 
 ## What ships in v1alpha1 (today)
@@ -30,7 +30,7 @@ more later.
 | `Queue` | `QLOCAL`, `QALIAS`, `QREMOTE` | `spec.type`: `local` (default), `alias`, `remote` |
 | `Topic` | `TOPIC` | Drift-checked attributes per [ATTRIBUTE_RECONCILIATION.md](docs/ATTRIBUTE_RECONCILIATION.md) |
 | `Channel` | `CHANNEL` … `CHLTYPE(SVRCONN)` | Other channel types planned later |
-| `ChannelAuthRule` | `CHLAUTH` | `ADDRESSMAP` in v1alpha1; other rule types in schema, MQ-validated |
+| `ChannelAuthRule` | `CHLAUTH` | `ADDRESSMAP` exercised in kind e2e; `BLOCKUSER` in Docker integration; `USERMAP`, `SSLPEERMAP`, `QMGRMAP`, `BLOCKADDR` accepted by schema and admission, MQ-validated at apply time |
 | `AuthorityRecord` | `SET AUTHREC` (OAM) | Queue profile + principal/group authorities |
 
 **v1alpha1 scope:** access control covers `SET CHLAUTH` (one rule per CR) and

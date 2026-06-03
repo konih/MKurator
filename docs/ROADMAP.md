@@ -190,18 +190,18 @@ reference MQSC; e2e fixture
 **Remaining:**
 
 - [ ] Confirm GitHub Actions **CI**, **Integration**, and **E2E** workflows green
-  on the `v0.5.1` tag push.
+  on `main` before **`v0.5.2`** tag (release gate in [RELEASE.md](RELEASE.md)).
 - [ ] **`task ci:e2e` green locally** — maintainer verification of full kind + MQ
-  stack (Kustomize deploy path).
-- [ ] Additional CHLAUTH rule types (`BLOCKUSER`, `USERMAP`, …) — schema present;
-  extend samples, integration, and e2e when needed.
-- [x] Optional: integration coverage for a second CHLAUTH rule type or AUTHREC
-  object type beyond `ADDRESSMAP` / `QUEUE` — `BLOCKUSER` in Docker integration
+  stack (Kustomize deploy path); respect `exclusive-test.lock`.
+- [x] Helm **ClusterRole** includes auth CRDs; `hack/helm-verify-rbac.sh` in `task helm:lint`.
+- [x] E2e **BLOCKUSER** `ChannelAuthRule` on kind ([`test/e2e/mq_e2e_test.go`](../test/e2e/mq_e2e_test.go)).
+- [x] Optional: integration **BLOCKUSER** CHLAUTH
   ([`test/integration/mq/auth_integration_test.go`](../test/integration/mq/auth_integration_test.go)).
+- [ ] Additional CHLAUTH rule types (`USERMAP`, `SSLPEERMAP`, …) — schema present;
+  extend API fields, integration, and e2e when needed.
 
 Exit criteria: declarative channel auth and OAM authority records reconciled on
-kind with e2e coverage — **partial** (core auth shipped and tagged; CI proof on
-tag and extended rule types pending).
+kind with e2e coverage — **partial** (core auth shipped; **`v0.5.2`** gated on green CI/E2E).
 
 ## Repo visibility
 
@@ -228,7 +228,7 @@ tag and extended rule types pending).
 - Commit generated `docs/schemas/mqweb-swagger.json` per target MQ version.
 - [x] **Admission:** envtest assertion for unknown-attribute warnings (Queue, Topic,
   Channel) via `internal/webhook/v1alpha1/suite_test.go`.
-- **e2e Helm deploy path wired** (`KURATOR_E2E_DEPLOY=helm`, `task test:e2e:helm`) —
-  pending first green local run and optional CI matrix job.
+- [x] **e2e Helm deploy path** (`KURATOR_E2E_DEPLOY=helm`, `task test:e2e:helm`) —
+  CI job `e2e (helm)` on `main` push and `workflow_dispatch` ([`e2e.yaml`](../.github/workflows/e2e.yaml)).
 - **Runtime cleanup:** migrate off deprecated `GetEventRecorderFor` when
   controller-runtime guidance is stable.

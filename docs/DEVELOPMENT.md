@@ -67,7 +67,7 @@ Platform-only commands live under `task cluster:*` (see
 | `task test:integration:local` | Docker MQ up + wait + integration tests |
 | `task ci:integration` | Same as GitHub Actions integration job |
 | `task test:e2e` | E2E on kind (set `KURATOR_E2E_MQ=1` for IBM MQ scenarios) |
-| `task test:e2e:helm` | Same suite with Helm operator deploy (`KURATOR_E2E_DEPLOY=helm`; not in CI yet) |
+| `task test:e2e:helm` | Same suite with Helm operator deploy (`KURATOR_E2E_DEPLOY=helm`; CI job `e2e (helm)` on `main` / `workflow_dispatch`) |
 | `task ci:e2e` | Same as GitHub Actions e2e job (`cluster:up` + MQ wait + tests) |
 | `task changelog` | Preview unreleased changelog (`git-cliff`; see [CICD.md](CICD.md)) |
 | `task changelog:write` | Regenerate `CHANGELOG.md` before tagging a release |
