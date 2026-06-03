@@ -34,6 +34,7 @@ type ChannelAuthRuleReconciler struct {
 // +kubebuilder:rbac:groups=messaging.kurator.dev,resources=queuemanagerconnections,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=events.k8s.io,resources=events,verbs=create;patch
 
 // Reconcile ensures the CHLAUTH rule matches spec.
 func (r *ChannelAuthRuleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
