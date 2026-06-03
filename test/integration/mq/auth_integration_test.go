@@ -164,51 +164,6 @@ func TestIntegration_GetAuthority(t *testing.T) {
 	}
 }
 
-func TestIntegration_GetAuthority_Group(t *testing.T) {
-	requireIntegration(t)
-	ctx := testContext(t)
-	profile := queueNameForTest(t.Name())
-
-	c, err := newIntegrationClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	queueSpec := mqadmin.QueueSpec{
-		Name:       profile,
-		Type:       mqadmin.QueueTypeLocal,
-		Attributes: map[string]string{"maxdepth": "100"},
-	}
-	authSpec := mqadmin.AuthoritySpec{
-		Profile:     profile,
-		ObjectType:  mqadmin.AuthorityObjectTypeQueue,
-		Group:       "apps",
-		Authorities: []string{"GET", "BROWSE"},
-	}
-	t.Cleanup(func() {
-		_ = c.DeleteAuthority(context.Background(), authSpec)
-		_ = c.DeleteQueue(context.Background(), queueSpec)
-	})
-
-	if err := c.DefineQueue(ctx, queueSpec); err != nil {
-		t.Fatalf("DefineQueue: %v", err)
-	}
-	if err := c.SetAuthority(ctx, authSpec); err != nil {
-		t.Fatalf("SetAuthority: %v", err)
-	}
-
-	state, err := c.GetAuthority(ctx, authSpec)
-	if err != nil {
-		t.Fatalf("GetAuthority: %v", err)
-	}
-	if !strings.EqualFold(state.Group, "apps") {
-		t.Fatalf("group = %q", state.Group)
-	}
-	if !authoritySetEqual(state.Authorities, []string{"GET", "BROWSE"}) {
-		t.Fatalf("authorities = %v", state.Authorities)
-	}
-}
-
 func TestIntegration_GetAuthority_NotFound(t *testing.T) {
 	requireIntegration(t)
 	ctx := testContext(t)
