@@ -29,6 +29,7 @@ flowchart LR
   lint --> format["format (gofmt/goimports/golines)"]
   format --> test["test (unit + envtest, -race, coverage)"]
   test --> build["build (CGO-free static binary)"]
+  build --> docker["docker-build (controller image)"]
   build --> vuln["govulncheck"]
   pr --> helmlint["helm-lint"]
   pr --> integration["integration (Docker IBM MQ)"]
@@ -41,7 +42,7 @@ flowchart LR
 
 | Event | Runs |
 |-------|------|
-| PR / push to `main` | `ci.yaml`: gitleaks, verify, lint, format, test, build, govulncheck, helm-lint |
+| PR / push to `main` | `ci.yaml`: gitleaks, verify, lint, format, test, build, docker-build, govulncheck, helm-lint |
 | PR / push to `main` (non-docs paths) | `integration.yaml`: Docker IBM MQ integration tests |
 | PR / push to `main` (non-docs paths) | `e2e.yaml`: kind + IBM MQ e2e |
 | Tag `v*` | `release.yaml`: build + push image, publish install manifests, Trivy scan |
@@ -79,8 +80,13 @@ profile (`coverage.out`). envtest control-plane binaries come from
 `CODECOV_TOKEN`. A regression is investigated, not ignored.
 
 ### `build`
-`task build` — static `CGO_ENABLED=0` manager binary. **Docker image builds run
-only on release tags** (`release.yaml`), not on PRs.
+`task build` — static `CGO_ENABLED=0` manager binary.
+
+### `docker-build`
+`task docker:build` — builds the controller-manager container image locally on
+the runner (`Dockerfile`; same Go toolchain and build flags as release). Verifies
+the image builds on every PR and `main` push; **no registry push** (push, scan,
+and signing run only in `release.yaml` on tags).
 
 ### `govulncheck`
 `task vuln:check` (`govulncheck ./...`) on PRs and `main` pushes. There is no
@@ -135,7 +141,7 @@ Go-heavy jobs in `ci.yaml` and the `integration` workflow restore and save
 
 | Cache | Path | Jobs |
 |-------|------|------|
-| Go modules + build cache | `~/go/pkg/mod`, `~/.cache/go-build` | verify, lint, format, test, build, govulncheck, integration |
+| Go modules + build cache | `~/go/pkg/mod`, `~/.cache/go-build` | verify, lint, format, test, build, docker-build, govulncheck, integration |
 | envtest binaries | `~/.local/share/kubebuilder-envtest` | test only |
 
 The envtest cache key includes the pinned K8s version (`1.35.x`, from
@@ -177,6 +183,7 @@ non-docs PR today. No direct pushes to the default branch.
 | format | `task format` / `task format:check` |
 | test | `task test:run` |
 | build | `task build` |
+| docker-build | `task docker:build` |
 | govulncheck | `task vuln:check` |
 | helm-lint | `task helm:lint` |
 | integration | `task ci:integration` (or `task test:integration:local`) |
