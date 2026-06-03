@@ -89,6 +89,14 @@ func kubectlWait(condition, resource, name, ns string) error {
 	return nil
 }
 
+// kubectlDeleteNoWait issues a delete without blocking on finalizers (MQ specs assert via mqweb).
+func kubectlDeleteNoWait(resource, name, ns string) error {
+	cmd := exec.Command("kubectl", "delete", resource, name, "-n", ns,
+		"--ignore-not-found", "--wait=false")
+	_, err := utils.Run(cmd)
+	return err
+}
+
 // kubectlDeleteIgnoreNotFound best-effort deletes without waiting (test cleanup).
 func kubectlDeleteIgnoreNotFound(resource, name, ns string) {
 	_ = exec.Command("kubectl", "delete", resource, name, "-n", ns, "--ignore-not-found").Run()

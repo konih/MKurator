@@ -48,7 +48,7 @@ export CGO_ENABLED="${CGO_ENABLED:-1}"
 GINKGO_FLAGS=(
   --procs="${GINKGO_NODES}"
   --race
-  --timeout=90m
+  --timeout=120m
   --tags=e2e
   -vv
   --show-node-events

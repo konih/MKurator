@@ -77,7 +77,10 @@ func ensureMQCredentialsSecret(ns string) {
 	)
 	manifest, err := utils.Run(cmd)
 	Expect(err).NotTo(HaveOccurred())
-	Expect(kubectlApply(manifest)).To(Succeed())
+	cmd = exec.Command("kubectl", "apply", "--server-side", "--force-conflicts", "-f", "-")
+	cmd.Stdin = strings.NewReader(manifest)
+	_, err = utils.Run(cmd)
+	Expect(err).NotTo(HaveOccurred(), "Failed to apply mq-credentials in %s", ns)
 }
 
 func cleanupE2EResources() {

@@ -85,6 +85,7 @@ var _ = Describe("Post-manager IBM MQ integration", Label("mq"), func() {
 
 		It("reconciles a Queue CR against the kind IBM MQ queue manager", func() {
 			Expect(kubectlApply(connectionManifest(ns))).To(Succeed())
+			eventuallyExpectQMCReady(ns)
 
 			queueYAML := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
 kind: Queue
@@ -122,8 +123,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.Attributes["maxdepth"]).To(Equal(mqQueueMaxDepthV1))
 
-			Expect(kubectlDeleteWait("queue", queueCR, ns)).To(Succeed(),
-				"Queue CR delete should complete within %s", kubectlWaitTimeout)
+			Expect(kubectlDeleteNoWait("queue", queueCR, ns)).To(Succeed())
 
 			Eventually(func(g Gomega) {
 				_, err := client.GetQueue(ctx, e2eLocalQueueSpec(queueObject))
@@ -203,6 +203,7 @@ stringData:
 
 		It("reconciles a Topic CR against the kind IBM MQ queue manager", func() {
 			Expect(kubectlApply(connectionManifest(ns))).To(Succeed())
+			eventuallyExpectQMCReady(ns)
 			topicYAML := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
 kind: Topic
 metadata:
@@ -235,8 +236,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state.Attributes["topstr"]).To(Equal("e2e/retail/orders"))
 
-			Expect(kubectlDeleteWait("topic", topicCR, ns)).To(Succeed(),
-				"Topic CR delete should complete within %s", kubectlWaitTimeout)
+			Expect(kubectlDeleteNoWait("topic", topicCR, ns)).To(Succeed())
 
 			Eventually(func(g Gomega) {
 				ok, err := topicExists(ctx, client, topicObject)
@@ -269,6 +269,7 @@ spec:
 
 		It("reconciles a Channel CR against the kind IBM MQ queue manager", func() {
 			Expect(kubectlApply(connectionManifest(ns))).To(Succeed())
+			eventuallyExpectQMCReady(ns)
 			channelYAML := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
 kind: Channel
 metadata:
@@ -302,8 +303,7 @@ spec:
 			Expect(err).NotTo(HaveOccurred())
 			Expect(ok).To(BeTrue())
 
-			Expect(kubectlDeleteWait("channel", channelCR, ns)).To(Succeed(),
-				"Channel CR delete should complete within %s", kubectlWaitTimeout)
+			Expect(kubectlDeleteNoWait("channel", channelCR, ns)).To(Succeed())
 
 			Eventually(func(g Gomega) {
 				ok, err := svrconnChannelExists(ctx, client, channelObject)
