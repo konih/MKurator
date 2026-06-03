@@ -37,7 +37,7 @@ resource "helm_release" "kube_prometheus_stack" {
 
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "kube-prometheus-stack"
-  version    = "84.4.0"
+  version    = "84.5.0"
 
   wait    = true
   timeout = 900

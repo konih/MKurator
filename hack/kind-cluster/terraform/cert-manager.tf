@@ -7,7 +7,7 @@ resource "helm_release" "cert_manager" {
   chart      = "cert-manager"
 
   # Pinned to avoid surprise upgrades in local dev.
-  version = "v1.18.2"
+  version = "v1.20.2"
 
   wait    = true
   timeout = 600

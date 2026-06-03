@@ -5,7 +5,7 @@ resource "helm_release" "haproxy_ingress" {
 
   repository = "https://haproxy-ingress.github.io/charts"
   chart      = "haproxy-ingress"
-  version    = "0.14.7"
+  version    = "0.16.1"
 
   wait    = true
   timeout = 600
