@@ -148,8 +148,9 @@ before access-control work.
 - [x] Drift detection: case-insensitive `pub`/`sub`/policies; channel `maxinst` /
   `maxinstc`; topic `pubscope`/`subscope` where mqweb DISPLAY allows.
 - [x] **Alias** and **remote** queue types (`QALIAS`, `QREMOTE`) with drift detection.
-- [ ] Optional: extend queue DISPLAY list (`share`, `defopts`, …) after mqweb 9.4
-  compatibility testing; TLS channel attrs (`sslciph`, `sslcauth`) for drift.
+- [ ] Optional: TLS channel attrs (`sslciph`, `sslcauth`) for drift. Queue attrs
+  `share`, `defopts`, `bothresh`, `boqname`, `usage` remain DEFINE-only on mqweb
+  9.4 (`MQWB0120E` on DISPLAY); drift for those deferred until mqweb allows it.
 
 Exit criteria: at least **Topic** and one **Channel** kind reconcile end-to-end on
 kind with the same quality bar as Phase 2 (`verify`, ≥90% `internal/` coverage,
@@ -165,7 +166,7 @@ e2e green) — **met** (optional DISPLAY/TLS drift extensions above remain open)
 - [x] Unit tests (`internal/validation`) + envtest admission tests; optional e2e negative apply.
 - [x] Optional: deny `QueueManagerConnection` delete while dependent CRs exist.
 
-Exit criteria: **met** — invalid manifests rejected by `kubectl apply` on kind (Kustomize and Helm verified); `task test:run` includes webhook envtest suite; see [plans/VALIDATING_WEBHOOKS_FOLLOWUPS.md](plans/VALIDATING_WEBHOOKS_FOLLOWUPS.md).
+Exit criteria: **met** — invalid manifests rejected by `kubectl apply` on kind (Kustomize and Helm verified); `task test:run` includes webhook envtest suite.
 
 ## Phase 5 — User & authority management
 
@@ -177,20 +178,29 @@ reference MQSC; e2e fixture
 
 - [x] `ChannelAuthRule` and `AuthorityRecord` CRDs — API, CRDs, `MQAdmin` port,
   `mqrest` adapter (`SET CHLAUTH` / `SET AUTHREC`), thin reconcilers, validating
-  webhooks, samples, Docker integration tests.
+  webhooks, samples, Docker integration tests (including auth delete/update paths).
 - [x] **E2e on kind** — `ChannelAuthRule` and `AuthorityRecord` reconcile and
-  delete in [`test/e2e/mq_e2e_test.go`](../test/e2e/mq_e2e_test.go).
+  delete in [`test/e2e/mq_e2e_test.go`](../test/e2e/mq_e2e_test.go); adapter GET
+  helpers for auth assertions; admission negative tests for invalid Queue and
+  ChannelAuthRule without a matching Channel.
+- [x] **MQAdmin GET + drift** — `GetChannelAuth` / `GetAuthority`; replace-on-diff
+  in auth reconcilers; `status.desiredMQSC` on auth CRs.
+- [x] Release tags **`v0.5.0`** and **`v0.5.1`** published on GitHub.
 
 **Remaining:**
 
-- [ ] Release tag **`v0.5.0`** published (see
-  [plans/RELEASE_0.5.0_FOLLOWUPS.md](plans/RELEASE_0.5.0_FOLLOWUPS.md)).
+- [ ] Confirm GitHub Actions **CI**, **Integration**, and **E2E** workflows green
+  on the `v0.5.1` tag push.
+- [ ] **`task ci:e2e` green locally** — maintainer verification of full kind + MQ
+  stack (Kustomize deploy path).
 - [ ] Additional CHLAUTH rule types (`BLOCKUSER`, `USERMAP`, …) — schema present;
-  extend samples and e2e when needed.
+  extend samples, integration, and e2e when needed.
+- [ ] Optional: integration coverage for a second CHLAUTH rule type or AUTHREC
+  object type beyond `ADDRESSMAP` / `QUEUE`.
 
 Exit criteria: declarative channel auth and OAM authority records reconciled on
-kind with e2e coverage — **partial** (reconcilers, integration tests, and auth e2e
-shipped; release tag and extended rule types pending).
+kind with e2e coverage — **partial** (core auth shipped and tagged; CI proof on
+tag and extended rule types pending).
 
 ## Repo visibility
 
@@ -215,3 +225,7 @@ shipped; release tag and extended rule types pending).
 - Documentation site and OCI Helm chart registry (release today attaches `.tgz`
   to GitHub Releases; GHCR chart push is optional follow-up).
 - Commit generated `docs/schemas/mqweb-swagger.json` per target MQ version.
+- **Admission (optional):** envtest assertion for unknown-attribute warnings;
+  e2e suite variant with Helm deploy instead of Kustomize.
+- **Runtime cleanup:** migrate off deprecated `GetEventRecorderFor` when
+  controller-runtime guidance is stable.

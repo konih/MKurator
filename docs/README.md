@@ -30,7 +30,6 @@
 | 🏗️ | [adr/](adr/) | Architecture Decision Records |
 | 📋 | [ROADMAP.md](ROADMAP.md) | Phased delivery plan |
 | 📋 | [PHASE5_AUTH_SKETCH.md](PHASE5_AUTH_SKETCH.md) | Phase 5 CHLAUTH / AUTHREC (shipped + roadmap) |
-| 📋 | [plans/RELEASE_0.5.0_FOLLOWUPS.md](plans/RELEASE_0.5.0_FOLLOWUPS.md) | Release 0.5.0 checklist (e2e auth, tag, CI) |
 | 📋 | [NON_FUNCTIONAL_REQUIREMENTS.md](NON_FUNCTIONAL_REQUIREMENTS.md) | Security, reliability, observability, performance |
 | 📋 | [CICD.md](CICD.md) | CI/CD pipeline and `verify` discipline |
 | 🔒 | [../SECURITY.md](../SECURITY.md) | Security posture and vulnerability reporting |

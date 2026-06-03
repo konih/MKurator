@@ -427,7 +427,7 @@ set and the kind platform with IBM MQ is up. Without that, the scaffold e2e suit
 `hack/kind-cluster` (`QM1`, `admin` / `passw0rd`, endpoint
 `https://ibm-mq.ibm-mq.svc:9443`). Override with `KURATOR_E2E_MQ_*` env vars
 documented in [`test/e2e/fixtures/README.md`](../test/e2e/fixtures/README.md).
-Optional follow-ups: [plans/RELEASE_0.5.0_FOLLOWUPS.md](plans/RELEASE_0.5.0_FOLLOWUPS.md).
+Phase 5 and test-tier follow-ups: [ROADMAP.md](ROADMAP.md#phase-5--user--authority-management).
 
 Guidelines:
 

@@ -16,8 +16,8 @@ mqweb and belong in reconcile ([ADR-0002](0002-manage-mq-via-mqweb-rest.md),
 [ADR-0003](0003-connection-model.md)).
 
 Phase 4b delivered validating webhooks for all shipped v1alpha1 CRDs. See
-[../plans/VALIDATING_WEBHOOKS.md](../plans/VALIDATING_WEBHOOKS.md) for the
-implementation plan.
+[ARCHITECTURE.md](../ARCHITECTURE.md) and [ROADMAP.md](../ROADMAP.md#phase-4b--validating-admission-webhooks-pre-phase-5)
+for the as-built design.
 
 ## Decision
 

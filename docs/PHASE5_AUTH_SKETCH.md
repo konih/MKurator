@@ -19,8 +19,9 @@ CRD reconciles `DEFINE CHANNEL` … `CHLTYPE(SVRCONN)` with drift detection. See
 - Samples: [`config/samples/`](../config/samples/) · integration tests in
   [`test/integration/mq/`](../test/integration/mq/)
 
-**Remaining:** optional webhook negative e2e and drift-aware auth reconcile — see
-[plans/RELEASE_0.5.0_FOLLOWUPS.md](plans/RELEASE_0.5.0_FOLLOWUPS.md).
+**Remaining:** extended CHLAUTH rule types, CI proof on release tag, and optional
+integration coverage for additional rule/object types — see
+[ROADMAP.md](ROADMAP.md#phase-5--user--authority-management).
 
 Kurator reconciles Phase 5 objects via the existing **mqweb `/mqsc`** path
 ([ADR-0002](adr/0002-manage-mq-via-mqweb-rest.md)), not via IBM’s ConfigMap-at-
@@ -110,6 +111,5 @@ still use replace-on-apply; drift-aware auth reconcile is a follow-up.
 
 Channel/auth MQSC used to validate mqweb lives under
 [`test/e2e/fixtures/`](../test/e2e/fixtures/). Queue/Topic/Channel/auth reconcile
-e2e is in [`test/e2e/mq_e2e_test.go`](../test/e2e/mq_e2e_test.go). Optional
-follow-ups (webhook negative apply, drift-aware auth reconcile) are tracked in
-[RELEASE_0.5.0_FOLLOWUPS.md](plans/RELEASE_0.5.0_FOLLOWUPS.md).
+e2e is in [`test/e2e/mq_e2e_test.go`](../test/e2e/mq_e2e_test.go). Remaining
+Phase 5 items are tracked in [ROADMAP.md](ROADMAP.md#phase-5--user--authority-management).
