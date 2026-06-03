@@ -18,12 +18,48 @@ const kubectlWaitTimeout = "2m"
 // KubectlWaitDuration matches kubectlWaitTimeout for Gomega Eventually blocks.
 const KubectlWaitDuration = 2 * time.Minute
 
+const (
+	webhookApplyRetryTimeout  = 2 * time.Minute
+	webhookApplyRetryInterval = 2 * time.Second
+)
+
 // kubectlApply applies a multi-document manifest from stdin.
 func kubectlApply(manifest string) error {
 	cmd := exec.Command("kubectl", "apply", "-f", "-")
 	cmd.Stdin = strings.NewReader(manifest)
 	_, err := utils.Run(cmd)
 	return err
+}
+
+// isWebhookConnectionRefused reports transient failures reaching the validating webhook.
+func isWebhookConnectionRefused(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "connection refused") ||
+		strings.Contains(msg, "no endpoints available") ||
+		strings.Contains(msg, "failed calling webhook")
+}
+
+// applyWithWebhookRetry applies a manifest, retrying when the API server cannot reach the webhook.
+func applyWithWebhookRetry(manifest string) error {
+	deadline := time.Now().Add(webhookApplyRetryTimeout)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		lastErr = kubectlApply(manifest)
+		if lastErr == nil {
+			return nil
+		}
+		if !isWebhookConnectionRefused(lastErr) {
+			return lastErr
+		}
+		time.Sleep(webhookApplyRetryInterval)
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("timed out after %s waiting for webhook", webhookApplyRetryTimeout)
+	}
+	return fmt.Errorf("kubectl apply (webhook retries exhausted): %w", lastErr)
 }
 
 // kubectlDeleteWait deletes a namespaced resource and blocks until removal or kubectlWaitTimeout.

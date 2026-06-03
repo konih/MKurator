@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -142,4 +143,40 @@ func waitForControllerAndWebhookReady() {
 		g.Expect(runErr).NotTo(HaveOccurred())
 		g.Expect(out).NotTo(BeEmpty(), "webhook service should have endpoints")
 	}).WithTimeout(5 * time.Minute).WithPolling(2 * time.Second).Should(Succeed())
+
+	Eventually(func(g Gomega) {
+		cmd := exec.Command("kubectl", "get", "validatingwebhookconfiguration",
+			"kurator-validating-webhook-configuration")
+		_, runErr := utils.Run(cmd)
+		g.Expect(runErr).NotTo(HaveOccurred(), "ValidatingWebhookConfiguration should exist")
+	}).WithTimeout(2 * time.Minute).WithPolling(2 * time.Second).Should(Succeed())
+
+	Eventually(func(g Gomega) {
+		g.Expect(webhookAdmissionResponds()).To(Succeed(), "validating webhook should accept traffic")
+	}).WithTimeout(3 * time.Minute).WithPolling(2 * time.Second).Should(Succeed())
+}
+
+// webhookAdmissionResponds checks the validating webhook is reachable by dry-running an invalid Queue.
+func webhookAdmissionResponds() error {
+	invalidQueue := fmt.Sprintf(`apiVersion: messaging.kurator.dev/v1alpha1
+kind: Queue
+metadata:
+  name: webhook-readiness-probe
+  namespace: %s
+spec:
+  connectionRef:
+    name: missing-qmc-webhook-readiness
+  queueName: APP.INVALID
+  type: alias
+`, namespace)
+	apply := exec.Command("kubectl", "apply", "--dry-run=server", "-f", "-")
+	apply.Stdin = strings.NewReader(invalidQueue)
+	_, err := utils.Run(apply)
+	if err == nil {
+		return fmt.Errorf("invalid Queue dry-run should be rejected by admission")
+	}
+	if isWebhookConnectionRefused(err) {
+		return err
+	}
+	return nil
 }
