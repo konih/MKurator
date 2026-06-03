@@ -31,23 +31,30 @@ func TestCRDSpecOpenAPIFragments(t *testing.T) {
 
 			goldenPath := GoldenPath(root, tc.GoldenFile)
 			if update {
-				if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
-					t.Fatalf("mkdir golden dir: %v", err)
+				if mkdirErr := os.MkdirAll(filepath.Dir(goldenPath), 0o750); mkdirErr != nil {
+					t.Fatalf("mkdir golden dir: %v", mkdirErr)
 				}
-				if err := os.WriteFile(goldenPath, got, 0o644); err != nil {
-					t.Fatalf("write golden: %v", err)
+				if writeErr := os.WriteFile(goldenPath, got, 0o600); writeErr != nil {
+					t.Fatalf("write golden: %v", writeErr)
 				}
 				t.Logf("updated %s", goldenPath)
 				return
 			}
 
-			want, err := os.ReadFile(goldenPath)
-			if err != nil {
-				t.Fatalf("read golden %q: %v (run UPDATE_GOLDEN=1 go test ./test/schema/ -run TestCRDSpecOpenAPIFragments)", goldenPath, err)
+			//nolint:gosec // G304: goldenPath is repo-relative under test/schema/golden.
+			want, readErr := os.ReadFile(goldenPath)
+			if readErr != nil {
+				t.Fatalf(
+					"read golden %q: %v (run UPDATE_GOLDEN=1 go test ./test/schema/ -run TestCRDSpecOpenAPIFragments)",
+					goldenPath,
+					readErr,
+				)
 			}
 			if !bytes.Equal(got, want) {
 				t.Fatalf(
-					"OpenAPI spec fragment drift for %s\nrun: UPDATE_GOLDEN=1 go test ./test/schema/ -run TestCRDSpecOpenAPIFragments\nor: task test:schema:update",
+					"OpenAPI spec fragment drift for %s\n"+
+						"run: UPDATE_GOLDEN=1 go test ./test/schema/ -run TestCRDSpecOpenAPIFragments\n"+
+						"or: task test:schema:update",
 					tc.CRDFile,
 				)
 			}

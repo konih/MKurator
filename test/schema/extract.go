@@ -23,7 +23,10 @@ var DefaultCases = []SpecFragmentCase{
 	{CRDFile: "messaging.kurator.dev_channels.yaml", GoldenFile: "channel.spec.openapi.yaml"},
 	{CRDFile: "messaging.kurator.dev_channelauthrules.yaml", GoldenFile: "channelauthrule.spec.openapi.yaml"},
 	{CRDFile: "messaging.kurator.dev_authorityrecords.yaml", GoldenFile: "authorityrecord.spec.openapi.yaml"},
-	{CRDFile: "messaging.kurator.dev_queuemanagerconnections.yaml", GoldenFile: "queuemanagerconnection.spec.openapi.yaml"},
+	{
+		CRDFile:    "messaging.kurator.dev_queuemanagerconnections.yaml",
+		GoldenFile: "queuemanagerconnection.spec.openapi.yaml",
+	},
 }
 
 // ExtractSpecOpenAPIFragment returns the storage-version .spec OpenAPI subtree from a CRD YAML file.

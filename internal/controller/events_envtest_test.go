@@ -237,7 +237,8 @@ func hasEventsAPIEvent(ctx context.Context, ns, kind, name, eventType, reason st
 		if ev.Type != eventType || ev.Reason != reason {
 			continue
 		}
-		if gvk := ev.GetObjectKind().GroupVersionKind(); gvk.Group != "" && (gvk.Group != "events.k8s.io" || gvk.Version != "v1") {
+		gvk := ev.GetObjectKind().GroupVersionKind()
+		if gvk.Group != "" && (gvk.Group != "events.k8s.io" || gvk.Version != "v1") {
 			continue
 		}
 		if ev.Action != eventActionReconcile {
