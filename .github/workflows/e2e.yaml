@@ -33,7 +33,7 @@ env:
 
 jobs:
   e2e:
-    name: e2e
+    name: e2e (kustomize)
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -76,6 +76,57 @@ jobs:
         run: task test:e2e
         env:
           CI: "true"
+
+      - name: Tear down platform
+        if: always()
+        run: task cluster:down
+        env:
+          CI: "true"
+
+  e2e-helm:
+    name: e2e (helm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    # Helm deploy path is slower; run on main pushes and manual dispatch (not every PR).
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version-file: go.mod
+
+      - uses: arduino/setup-task@b91d5d2c96a56797b48ac1e0e89220bf64044611 # v2.0.0
+        with:
+          version: 3.51.1
+
+      - name: Install platform tools (kind, mkcert, terraform)
+        run: task tools:install
+
+      - name: Expose platform tools on PATH
+        run: |
+          bindir="${{ github.workspace }}/bin"
+          echo "${bindir}" >> "${GITHUB_PATH}"
+          echo "PATH=${bindir}:${PATH}" >> "${GITHUB_ENV}"
+          echo "KIND=${bindir}/kind" >> "${GITHUB_ENV}"
+
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+
+      - name: Bring up kind + IBM MQ platform
+        run: task cluster:up
+        env:
+          CI: "true"
+
+      - name: Wait for mqweb
+        run: bash hack/ci/wait-mqweb.sh
+
+      - name: Run e2e tests (Helm deploy)
+        run: task test:e2e:helm
+        env:
+          CI: "true"
+          KURATOR_E2E_DEPLOY: helm
 
       - name: Tear down platform
         if: always()
