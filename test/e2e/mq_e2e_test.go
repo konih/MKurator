@@ -426,15 +426,28 @@ spec:
 				g.Expect(out).To(Equal("True"))
 			}).WithTimeout(3 * time.Minute).WithPolling(5 * time.Second).Should(Succeed())
 
-			ok, err := chlauthRuleExists(ctx, client, e2eChannelName)
+			carSpec := mqadmin.ChannelAuthSpec{
+				ChannelName: e2eChannelName,
+				RuleType:    mqadmin.ChannelAuthRuleTypeAddressMap,
+				Address:     "*",
+				UserSource:  "CHANNEL",
+				CheckClient: "REQUIRED",
+				Description: "e2e address map rule",
+			}
+			ok, err := channelAuthMatches(ctx, client, carSpec)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(ok).To(BeTrue())
+			Expect(ok).To(BeTrue(), "CHLAUTH for %s should match ChannelAuthRule spec", e2eChannelName)
 
 			Expect(kubectlDeleteWait("channelauthrule", mqChannelAuthCRName, namespace)).To(Succeed(),
 				"ChannelAuthRule CR delete should complete within %s", kubectlWaitTimeout)
 
+			carLookup := mqadmin.ChannelAuthSpec{
+				ChannelName: e2eChannelName,
+				RuleType:    mqadmin.ChannelAuthRuleTypeAddressMap,
+				Address:     "*",
+			}
 			Eventually(func(g Gomega) {
-				ok, err := chlauthRuleExists(ctx, client, e2eChannelName)
+				ok, err := channelAuthExists(ctx, client, carLookup)
 				g.Expect(err).NotTo(HaveOccurred())
 				g.Expect(ok).To(BeFalse(), "CHLAUTH for %s should be removed from MQ after CR delete", e2eChannelName)
 			}).WithTimeout(KubectlWaitDuration).WithPolling(3 * time.Second).Should(Succeed())
@@ -496,15 +509,26 @@ spec:
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 
-			ok, err := authorityRecordExists(ctx, client, mqQueueObject, "QUEUE", "app")
+			authSpec := mqadmin.AuthoritySpec{
+				Profile:     mqQueueObject,
+				ObjectType:  mqadmin.AuthorityObjectTypeQueue,
+				Principal:   "app",
+				Authorities: []string{"GET", "PUT"},
+			}
+			ok, err := authorityMatches(ctx, client, authSpec)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(ok).To(BeTrue())
+			Expect(ok).To(BeTrue(), "AUTHREC for queue %s principal app should match AuthorityRecord spec", mqQueueObject)
 
 			Expect(kubectlDeleteWait("authorityrecord", mqAuthorityCRName, namespace)).To(Succeed(),
 				"AuthorityRecord CR delete should complete within %s", kubectlWaitTimeout)
 
+			authLookup := mqadmin.AuthoritySpec{
+				Profile:    mqQueueObject,
+				ObjectType: mqadmin.AuthorityObjectTypeQueue,
+				Principal:  "app",
+			}
 			Eventually(func(g Gomega) {
-				ok, err := authorityRecordExists(ctx, client, mqQueueObject, "QUEUE", "app")
+				ok, err := authorityExists(ctx, client, authLookup)
 				g.Expect(err).NotTo(HaveOccurred())
 				g.Expect(ok).To(BeFalse(), "AUTHREC for queue %s principal app should be removed after CR delete", mqQueueObject)
 			}).WithTimeout(KubectlWaitDuration).WithPolling(3 * time.Second).Should(Succeed())

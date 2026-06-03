@@ -34,7 +34,7 @@ issue `DISPLAY CHLAUTH` / `DISPLAY AUTHREC` MQSC via `runCommand`.
 - [x] Unit tests (`auth_test.go`, `client_test.go`, `mqsc_params_test.go`)
 - [x] Docker integration tests (`test/integration/mq/auth_integration_test.go`)
 - [x] Wire GET paths into auth reconcilers for drift-aware reconcile (replace-on-diff)
-- [ ] Extend e2e helpers to use adapter GET instead of raw `RunMQSC` DISPLAY
+- [x] Extend e2e helpers to use adapter GET instead of raw `RunMQSC` DISPLAY
 
 ## Release mechanics
 
@@ -49,6 +49,7 @@ issue `DISPLAY CHLAUTH` / `DISPLAY AUTHREC` MQSC via `runCommand`.
 - [x] Add `task format:check` to `ci.yaml` (Task target already exists)
 - [x] Path filters on integration/e2e workflows to skip when only docs change
 - [x] Scheduled `govulncheck` workflow (if not already covered by Renovate weekly) — covered by CI `govulncheck` job on every push/PR
+- [x] Integration test tier audit — [INTEGRATION_TEST_AUDIT.md](INTEGRATION_TEST_AUDIT.md)
 
 ## GitOps debugging
 

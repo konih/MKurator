@@ -6,6 +6,7 @@ package e2e
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -152,38 +153,50 @@ func channelExists(ctx context.Context, client *mqrest.Client, name string) (boo
 	return false, err
 }
 
-func chlauthRuleExists(ctx context.Context, client *mqrest.Client, channelName string) (bool, error) {
-	cmd := fmt.Sprintf("DISPLAY CHLAUTH('%s') TYPE(ADDRESSMAP)", strings.ReplaceAll(channelName, "'", "''"))
-	err := client.RunMQSC(ctx, cmd)
+// channelAuthExists reports whether a CHLAUTH rule is present on MQ (adapter GET path).
+func channelAuthExists(ctx context.Context, client *mqrest.Client, spec mqadmin.ChannelAuthSpec) (bool, error) {
+	_, err := client.GetChannelAuth(ctx, spec)
 	if err == nil {
 		return true, nil
 	}
-	if strings.Contains(strings.ToUpper(err.Error()), "AMQ8147") ||
-		strings.Contains(strings.ToUpper(err.Error()), "AMQ8958") ||
-		strings.Contains(strings.ToLower(err.Error()), "not found") {
+	if errors.Is(err, mqadmin.ErrNotFound) {
 		return false, nil
 	}
 	return false, err
 }
 
-func authorityRecordExists(
-	ctx context.Context,
-	client *mqrest.Client,
-	profile, objectType, principal string,
-) (bool, error) {
-	cmd := fmt.Sprintf("DISPLAY AUTHREC PROFILE('%s') OBJTYPE(%s) PRINCIPAL('%s')",
-		strings.ReplaceAll(profile, "'", "''"),
-		objectType,
-		strings.ReplaceAll(principal, "'", "''"),
-	)
-	err := client.RunMQSC(ctx, cmd)
+// channelAuthMatches reports whether observed CHLAUTH attributes match the desired spec.
+func channelAuthMatches(ctx context.Context, client *mqrest.Client, spec mqadmin.ChannelAuthSpec) (bool, error) {
+	state, err := client.GetChannelAuth(ctx, spec)
+	if err != nil {
+		if errors.Is(err, mqadmin.ErrNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return !mqadmin.ChannelAuthNeedsUpdate(spec, state), nil
+}
+
+// authorityExists reports whether an AUTHREC is present on MQ (adapter GET path).
+func authorityExists(ctx context.Context, client *mqrest.Client, spec mqadmin.AuthoritySpec) (bool, error) {
+	_, err := client.GetAuthority(ctx, spec)
 	if err == nil {
 		return true, nil
 	}
-	if strings.Contains(strings.ToUpper(err.Error()), "AMQ8147") ||
-		strings.Contains(strings.ToUpper(err.Error()), "AMQ8958") ||
-		strings.Contains(strings.ToLower(err.Error()), "not found") {
+	if errors.Is(err, mqadmin.ErrNotFound) {
 		return false, nil
 	}
 	return false, err
+}
+
+// authorityMatches reports whether observed OAM authorities match the desired spec.
+func authorityMatches(ctx context.Context, client *mqrest.Client, spec mqadmin.AuthoritySpec) (bool, error) {
+	state, err := client.GetAuthority(ctx, spec)
+	if err != nil {
+		if errors.Is(err, mqadmin.ErrNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return !mqadmin.AuthorityNeedsUpdate(spec, state), nil
 }
