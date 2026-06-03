@@ -305,20 +305,12 @@ tasks:
       KIND_CLUSTER: "{{.CLUSTER_NAME}}"
       KUBECONFIG: "{{.KUBECONFIG}}"
     cmds:
-      - bash hack/ci/step.sh "Phase 1/3 — kind cluster + IBM MQ platform (task cluster:up)"
-      - task: cluster:up
-      - bash hack/ci/step.sh "Phase 2/3 — wait for mqweb (NodePort / HAProxy)"
-      - bash hack/ci/wait-mqweb.sh
-      - bash hack/ci/step.sh "Phase 3/3 — Ginkgo e2e suite (image build + deploy)"
-      - task: test:e2e
+      - bash hack/ci/run-ci-e2e.sh
 
   ci:integration:
     desc: "Integration test parity with GitHub Actions (Docker MQ up, test, down)"
     cmds:
-      - task: mq:integration:up
-      - task: mq:integration:wait
-      - task: test:integration
-      - task: mq:integration:down
+      - bash hack/ci/run-ci-integration.sh
 
   tools:check:
     desc: Verify dev tools for tier A/B/C (TOOLS_TIER env, default C)

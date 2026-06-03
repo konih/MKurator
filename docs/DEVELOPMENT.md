@@ -390,6 +390,13 @@ queue/topic/channel. **Alias and remote queues** are exercised here only (e2e
 uses local queues). Uses `//go:build integration` in
 [`test/integration/mq/`](../test/integration/mq/).
 
+**Machine lock:** e2e and integration share Docker MQ, kind, kubeconfig, and
+operator deploy on one host — only one suite may run at a time. Entry points
+acquire a file lock (`flock`) at
+`hack/kind-cluster/.state/locks/exclusive-test.lock`. A second concurrent run
+exits immediately with the lock path and holder PID; wait for the other run or
+stop that process.
+
 ```sh
 task test:integration:local   # docker compose up + wait + tests (first run: image pull)
 # or, if the container is already up:
@@ -427,6 +434,8 @@ set and the kind platform with IBM MQ is up. Without that, the scaffold e2e suit
 `hack/kind-cluster` (`QM1`, `admin` / `passw0rd`, endpoint
 `https://ibm-mq.ibm-mq.svc:9443`). Override with `KURATOR_E2E_MQ_*` env vars
 documented in [`test/e2e/fixtures/README.md`](../test/e2e/fixtures/README.md).
+The same **machine lock** as integration applies (`exclusive-test.lock`); do not
+run `task ci:e2e`, `task test:e2e`, and integration tasks in parallel on one host.
 Phase 5 and test-tier follow-ups: [ROADMAP.md](ROADMAP.md#phase-5--user--authority-management).
 
 Guidelines:

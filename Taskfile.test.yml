@@ -79,11 +79,9 @@ tasks:
       KURATOR_INTEGRATION_MQ_INSECURE_TLS:
         sh: echo "${KURATOR_INTEGRATION_MQ_INSECURE_TLS:-true}"
     cmds:
-      - go test -tags=integration -race -v ./test/integration/mq/...
+      - bash hack/ci/run-integration.sh
 
   integration:local:
     desc: Start Docker MQ, wait for mqweb, run integration tests (container left running)
     cmds:
-      - task: mq:integration:up
-      - task: mq:integration:wait
-      - task: test:integration
+      - bash hack/ci/run-integration-local.sh
