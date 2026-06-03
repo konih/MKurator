@@ -32,6 +32,38 @@ func TestChannelAuthNeedsUpdate(t *testing.T) {
 	}
 }
 
+func TestChannelAuthNeedsUpdateAddress(t *testing.T) {
+	t.Parallel()
+	desired := ChannelAuthSpec{
+		ChannelName: "CH1",
+		RuleType:    ChannelAuthRuleTypeAddressMap,
+		Address:     "*",
+	}
+	observed := &ChannelAuthState{ChannelName: "CH1", RuleType: ChannelAuthRuleTypeAddressMap, Address: "127.0.0.1"}
+	if !ChannelAuthNeedsUpdate(desired, observed) {
+		t.Fatal("expected update when address drifts")
+	}
+}
+
+func TestChannelAuthNeedsUpdateDescription(t *testing.T) {
+	t.Parallel()
+	desired := ChannelAuthSpec{
+		ChannelName: "CH1",
+		RuleType:    ChannelAuthRuleTypeAddressMap,
+		Address:     "*",
+		Description: "new",
+	}
+	observed := &ChannelAuthState{
+		ChannelName: "CH1",
+		RuleType:    ChannelAuthRuleTypeAddressMap,
+		Address:     "*",
+		Description: "old",
+	}
+	if !ChannelAuthNeedsUpdate(desired, observed) {
+		t.Fatal("expected update when description drifts")
+	}
+}
+
 func TestChannelAuthNeedsUpdateUserList(t *testing.T) {
 	t.Parallel()
 	desired := ChannelAuthSpec{
@@ -50,6 +82,13 @@ func TestChannelAuthNeedsUpdateUserList(t *testing.T) {
 	observed.UserList = "admin"
 	if !ChannelAuthNeedsUpdate(desired, observed) {
 		t.Fatal("expected update when user list drifts")
+	}
+}
+
+func TestAuthoritySetsEqualDifferentLengths(t *testing.T) {
+	t.Parallel()
+	if authoritySetsEqual([]string{"GET", "PUT"}, []string{"GET"}) {
+		t.Fatal("expected unequal for different lengths")
 	}
 }
 

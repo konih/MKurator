@@ -1052,3 +1052,104 @@ func TestClient_GetQueueUnsupportedType(t *testing.T) {
 		t.Fatalf("expected terminal error, got %v", err)
 	}
 }
+
+func TestClient_GetAuthorityDisplayTextFallback(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			testKeyCommandResponse: []map[string]any{{
+				testKeyCompletionCode: 0,
+				"text":                []string{"AUTHLIST(GET,PUT)"},
+			}},
+			testKeyOverallCompletionCode: 0,
+		})
+	}))
+	defer srv.Close()
+
+	c := newTestClient(t, srv.URL, srv.Client())
+	spec := mqadmin.AuthoritySpec{
+		Profile:    "APP.ORDERS",
+		ObjectType: mqadmin.AuthorityObjectTypeQueue,
+		Principal:  "app",
+	}
+	state, err := c.GetAuthority(context.Background(), spec)
+	if err != nil {
+		t.Fatalf("GetAuthority: %v", err)
+	}
+	if len(state.Authorities) == 0 {
+		t.Fatalf("expected authorities from text display, state = %+v", state)
+	}
+}
+
+func TestClient_DeleteChannelAuthInvalidSpec(t *testing.T) {
+	t.Parallel()
+	c := newTestClient(t, "https://example.invalid", http.DefaultClient)
+	err := c.DeleteChannelAuth(context.Background(), mqadmin.ChannelAuthSpec{})
+	if err == nil || !errors.Is(err, mqadmin.ErrTerminal) {
+		t.Fatalf("expected terminal error, got %v", err)
+	}
+}
+
+func TestClient_GetChannelAuthDisplayTextOnly(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			testKeyCommandResponse: []map[string]any{{
+				testKeyCompletionCode: 0,
+				"text":                []string{"ADDRESS(*)", "USERSRC(CHANNEL)"},
+			}},
+			testKeyOverallCompletionCode: 0,
+		})
+	}))
+	defer srv.Close()
+
+	c := newTestClient(t, srv.URL, srv.Client())
+	spec := mqadmin.ChannelAuthSpec{
+		ChannelName: "DEV.APP",
+		RuleType:    mqadmin.ChannelAuthRuleTypeAddressMap,
+	}
+	state, err := c.GetChannelAuth(context.Background(), spec)
+	if err != nil {
+		t.Fatalf("GetChannelAuth: %v", err)
+	}
+	if state.Address != "*" {
+		t.Fatalf("state = %+v", state)
+	}
+}
+
+func TestClient_GetAuthorityEmptyAuthListNotFound(t *testing.T) {
+	t.Parallel()
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			testKeyCommandResponse: []map[string]any{{
+				testKeyCompletionCode: 0,
+				"parameters":          map[string]any{},
+			}},
+			testKeyOverallCompletionCode: 0,
+		})
+	}))
+	defer srv.Close()
+
+	c := newTestClient(t, srv.URL, srv.Client())
+	spec := mqadmin.AuthoritySpec{
+		Profile:    "APP.EMPTY",
+		ObjectType: mqadmin.AuthorityObjectTypeQueue,
+		Principal:  "app",
+	}
+	_, err := c.GetAuthority(context.Background(), spec)
+	if err == nil || !errors.Is(err, mqadmin.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}

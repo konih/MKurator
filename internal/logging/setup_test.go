@@ -128,6 +128,18 @@ func TestSampleTextLogOutput(t *testing.T) {
 	t.Logf("sample text log line:\n%s", strings.TrimSpace(out))
 }
 
+func TestSetupWithWriter_InvalidLevel(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	err := logging.SetupWithWriter(logging.Config{
+		Level:  logging.Level("bogus"),
+		Format: logging.FormatJSON,
+	}, &buf)
+	if err == nil {
+		t.Fatal("expected error for invalid log level")
+	}
+}
+
 func nonEmptyLines(s string) []string {
 	var lines []string
 	for _, line := range strings.Split(strings.TrimSpace(s), "\n") {

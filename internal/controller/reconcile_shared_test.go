@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -172,7 +172,7 @@ func TestWaitForConnectionReady_Requeues(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: ns, Generation: 1},
 	}
 	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(q).WithObjects(q).Build()
-	recorder := record.NewFakeRecorder(1)
+	recorder := events.NewFakeRecorder(1)
 	result, wait, err := waitForConnectionReady(ctx, cl.Status(), recorder, q, conn, 1)
 	if err != nil || !wait || result.RequeueAfter != 15*time.Second {
 		t.Fatalf("result=%+v wait=%v err=%v", result, wait, err)
@@ -197,6 +197,20 @@ func TestWaitForConnectionReady_Requeues(t *testing.T) {
 	}
 }
 
+func TestWaitForConnectionReady_AlreadyReady(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	ns := "kurator-system"
+	conn := readyConnForUnit(ns)
+	q := &messagingv1alpha1.Queue{
+		ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: ns, Generation: 1},
+	}
+	result, wait, err := waitForConnectionReady(ctx, nil, nil, q, conn, 1)
+	if err != nil || wait || result != (ctrl.Result{}) {
+		t.Fatalf("result=%+v wait=%v err=%v", result, wait, err)
+	}
+}
+
 func TestPatchSyncedAvailable_Queue(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -206,7 +220,7 @@ func TestPatchSyncedAvailable_Queue(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: ns, Generation: 2},
 	}
 	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(q).WithObjects(q).Build()
-	recorder := record.NewFakeRecorder(1)
+	recorder := events.NewFakeRecorder(1)
 	exists := true
 	if err := patchSyncedAvailable(ctx, cl.Status(), recorder, q, 2, "synced",
 		syncStatusOpts{mqObjectExists: &exists}); err != nil {
@@ -272,7 +286,7 @@ func TestSetSyncedError_TerminalQueue(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: ns, Generation: 1},
 	}
 	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(q).WithObjects(q).Build()
-	recorder := record.NewFakeRecorder(1)
+	recorder := events.NewFakeRecorder(1)
 	result, err := setSyncedError(
 		ctx,
 		cl.Status(),

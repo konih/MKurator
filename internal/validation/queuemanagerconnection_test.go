@@ -2,6 +2,7 @@ package validation
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -19,6 +20,28 @@ func TestValidateQueueManagerConnectionSpecRequiredFields(t *testing.T) {
 	spec := &messagingv1alpha1.QueueManagerConnectionSpec{}
 	if errs := ValidateQueueManagerConnectionSpec(context.Background(), cl, "ns", nil, spec); len(errs) < 3 {
 		t.Fatalf("expected required field errors, got %v", errs)
+	}
+}
+
+func TestValidateQueueManagerConnectionDeleteWithTopic(t *testing.T) {
+	t.Parallel()
+	scheme := runtime.NewScheme()
+	_ = messagingv1alpha1.AddToScheme(scheme)
+	conn := sampleConnection("ns", "qm1")
+	topic := &messagingv1alpha1.Topic{
+		ObjectMeta: metav1.ObjectMeta{Name: "retail", Namespace: "ns"},
+		Spec: messagingv1alpha1.TopicSpec{
+			ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+			TopicName:     "RETAIL.ORDERS",
+		},
+	}
+	cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(conn, topic).Build()
+	errs := ValidateQueueManagerConnectionDelete(context.Background(), cl, conn)
+	if len(errs) == 0 {
+		t.Fatal("expected delete blocked when topic dependent exists")
+	}
+	if !strings.Contains(errs[0].Detail, "retail") {
+		t.Fatalf("detail = %q", errs[0].Detail)
 	}
 }
 

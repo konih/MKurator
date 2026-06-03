@@ -76,6 +76,27 @@ func TestMQConnectivityChecker_Check(t *testing.T) {
 		}
 	})
 
+	t.Run("list error", func(t *testing.T) {
+		t.Parallel()
+		cl := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+		checker := &MQConnectivityChecker{Client: cl}
+		if err := checker.Check(nil); err == nil {
+			t.Fatal("expected list error")
+		}
+	})
+
+	t.Run("constructor wraps checker", func(t *testing.T) {
+		t.Parallel()
+		c := fake.NewClientBuilder().
+			WithScheme(scheme).
+			WithStatusSubresource(&messagingv1alpha1.QueueManagerConnection{}).
+			Build()
+		check := NewMQConnectivityChecker(c)
+		if err := check(nil); err != nil {
+			t.Fatalf("Check() err = %v", err)
+		}
+	})
+
 	t.Run("only unready", func(t *testing.T) {
 		t.Parallel()
 		c := fake.NewClientBuilder().

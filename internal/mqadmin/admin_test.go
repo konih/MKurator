@@ -45,6 +45,18 @@ func TestTransientError(t *testing.T) {
 	}
 }
 
+func TestTransientErrorWithCause(t *testing.T) {
+	t.Parallel()
+	cause := fmt.Errorf("dial tcp: timeout")
+	err := &TransientError{Message: "mqweb unreachable", Cause: cause}
+	if err.Error() != "mqweb unreachable: dial tcp: timeout" {
+		t.Fatalf("Error() = %q", err.Error())
+	}
+	if !errors.Is(err, cause) {
+		t.Fatal("expected unwrap to cause")
+	}
+}
+
 func TestNotFoundError(t *testing.T) {
 	t.Parallel()
 	err := &NotFoundError{Object: "APP.X"}

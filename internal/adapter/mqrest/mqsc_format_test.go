@@ -145,6 +145,36 @@ func TestFormatSetChannelAuthMQSCBlockUser(t *testing.T) {
 	}
 }
 
+func TestFormatDefineQueueMQSC_Remote(t *testing.T) {
+	t.Parallel()
+	got, err := FormatDefineQueueMQSC(mqadmin.QueueSpec{
+		Name: "APP.REMOTE",
+		Type: mqadmin.QueueTypeRemote,
+		Attributes: map[string]string{
+			"xmitq": "SYSTEM.DEF.XMIT.QUEUE",
+		},
+	})
+	if err != nil {
+		t.Fatalf("FormatDefineQueueMQSC: %v", err)
+	}
+	if !strings.HasPrefix(got, "DEFINE QREMOTE('APP.REMOTE') REPLACE ") {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestFormatMQSCAttributeNumeric(t *testing.T) {
+	t.Parallel()
+	if got := formatMQSCAttribute("maxdepth", 5000); got != "MAXDEPTH(5000)" {
+		t.Fatalf("got %q", got)
+	}
+	if got := formatMQSCAttribute("maxdepth", int64(5000)); got != "MAXDEPTH(5000)" {
+		t.Fatalf("got %q", got)
+	}
+	if got := formatMQSCAttribute("maxdepth", float64(5000)); got != "MAXDEPTH(5000)" {
+		t.Fatalf("got %q", got)
+	}
+}
+
 func TestFormatSetAuthorityMQSC(t *testing.T) {
 	t.Parallel()
 	got, err := FormatSetAuthorityMQSC(mqadmin.AuthoritySpec{

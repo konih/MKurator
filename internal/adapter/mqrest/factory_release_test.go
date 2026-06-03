@@ -57,3 +57,46 @@ func TestClientFactory_ReleaseConnection(t *testing.T) {
 		t.Fatalf("expected empty cache after release, got %d entries", n)
 	}
 }
+
+func TestClientFactory_ForConnectionUsesCache(t *testing.T) {
+	ctx := context.Background()
+	ns := "kurator-system"
+	s := runtime.NewScheme()
+	if err := messagingv1alpha1.AddToScheme(s); err != nil {
+		t.Fatal(err)
+	}
+	if err := corev1.AddToScheme(s); err != nil {
+		t.Fatal(err)
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "mq-credentials", Namespace: ns, ResourceVersion: "1"},
+		Data: map[string][]byte{
+			"username":        []byte("admin"),
+			"mqAdminPassword": []byte("passw0rd"),
+		},
+	}
+	conn := &messagingv1alpha1.QueueManagerConnection{
+		ObjectMeta: metav1.ObjectMeta{Name: "qm1", Namespace: ns, Generation: 1},
+		Spec: messagingv1alpha1.QueueManagerConnectionSpec{
+			QueueManager:         "QM1",
+			Endpoint:             "https://ibm-mq.ibm-mq.svc:9443",
+			CredentialsSecretRef: messagingv1alpha1.SecretReference{Name: "mq-credentials"},
+		},
+	}
+
+	cl := fake.NewClientBuilder().WithScheme(s).WithObjects(secret, conn).Build()
+	factory := NewClientFactory(cl)
+
+	c1, err := factory.ForConnection(ctx, conn)
+	if err != nil {
+		t.Fatalf("ForConnection first: %v", err)
+	}
+	c2, err := factory.ForConnection(ctx, conn)
+	if err != nil {
+		t.Fatalf("ForConnection second: %v", err)
+	}
+	if c1 != c2 {
+		t.Fatal("expected cached client instance")
+	}
+}

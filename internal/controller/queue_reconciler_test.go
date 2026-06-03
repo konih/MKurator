@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -55,7 +55,7 @@ var _ = Describe("QueueReconciler", func() {
 		q := sampleQueue(ns, key, "qm1", testQueueName)
 		Expect(k8sClient.Create(ctx, q)).To(Succeed())
 
-		recorder := record.NewFakeRecorder(2)
+		recorder := events.NewFakeRecorder(2)
 		rec := &QueueReconciler{
 			Client:    k8sClient,
 			Scheme:    k8sClient.Scheme(),
@@ -116,7 +116,7 @@ var _ = Describe("QueueReconciler", func() {
 			ForConnection(mock.Anything, mock.Anything).
 			Return(mockAdmin, nil)
 
-		recorder := record.NewFakeRecorder(2)
+		recorder := events.NewFakeRecorder(2)
 		rec := &QueueReconciler{
 			Client:    k8sClient,
 			Scheme:    k8sClient.Scheme(),
@@ -173,7 +173,7 @@ var _ = Describe("QueueReconciler", func() {
 			ForConnection(mock.Anything, mock.Anything).
 			Return(mockAdmin, nil)
 
-		recorder := record.NewFakeRecorder(2)
+		recorder := events.NewFakeRecorder(2)
 		rec := &QueueReconciler{
 			Client:    k8sClient,
 			Scheme:    k8sClient.Scheme(),
@@ -247,7 +247,7 @@ func conditionReason(conditions []metav1.Condition, condType string) string {
 	return ""
 }
 
-func expectRecordedEvent(recorder *record.FakeRecorder, eventType, reason string) {
+func expectRecordedEvent(recorder *events.FakeRecorder, eventType, reason string) {
 	select {
 	case ev := <-recorder.Events:
 		Expect(ev).To(ContainSubstring(eventType))

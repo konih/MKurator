@@ -213,6 +213,20 @@ func TestAuthorityStateFromAttributes(t *testing.T) {
 	}
 }
 
+func TestBuildDisplayAuthorityMQSCTopicObject(t *testing.T) {
+	cmd, err := buildDisplayAuthorityMQSC(mqadmin.AuthoritySpec{
+		Profile:    "SYSTEM.ADMIN.TOPIC",
+		ObjectType: mqadmin.AuthorityObjectTypeTopic,
+		Principal:  "app",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(cmd, "OBJTYPE(TOPIC)") {
+		t.Fatalf("cmd = %q", cmd)
+	}
+}
+
 func TestBuildDisplayAuthorityMQSCGroup(t *testing.T) {
 	cmd, err := buildDisplayAuthorityMQSC(mqadmin.AuthoritySpec{
 		Profile:    "APP.ORDERS",
