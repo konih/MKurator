@@ -11,11 +11,38 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 
 ### Bug Fixes
 
+- **helm:** Add auth CR RBAC and verify in helm:lint [fd8d361](https://github.com/konih/kurator/commit/fd8d361868c66beb2f41e7e73bf311fd10dafebb)
+
+- **ci:** Repair Renovate workflow permissions and token [7476fcd](https://github.com/konih/kurator/commit/7476fcdfe88a754a2827784ad09cdbb0d42ead83)
+
+- **ci:** Drop invalid workflows permission from Renovate job [f8e626d](https://github.com/konih/kurator/commit/f8e626d2170acd4d3664d28ff9a671fe0a18ecf2)
+
+- **ci:** Configure Renovate repository target and token [1a14953](https://github.com/konih/kurator/commit/1a1495373b0434aca9c16c3f7e85da293c4fe90d)
+
+- **ci:** Migrate renovate config for v43 [05024de](https://github.com/konih/kurator/commit/05024dedb25582200d5bf5620a1cc08e43417680)
+
+- **ci:** Flock mutex for e2e and integration suites [4bf0f8c](https://github.com/konih/kurator/commit/4bf0f8c20824da5ad2b428908e580af1acf6debb)
+
+
+### Features
+
+- **e2e:** Wire Helm admission webhook e2e path [873fb30](https://github.com/konih/kurator/commit/873fb3057360a8eb95442944f3608a2dffc5a6ba)
+
+- **mqpcf:** Scaffold PCF adapter behind MQAdmin [ed2c290](https://github.com/konih/kurator/commit/ed2c290ec01d44873bc3e48b48eb5ed992864d95)
+
+
+### Refactoring
+
+- **controller:** Migrate to events EventRecorder API [38d531f](https://github.com/konih/kurator/commit/38d531f2fdd8e405e7331848333fa1d89b8af29f)
+
+## [0.5.1](https://github.com/konih/kurator/compare/v0.5.0..v0.5.1) - 2026-06-03
+
+### Bug Fixes
+
 - **e2e:** Drop deprecated ginkgo.progress flag [5e996a9](https://github.com/konih/kurator/commit/5e996a9529d230dd58bfe10528c6784277e33746)
 
 - **mqrest:** Treat empty AUTHREC authorities as not found [d63058e](https://github.com/konih/kurator/commit/d63058e89b7478b9c36b90beb7b821a084344924)
 
-## [0.5.1](https://github.com/konih/kurator/compare/v0.5.0..v0.5.1) - 2026-06-03
 
 ### Features
 
