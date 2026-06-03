@@ -27,6 +27,39 @@ func TestBuildSetChannelAuthMQSC(t *testing.T) {
 	}
 }
 
+func TestBuildSetChannelAuthMQSCBlockAddr(t *testing.T) {
+	cmd, err := buildSetChannelAuthMQSC(mqadmin.ChannelAuthSpec{
+		ChannelName: "*",
+		RuleType:    mqadmin.ChannelAuthRuleTypeBlockAddr,
+		Address:     "192.0.2.1",
+		Description: "block TEST-NET-1",
+	}, "REPLACE")
+	if err != nil {
+		t.Fatalf("buildSetChannelAuthMQSC: %v", err)
+	}
+	want := "SET CHLAUTH('*') TYPE(BLOCKADDR) ADDRESS('192.0.2.1') " +
+		"DESCR('block TEST-NET-1') ACTION(REPLACE)"
+	if cmd != want {
+		t.Fatalf("got %q, want %q", cmd, want)
+	}
+}
+
+func TestBuildSetChannelAuthMQSCBlockAddrRemove(t *testing.T) {
+	cmd, err := buildSetChannelAuthMQSC(mqadmin.ChannelAuthSpec{
+		ChannelName: "*",
+		RuleType:    mqadmin.ChannelAuthRuleTypeBlockAddr,
+		Address:     "192.0.2.1",
+		Description: "ignored on remove",
+	}, "REMOVE")
+	if err != nil {
+		t.Fatalf("buildSetChannelAuthMQSC: %v", err)
+	}
+	want := "SET CHLAUTH('*') TYPE(BLOCKADDR) ADDRESS('192.0.2.1') ACTION(REMOVE)"
+	if cmd != want {
+		t.Fatalf("got %q, want %q", cmd, want)
+	}
+}
+
 func TestBuildSetChannelAuthMQSCBlockUser(t *testing.T) {
 	cmd, err := buildSetChannelAuthMQSC(mqadmin.ChannelAuthSpec{
 		ChannelName: "ORDERS.APP",
@@ -257,6 +290,34 @@ func TestChannelAuthStateFromAttributes(t *testing.T) {
 		"address": "*", "usersrc": "CHANNEL", "chckclnt": "REQUIRED", "descr": "d",
 	})
 	if state.Description != "d" {
+		t.Fatalf("state = %+v", state)
+	}
+}
+
+func TestBuildDisplayChannelAuthMQSCBlockAddr(t *testing.T) {
+	cmd, err := buildDisplayChannelAuthMQSC(mqadmin.ChannelAuthSpec{
+		ChannelName: "*",
+		RuleType:    mqadmin.ChannelAuthRuleTypeBlockAddr,
+		Address:     "192.0.2.1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "DISPLAY CHLAUTH('*') TYPE(BLOCKADDR) ADDRESS('192.0.2.1')"
+	if cmd != want {
+		t.Fatalf("got %q, want %q", cmd, want)
+	}
+}
+
+func TestChannelAuthStateFromAttributesBlockAddr(t *testing.T) {
+	spec := mqadmin.ChannelAuthSpec{
+		ChannelName: "*",
+		RuleType:    mqadmin.ChannelAuthRuleTypeBlockAddr,
+	}
+	state := channelAuthStateFromAttributes(spec, map[string]string{
+		"address": "192.0.2.1", "descr": "block",
+	})
+	if state.Address != "192.0.2.1" || state.Description != "block" {
 		t.Fatalf("state = %+v", state)
 	}
 }
