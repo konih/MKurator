@@ -18,11 +18,10 @@ const attrReplace = "replace"
 const attrTrptype = "trptype"
 
 // queueDisplayParameters lists attributes safe for runCommandJSON DISPLAY qlocal
-// on IBM MQ 9.4.x. Some keywords (e.g. maxmsglen) are rejected by mqweb with
-// MQWB0120E even though they are valid on DEFINE.
+// on IBM MQ 9.4.x. Some keywords (e.g. maxmsglen, share, defopts) are rejected
+// by mqweb with MQWB0120E even though they are valid on DEFINE.
 var queueLocalDisplayParameters = []string{
 	attrMaxDepth, attrDescr, "defpsist", "get", "put",
-	"share", "defopts", "bothresh", "boqname", "usage",
 }
 
 var queueAliasDisplayParameters = []string{

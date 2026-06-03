@@ -40,7 +40,7 @@ Shipped: `SET AUTHREC` / `SET CHLAUTH` via `AuthorityRecord` and `ChannelAuthRul
 | `descr` | yes | yes | |
 | `defpsist` | yes | yes | Case-insensitive match |
 | `get`, `put` | yes | yes | Case-insensitive |
-| `share`, `defopts`, `bothresh`, `boqname`, `usage` | yes | yes | Extended Phase 4 DISPLAY; `share`/`defopts`/`usage` case-insensitive |
+| `share`, `defopts`, `bothresh`, `boqname`, `usage` | yes | **no** | DEFINE-only on mqweb 9.4 (`MQWB0120E` on DISPLAY); drift deferred |
 | `maxmsglen` | yes | **no** | mqweb 9.4 rejects on DISPLAY (`MQWB0120E`) |
 | trigger fields | yes | **no** | Passthrough; not in safe DISPLAY list |
 | `cluster`, `clusnl` | yes | **no** | Clustering — future work |

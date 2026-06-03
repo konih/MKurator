@@ -384,7 +384,10 @@ Commands and env vars below.
 ### IBM MQ integration tests (Docker)
 
 Fast contract tests for queue, topic, channel, CHLAUTH, and AUTHREC operations
-via mqweb — no Kubernetes or operator required. Uses `//go:build integration` in
+via mqweb — no Kubernetes or operator required. Covers CRUD, replace-on-update,
+delete (including idempotent delete), and not-found paths for auth as well as
+queue/topic/channel. **Alias and remote queues** are exercised here only (e2e
+uses local queues). Uses `//go:build integration` in
 [`test/integration/mq/`](../test/integration/mq/).
 
 ```sh

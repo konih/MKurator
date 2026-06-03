@@ -84,18 +84,13 @@ func TestChannelDisplayParametersIncludeConnectionLimits(t *testing.T) {
 	}
 }
 
-func TestQueueLocalDisplayParametersIncludeExtendedAttrs(t *testing.T) {
+func TestQueueLocalDisplayParametersOmitExtendedAttrsOn94(t *testing.T) {
 	t.Parallel()
 	for _, p := range []string{"share", "defopts", "bothresh", "boqname", "usage"} {
-		found := false
 		for _, q := range queueLocalDisplayParameters {
 			if q == p {
-				found = true
-				break
+				t.Fatalf("%q must not be in queueLocalDisplayParameters on mqweb 9.4 (MQWB0120E)", p)
 			}
-		}
-		if !found {
-			t.Fatalf("%q missing from queueLocalDisplayParameters", p)
 		}
 	}
 }
