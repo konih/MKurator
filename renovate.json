@@ -23,7 +23,9 @@
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+TASK_VERSION: \"(?<currentValue>\\S+)\"",
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+TERRAFORM_VERSION: \"(?<currentValue>\\S+)\"",
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+GIT_CLIFF_VERSION: (?<currentValue>\\S+)"
-      ]
+      ],
+      "datasourceTemplate": "{{datasource}}",
+      "depNameTemplate": "{{depName}}"
     },
     {
       "customType": "regex",
@@ -31,7 +33,9 @@
       "managerFilePatterns": ["/Taskfile\\.test\\.yml$/"],
       "matchStrings": [
         "# renovate: datasource=kubernetes-api depName=kubernetes\\n\\s+SETUP_ENVTEST_K8S_VERSION: \"(?<currentValue>[^\"]+)\""
-      ]
+      ],
+      "datasourceTemplate": "kubernetes-api",
+      "depNameTemplate": "kubernetes"
     },
     {
       "customType": "regex",
@@ -75,7 +79,7 @@
     },
     {
       "matchManagers": ["gomod"],
-      "matchPackagePatterns": ["^k8s.io/", "^sigs.k8s.io/controller-runtime"],
+      "matchPackageNames": ["/^k8s.io//", "/^sigs.k8s.io/controller-runtime/"],
       "groupName": "kubernetes packages"
     },
     {
@@ -97,7 +101,7 @@
     },
     {
       "description": "Group platform CLI tool bumps (Taskfile + CI action inputs)",
-      "matchManagers": ["regex", "github-actions"],
+      "matchManagers": ["custom.regex", "github-actions"],
       "matchPackageNames": [
         "go-task/task",
         "kubernetes-sigs/kind",
@@ -109,7 +113,7 @@
     },
     {
       "description": "Group IBM MQ chart and container image bumps",
-      "matchManagers": ["regex", "docker-compose", "terraform"],
+      "matchManagers": ["custom.regex", "docker-compose", "terraform"],
       "matchPackageNames": ["ibm-mq", "icr.io/ibm-messaging/mq"],
       "groupName": "ibm mq"
     }
