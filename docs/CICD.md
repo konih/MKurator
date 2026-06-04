@@ -10,10 +10,10 @@ CI runs on **GitHub Actions** per the workflows under `.github/workflows/`
 This doc is the contract they implement. See [ROADMAP.md](ROADMAP.md) for
 delivery context.
 
-**Pipeline health:** e2e on `main` was **not consistently green** when tag
-`v0.5.2` was cut before e2e was consistently green on `main`.
-Treat green **E2E (kustomize)** on the exact release SHA as a gate, not an
-assumption from older docs.
+**Pipeline health:** **CI**, **Integration**, and **E2E (kustomize)** were green on
+`main` before tag **`v0.6.0`** (2026-06-03/04). Tag **`v0.5.2`** predates that
+stability — always confirm green workflows on the **exact release SHA** via
+[release-gate](RELEASE.md#automated-release-gate-workflow) or `gh run list`.
 
 ## Principles
 
@@ -286,7 +286,7 @@ Maintainer steps: [RELEASE.md](RELEASE.md). Before tagging: `task changelog` (pr
 bump `charts/mkurator/Chart.yaml`, `task changelog:write`, commit, then run
 **Release gate** (`workflow_dispatch`) or manually confirm **CI**, **Integration**,
 and **E2E (kustomize)** are green on the **exact commit SHA** you will tag (do not
-tag ahead of a red pipeline — `v0.5.2` was tagged without this evidence).
+tag ahead of a red pipeline — see historical note for `v0.5.2` in [ROADMAP.md](ROADMAP.md)).
 `git tag vX.Y.Z && git push origin vX.Y.Z`. Rationale: [ADR-0008](adr/0008-changelog-git-cliff.md).
 Supply chain: [ADR-0016](adr/0016-release-supply-chain.md).
 

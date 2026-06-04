@@ -19,8 +19,9 @@ more later.
 
 > Status: **Phase 5 (auth) shipped on `main`** — `ChannelAuthRule` and
 > `AuthorityRecord` reconcile via mqweb MQSC, with Docker integration and kind e2e
-> coverage. Latest release: **`v0.5.2`**. Remaining Phase 5 items (extended rule
-> types, CI proof on tag) are in the [roadmap](docs/ROADMAP.md#phase-5--user--authority-management).
+> coverage. Latest release: **`v0.6.0`**. Remaining Phase 5 items (extended
+> CHLAUTH rule types) are in the
+> [roadmap](docs/ROADMAP.md#phase-5--user--authority-management).
 
 ## What ships in v1alpha1 (today)
 
