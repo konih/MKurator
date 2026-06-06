@@ -1,0 +1,36 @@
+# Dependabot version updates — action SHA bumps and Go module patches.
+# IBM MQ chart/image pins and Taskfile tools are managed by Renovate (see renovate.json).
+# Dependabot alerts + security updates are enabled at the repo level (GitHub Settings →
+# Code security); this file configures scheduled version-update PRs only.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: ":arrow_up:"
+      include: scope
+
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      go-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: ":arrow_up:"
+      include: scope

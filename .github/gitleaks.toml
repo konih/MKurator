@@ -1,0 +1,13 @@
+title = "MKurator gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+  '''(?:^|/)references/''',
+  '''(?:^|/)hack/kind-cluster/\.state/''',
+  '''(?:^|/)\.state/''',
+  '''\.tfstate(?:\.backup)?$''',
+  '''(?:^|/)hack/kind-cluster/terraform/\.terraform/''',
+]

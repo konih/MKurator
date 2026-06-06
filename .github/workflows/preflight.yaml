@@ -29,7 +29,16 @@ jobs:
         run: |
           go mod tidy
           git diff --exit-code go.sum
+      - name: Verify module checksums
+        run: go mod verify
       - name: Verify generated artifacts
         run: task verify
         env:
           CI: "true"
+      - uses: actions/setup-node@49933ea5288caeca8642d07e775a54d395e343d6 # v4.4.0
+        with:
+          node-version: "22"
+      - name: Lint Markdown
+        run: task lint:markdown
+      - name: Lint shell scripts
+        run: task lint:shell

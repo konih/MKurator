@@ -52,6 +52,7 @@ bin/
 dist/
 site/
 .venv-docs/
+docs/node_modules/
 .task/
 
 # Local Renovate working clone (hack/renovate-docker.sh)

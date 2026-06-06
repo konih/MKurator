@@ -5,8 +5,9 @@ This document describes the continuous integration and delivery design for
 (via Task and pre-commit) and in CI**, so "green locally" means "green in CI".
 
 CI runs on **GitHub Actions** per the workflows under `.github/workflows/`
-(`preflight.yaml`, `ci.yaml`, `integration.yaml`, `e2e.yaml`, `nightly.yaml`,
-`release-gate.yaml`, `release.yaml`, `renovate.yaml`).
+(`preflight.yaml`, `ci.yaml`, `codeql.yaml`, `scorecard.yaml`, `vulncheck.yaml`,
+`docs.yaml`, `integration.yaml`, `e2e.yaml`, `nightly.yaml`, `release-gate.yaml`,
+`release.yaml`, `renovate.yaml`, `sonarcloud.yaml` — disabled).
 This doc is the contract they implement. See [ROADMAP.md](ROADMAP.md) for
 delivery context.
 
@@ -37,6 +38,7 @@ flowchart LR
   pr --> build
   pr --> docker["docker-build"]
   pr --> helmlint["helm-lint"]
+  pr --> auditrbac["audit-rbac"]
   lint["lint (format:check + golangci-lint)"]
   test["test (unit + envtest, govulncheck, coverage)"]
   pr --> integration["integration (Docker IBM MQ)"]
@@ -52,8 +54,11 @@ what each job runs, not execution order.
 
 | Event | Runs |
 |-------|------|
-| PR / push to `main` | `preflight.yaml`: `go mod tidy` + `task verify` (fail-fast, 5 min cap) |
-| PR / push to `main` | `ci.yaml`: gitleaks, verify, lint, test, build, docker-build, helm-lint (seven parallel jobs) |
+| PR / push to `main` | `preflight.yaml`: `go mod tidy` + `go mod verify` + `task verify` + markdown/shell lint (5 min cap) |
+| PR / push to `main` | `ci.yaml`: gitleaks, verify, **audit-rbac**, lint, test, build, docker-build, helm-lint (eight parallel jobs) |
+| PR / push to `main` | `codeql.yaml`: Go SAST (weekly schedule + PR/push) |
+| Push to `main` | `scorecard.yaml`: OpenSSF Scorecard (weekly schedule + push) |
+| Schedule (Mon 04:12 UTC) + `workflow_dispatch` | `vulncheck.yaml`: standalone govulncheck |
 | PR / push to `main` (non-docs paths) | `integration.yaml`: Docker IBM MQ integration tests |
 | PR / push to `main` (non-docs paths) | `e2e.yaml`: kind + IBM MQ e2e |
 | Tag `v*` | `release.yaml`: build + push image, publish install manifests, Trivy scan |
@@ -365,9 +370,10 @@ the workflow files). No direct pushes to `main`.
 
 | Check name | Workflow | What it runs |
 |------------|----------|--------------|
-| `preflight` | Preflight | `go mod tidy` + `task verify` (5 min timeout) |
+| `preflight` | Preflight | `go mod tidy` + `go mod verify` + `task verify` + markdown/shell lint (5 min timeout) |
 | `gitleaks` | CI | Secret scan |
 | `verify` | CI | `task verify` (CRDs, RBAC, deepcopy, mocks) |
+| `audit-rbac` | CI | `hack/audit-rbac.sh` (Polaris + kubeaudit on `config/rbac/`) |
 | `lint` | CI | `task format:check` then `task lint` |
 | `test` | CI | `task test:run`, `task vuln:check`, Codecov upload |
 | `build` | CI | `task build` |
@@ -381,7 +387,7 @@ the workflow files). No direct pushes to `main`.
 | `integration` | Integration | Docker IBM MQ + `task test:integration` + JUnit artifact |
 
 Skipped when a PR changes only `**.md`, `docs/**`, or `charts/**/README.md`.
-Docs-only PRs need **`preflight`** plus the seven **`ci.yaml`** jobs only.
+Docs-only PRs need **`preflight`** plus the eight **`ci.yaml`** jobs only.
 
 ### E2E — optional on PRs, recommended on `main` when stable
 
@@ -411,9 +417,10 @@ above:
 
 | CI job | Local command |
 |--------|---------------|
-| preflight | `go mod tidy && git diff --exit-code go.sum` then `task verify` |
+| preflight | `go mod tidy && git diff --exit-code go.sum` · `go mod verify` · `task verify` · `task lint:markdown` · `task lint:shell` |
 | gitleaks | `task secrets:scan` |
 | verify | `task verify` (includes `task test:schema` / `make test-schema`) |
+| audit-rbac | `task audit:rbac` |
 | lint | `task format:check` then `task lint` |
 | test | `task test:run` then `task vuln:check` |
 | build | `task build` |

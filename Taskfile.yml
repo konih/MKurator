@@ -33,6 +33,7 @@ vars:
     sh: echo "${KUBECONFIG:-$(git rev-parse --show-toplevel)/hack/kind-cluster/.state/kubeconfig.yaml}"
   KUSTOMIZE:
     sh: go tool -n kustomize
+  MARKDOWNLINT_CONFIG: hack/tooling/markdownlint-cli2.yaml
 
 includes:
   cluster:
@@ -66,6 +67,22 @@ tasks:
     deps: [install]
     cmds:
       - go tool golangci-lint run ./...
+
+  lint:markdown:
+    desc: Lint Markdown docs with markdownlint-cli2
+    cmds:
+      - npm ci --prefix docs
+      - docs/node_modules/.bin/markdownlint-cli2 --config {{.MARKDOWNLINT_CONFIG}}
+
+  lint:shell:
+    desc: Lint shell scripts with ShellCheck
+    cmds:
+      - bash hack/lint-shell.sh
+
+  audit:rbac:
+    desc: Audit operator RBAC with Polaris and kubeaudit
+    cmds:
+      - bash hack/audit-rbac.sh
 
   manifests:
     desc: Generate CRDs, RBAC, and webhook configuration
