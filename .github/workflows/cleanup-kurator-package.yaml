@@ -1,0 +1,24 @@
+name: Cleanup legacy kurator package
+
+# One-shot: delete ghcr.io/konih/kurator after rename to mkurator (ADR-0018).
+# Remove this workflow after it has run successfully.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  delete-kurator-package:
+    name: Delete ghcr.io/konih/kurator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete legacy kurator container package
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          owner="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          gh api -X DELETE "users/${owner}/packages/container/kurator"
+          echo "Deleted users/${owner}/packages/container/kurator"
