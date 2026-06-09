@@ -122,6 +122,10 @@ func (r *QueueManagerConnectionReconciler) fail(
 	gen int64,
 	err error,
 ) (ctrl.Result, error) {
+	if connectionReady(conn) && conn.Status.ObservedGeneration == gen && errors.Is(err, mqadmin.ErrTransient) {
+		return ctrl.Result{RequeueAfter: TransientRequeueInterval()}, nil
+	}
+
 	recordReconcileWarning(r.Recorder, conn, err)
 
 	reason := messagingv1alpha1.ReasonError

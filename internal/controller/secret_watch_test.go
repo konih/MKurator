@@ -91,10 +91,21 @@ func TestSecretWatchPredicates(t *testing.T) {
 	if preds.Update(event.UpdateEvent{ObjectOld: old, ObjectNew: old}) {
 		t.Fatal("expected no update when data unchanged")
 	}
+	rvOnlyOld := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{ResourceVersion: "10"},
+		Data:       map[string][]byte{"password": []byte("a")},
+	}
+	rvOnlyNew := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{ResourceVersion: "11"},
+		Data:       map[string][]byte{"password": []byte("a")},
+	}
+	if preds.Update(event.UpdateEvent{ObjectOld: rvOnlyOld, ObjectNew: rvOnlyNew}) {
+		t.Fatal("expected no update on resourceVersion-only change when data present")
+	}
 	rvOld := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{ResourceVersion: "10"}}
 	rvNew := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{ResourceVersion: "11"}}
 	if !preds.Update(event.UpdateEvent{ObjectOld: rvOld, ObjectNew: rvNew}) {
-		t.Fatal("expected update on resourceVersion change")
+		t.Fatal("expected update on resourceVersion change when data stripped")
 	}
 }
 
