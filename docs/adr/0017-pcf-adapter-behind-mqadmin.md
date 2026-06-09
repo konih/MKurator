@@ -1,7 +1,17 @@
 # ADR-0017: PCF adapter behind the MQAdmin port
 
-- **Status**: Proposed
-- **Date**: 2026-06-03
+- **Status**: Accepted (scaffold only) — full adapter **parked**, see 2026-06-09 note
+- **Date**: 2026-06-03 (status updated 2026-06-09)
+
+> **2026-06-09 status note.** The scaffold described below shipped at
+> `internal/adapter/mqpcf` (v0.5.2) and is accepted as the compile-time
+> contract check on the `Admin` port. The **full PCF adapter is parked**: it
+> implies CGO builds, MQ C client redistribution, a second integration-test
+> matrix, and a second image variant — a project-defining commitment for a
+> single-maintainer operator. It will not be implemented unless a concrete
+> adopter with a no-mqweb environment commits to using and helping validate
+> it. The port seam preserves the option at zero ongoing cost; the connection
+> model questions below remain open until then.
 
 ## Context
 

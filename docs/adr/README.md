@@ -42,7 +42,12 @@ supersedes the old one rather than editing history.
 | [0014](0014-mq-error-taxonomy-and-requeue.md) | MQ error taxonomy and requeue strategy | Accepted |
 | [0015](0015-kubernetes-events-on-transitions.md) | Kubernetes Events on status transitions only | Accepted |
 | [0016](0016-release-supply-chain.md) | Release supply chain (image, SBOM, signing, scan) | Accepted |
-| [0017](0017-pcf-adapter-behind-mqadmin.md) | PCF adapter behind the MQAdmin port | Proposed |
+| [0017](0017-pcf-adapter-behind-mqadmin.md) | PCF adapter behind the MQAdmin port | Accepted (scaffold only; full adapter parked) |
 | [0018](0018-project-rename-mkurator.md) | Rename project Kurator → MKurator | Accepted |
 | [0019](0019-oss-maturity-posture.md) | OSS maturity posture (docs site, governance, supply chain) | Accepted |
 | [0020](0020-merge-gate-matrix.md) | CI merge-gate matrix (L0–L5 ↔ workflows) | Accepted |
+| [0021](0021-attribute-api-shape.md) | Attribute API shape — typed fields + attributes escape hatch | Accepted |
+| [0022](0022-deletion-and-adoption-policy.md) | Deletion and adoption policies for MQ object CRs | Accepted |
+| [0023](0023-connection-client-cache-lifecycle.md) | Connection client cache lifecycle and Secret handling | Accepted |
+| [0024](0024-mqsc-command-construction-hygiene.md) | MQSC command construction hygiene (structured-first) | Accepted |
+| [0025](0025-cel-first-admission-validation.md) | CEL-first admission validation; webhooks for stateful checks | Accepted |
