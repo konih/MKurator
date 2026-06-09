@@ -20,6 +20,10 @@ properties:
     required:
     - name
     type: object
+  suspend:
+    description: Suspend pauses MQ reconciliation for this object. Status shows Synced=False
+      ReasonSuspended.
+    type: boolean
   type:
     default: svrconn
     description: Type is the channel kind to define. Only svrconn is reconciled in

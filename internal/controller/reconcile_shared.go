@@ -568,7 +568,7 @@ func connectionWatchPredicates() predicate.Funcs {
 
 func setupMQObjectController(mgr ctrl.Manager, reconciler reconcile.Reconciler, forObj client.Object) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(forObj).
+		For(forObj, builder.WithPredicates(workloadReconcilePredicates())).
 		WithOptions(controllerOptions()).
 		Watches(
 			&messagingv1alpha1.QueueManagerConnection{},

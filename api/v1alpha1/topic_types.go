@@ -22,6 +22,10 @@ type TopicSpec struct {
 	// Drift-checked vs define-only keys: docs/ATTRIBUTE_RECONCILIATION.md.
 	// +optional
 	Attributes map[string]string `json:"attributes,omitempty"`
+
+	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
+	// +optional
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 // TopicStatus defines the observed state of Topic.

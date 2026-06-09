@@ -34,6 +34,10 @@ type QueueSpec struct {
 	// Drift-checked vs define-only keys: docs/ATTRIBUTE_RECONCILIATION.md.
 	// +optional
 	Attributes map[string]string `json:"attributes,omitempty"`
+
+	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
+	// +optional
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 // LocalObjectReference is a namespaced object reference.

@@ -17,6 +17,10 @@ properties:
     required:
     - name
     type: object
+  suspend:
+    description: Suspend pauses MQ reconciliation for this object. Status shows Synced=False
+      ReasonSuspended.
+    type: boolean
   topicName:
     description: TopicName is the IBM MQ topic object name (e.g. RETAIL.ORDERS).
     minLength: 1

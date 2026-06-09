@@ -53,6 +53,10 @@ func (r *TopicReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, fmt.Errorf("get Topic: %w", err)
 	}
 
+	if workloadSuspended(topic) {
+		return reconcileWorkloadSuspended(ctx, r.Status(), r.Recorder, topic, topic.Generation)
+	}
+
 	if !topic.DeletionTimestamp.IsZero() {
 		return reconcileWorkloadDeletion(
 			ctx, r.Client, r.Status(), r.Recorder, r.MQFactory, topic, topic.Generation,

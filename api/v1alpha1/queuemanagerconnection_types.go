@@ -18,7 +18,11 @@ const (
 	ReasonDeleting      = "Deleting"
 	ReasonDriftDetected = "DriftDetected"
 	ReasonOrphaned      = "Orphaned"
+	ReasonSuspended     = "Suspended"
 )
+
+// ReconcileRequestedAtAnnotation triggers an immediate reconcile when its value changes.
+const ReconcileRequestedAtAnnotation = "messaging.mkurator.dev/reconcile-requested-at"
 
 // ForceOrphanAnnotation skips MQ cleanup and removes the finalizer on a deleting CR.
 const ForceOrphanAnnotation = "messaging.mkurator.dev/force-orphan"

@@ -49,6 +49,10 @@ type AuthorityRecordSpec struct {
 	// +kubebuilder:validation:items:Pattern=`^[A-Za-z0-9+_]+$`
 	// +listType=set
 	Authorities []string `json:"authorities"`
+
+	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
+	// +optional
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 // AuthorityRecordStatus defines the observed state of AuthorityRecord.

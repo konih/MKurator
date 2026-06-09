@@ -80,6 +80,10 @@ spec:
                 description: QueueName is the IBM MQ object name.
                 minLength: 1
                 type: string
+              suspend:
+                description: Suspend pauses MQ reconciliation for this object. Status
+                  shows Synced=False ReasonSuspended.
+                type: boolean
               type:
                 default: local
                 description: 'Type is the queue kind to define: local (QLOCAL), alias

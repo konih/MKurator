@@ -101,6 +101,10 @@ spec:
                   object name.
                 minLength: 1
                 type: string
+              suspend:
+                description: Suspend pauses MQ reconciliation for this object. Status
+                  shows Synced=False ReasonSuspended.
+                type: boolean
             required:
             - authorities
             - connectionRef

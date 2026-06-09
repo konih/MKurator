@@ -54,6 +54,10 @@ func (r *ChannelAuthRuleReconciler) reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, fmt.Errorf("get ChannelAuthRule: %w", err)
 	}
 
+	if workloadSuspended(rule) {
+		return reconcileWorkloadSuspended(ctx, r.Status(), r.Recorder, rule, rule.Generation)
+	}
+
 	if !rule.DeletionTimestamp.IsZero() {
 		return reconcileWorkloadDeletion(
 			ctx, r.Client, r.Status(), r.Recorder, r.MQFactory, rule, rule.Generation,

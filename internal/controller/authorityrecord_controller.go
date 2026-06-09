@@ -54,6 +54,10 @@ func (r *AuthorityRecordReconciler) reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, fmt.Errorf("get AuthorityRecord: %w", err)
 	}
 
+	if workloadSuspended(auth) {
+		return reconcileWorkloadSuspended(ctx, r.Status(), r.Recorder, auth, auth.Generation)
+	}
+
 	if !auth.DeletionTimestamp.IsZero() {
 		return reconcileWorkloadDeletion(
 			ctx, r.Client, r.Status(), r.Recorder, r.MQFactory, auth, auth.Generation,

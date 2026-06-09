@@ -53,6 +53,10 @@ func (r *QueueReconciler) reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return ctrl.Result{}, fmt.Errorf("get Queue: %w", err)
 	}
 
+	if workloadSuspended(q) {
+		return reconcileWorkloadSuspended(ctx, r.Status(), r.Recorder, q, q.Generation)
+	}
+
 	if !q.DeletionTimestamp.IsZero() {
 		return reconcileWorkloadDeletion(
 			ctx, r.Client, r.Status(), r.Recorder, r.MQFactory, q, q.Generation,

@@ -75,6 +75,10 @@ type ChannelAuthRuleSpec struct {
 	// Description maps to DESCR(...).
 	// +optional
 	Description string `json:"description,omitempty"`
+
+	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
+	// +optional
+	Suspend bool `json:"suspend,omitempty"`
 }
 
 // ChannelAuthRuleStatus defines the observed state of ChannelAuthRule.

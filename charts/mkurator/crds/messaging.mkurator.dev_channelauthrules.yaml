@@ -100,6 +100,10 @@ spec:
                 - QMGRMAP
                 - BLOCKADDR
                 type: string
+              suspend:
+                description: Suspend pauses MQ reconciliation for this object. Status
+                  shows Synced=False ReasonSuspended.
+                type: boolean
               userList:
                 description: UserList maps to USERLIST(...) for BLOCKUSER rules.
                 type: string

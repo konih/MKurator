@@ -366,6 +366,110 @@ var _ = Describe("QueueReconciler", func() {
 		err = k8sClient.Get(ctx, types.NamespacedName{Namespace: ns, Name: key}, updated)
 		Expect(apierrors.IsNotFound(err)).To(BeTrue())
 	})
+
+	It("skips MQ ops and sets Suspended when spec.suspend is true", func() {
+		conn := readyConnection(ns, "qm1")
+		Expect(k8sClient.Create(ctx, conn)).To(Succeed())
+		conn.Status = messagingv1alpha1.QueueManagerConnectionStatus{
+			Conditions: []metav1.Condition{{
+				Type:               messagingv1alpha1.ConditionReady,
+				Status:             metav1.ConditionTrue,
+				Reason:             messagingv1alpha1.ReasonAvailable,
+				LastTransitionTime: metav1.Now(),
+			}},
+		}
+		Expect(k8sClient.Status().Update(ctx, conn)).To(Succeed())
+
+		q := sampleQueue(ns, key, "qm1", testQueueName)
+		q.Spec.Suspend = true
+		Expect(k8sClient.Create(ctx, q)).To(Succeed())
+
+		mockFactory := mqadmintest.NewMockFactory(GinkgoT())
+		rec := &QueueReconciler{
+			Client:    k8sClient,
+			Scheme:    k8sClient.Scheme(),
+			MQFactory: mockFactory,
+			Recorder:  testEventsRecorder(),
+		}
+
+		result, err := rec.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{Namespace: ns, Name: key},
+		})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(result.RequeueAfter).To(BeZero())
+
+		updated := &messagingv1alpha1.Queue{}
+		Expect(k8sClient.Get(ctx, types.NamespacedName{Namespace: ns, Name: key}, updated)).To(Succeed())
+		Expect(conditionStatus(updated.Status.Conditions, messagingv1alpha1.ConditionSynced)).
+			To(Equal(metav1.ConditionFalse))
+		Expect(conditionReason(updated.Status.Conditions, messagingv1alpha1.ConditionSynced)).
+			To(Equal(messagingv1alpha1.ReasonSuspended))
+
+		result, err = rec.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{Namespace: ns, Name: key},
+		})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(result.RequeueAfter).To(BeZero())
+	})
+
+	It("reconciles when reconcile-requested-at annotation changes", func() {
+		conn := readyConnection(ns, "qm1")
+		Expect(k8sClient.Create(ctx, conn)).To(Succeed())
+		conn.Status = messagingv1alpha1.QueueManagerConnectionStatus{
+			Conditions: []metav1.Condition{{
+				Type:               messagingv1alpha1.ConditionReady,
+				Status:             metav1.ConditionTrue,
+				Reason:             messagingv1alpha1.ReasonAvailable,
+				LastTransitionTime: metav1.Now(),
+			}},
+		}
+		Expect(k8sClient.Status().Update(ctx, conn)).To(Succeed())
+
+		q := sampleQueue(ns, key, "qm1", testQueueName)
+		Expect(k8sClient.Create(ctx, q)).To(Succeed())
+
+		mockAdmin := mqadmintest.NewMockAdmin(GinkgoT())
+		mockAdmin.EXPECT().
+			GetQueue(mock.Anything, mock.Anything).
+			Return(nil, &mqadmin.NotFoundError{Object: testQueueName})
+		mockAdmin.EXPECT().
+			DefineQueue(mock.Anything, mock.Anything).
+			Return(nil)
+
+		mockFactory := mqadmintest.NewMockFactory(GinkgoT())
+		mockFactory.EXPECT().
+			ForConnection(mock.Anything, mock.Anything).
+			Return(mockAdmin, nil).
+			Times(3)
+
+		rec := &QueueReconciler{
+			Client:    k8sClient,
+			Scheme:    k8sClient.Scheme(),
+			MQFactory: mockFactory,
+			Recorder:  testEventsRecorder(),
+		}
+
+		req := ctrl.Request{NamespacedName: types.NamespacedName{Namespace: ns, Name: key}}
+		_, err := rec.Reconcile(ctx, req)
+		Expect(err).NotTo(HaveOccurred())
+		_, err = rec.Reconcile(ctx, req)
+		Expect(err).NotTo(HaveOccurred())
+
+		updated := &messagingv1alpha1.Queue{}
+		Expect(k8sClient.Get(ctx, types.NamespacedName{Namespace: ns, Name: key}, updated)).To(Succeed())
+		if updated.Annotations == nil {
+			updated.Annotations = map[string]string{}
+		}
+		updated.Annotations[messagingv1alpha1.ReconcileRequestedAtAnnotation] = time.Now().UTC().Format(time.RFC3339)
+		Expect(k8sClient.Update(ctx, updated)).To(Succeed())
+
+		_, err = rec.Reconcile(ctx, req)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(k8sClient.Get(ctx, types.NamespacedName{Namespace: ns, Name: key}, updated)).To(Succeed())
+		Expect(conditionStatus(updated.Status.Conditions, messagingv1alpha1.ConditionSynced)).
+			To(Equal(metav1.ConditionTrue))
+	})
 })
 
 func sampleQueue(ns, name, connName, queueName string) *messagingv1alpha1.Queue {

@@ -53,6 +53,10 @@ func (r *ChannelReconciler) reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, fmt.Errorf("get Channel: %w", err)
 	}
 
+	if workloadSuspended(channel) {
+		return reconcileWorkloadSuspended(ctx, r.Status(), r.Recorder, channel, channel.Generation)
+	}
+
 	if !channel.DeletionTimestamp.IsZero() {
 		return reconcileWorkloadDeletion(
 			ctx, r.Client, r.Status(), r.Recorder, r.MQFactory, channel, channel.Generation,
