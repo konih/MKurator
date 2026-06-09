@@ -44,8 +44,9 @@ Exit criteria: design and local MQ platform documented and runnable — **met**.
 
 **Also delivered in Phase 1:**
 
-- [x] [ADR-0006](adr/0006-project-name-mkurator.md) — project name, module path,
-  API group `messaging.mkurator.dev`.
+- [x] [ADR-0006](adr/0006-project-name-kurator.md) — original project name and
+  module identity (superseded by [ADR-0018](adr/0018-project-rename-mkurator.md):
+  API group `messaging.mkurator.dev`).
 - [x] [ADR-0007](adr/0007-structured-logging-logr-slog.md) + [LOGGING.md](LOGGING.md)
   — `logr`/`slog`, redaction handler, manager flags/env.
 - [x] `hack/verify.sh` (codegen drift check) and `hack/goformat.sh`.
@@ -148,9 +149,12 @@ before access-control work.
 - [x] Drift detection: case-insensitive `pub`/`sub`/policies; channel `maxinst` /
   `maxinstc`; topic `pubscope`/`subscope` where mqweb DISPLAY allows.
 - [x] **Alias** and **remote** queue types (`QALIAS`, `QREMOTE`) with drift detection.
-- [ ] Optional: TLS channel attrs (`sslciph`, `sslcauth`) for drift. Queue attrs
-  `share`, `defopts`, `bothresh`, `boqname`, `usage` remain DEFINE-only on mqweb
-  9.4 (`MQWB0120E` on DISPLAY); drift for those deferred until mqweb allows it.
+- [x] TLS channel attrs (`sslciph`, `sslcauth`) drift-checked (shipped; see
+  [ATTRIBUTE_RECONCILIATION.md](ATTRIBUTE_RECONCILIATION.md)).
+- [ ] Queue attrs `share`, `defopts`, `bothresh`, `boqname`, `usage` remain
+  DEFINE-only on mqweb 9.4 (`MQWB0120E` on DISPLAY); drift for those deferred
+  until mqweb allows it (capability probing direction:
+  [ADR-0024](adr/0024-mqsc-command-construction-hygiene.md)).
 
 Exit criteria: at least **Topic** and one **Channel** kind reconcile end-to-end on
 kind with the same quality bar as Phase 2 (`verify`, ≥90% `internal/` coverage,
@@ -208,7 +212,10 @@ reference MQSC; e2e fixture
 - [x] Optional: integration **BLOCKUSER** CHLAUTH
   ([`test/integration/mq/auth_integration_test.go`](../test/integration/mq/auth_integration_test.go)).
 - [ ] Additional CHLAUTH rule types (`USERMAP`, `SSLPEERMAP`, …) — schema present;
-  extend API fields, integration, and e2e when needed.
+  extend API fields, integration, and e2e when needed. **Resequenced after
+  Phase 7** (2026-06-09 audit): production-hardening table stakes serve
+  adopters deciding whether to commit; extended rule types serve users already
+  committed.
 
 Exit criteria: declarative channel auth and OAM authority records reconciled on
 kind with e2e specs — **met** for core auth **code** and **`v0.6.0`** pipeline
@@ -230,13 +237,141 @@ verification remains a maintainer checklist item.
 - [x] [LOCAL_SETUP.md](LOCAL_SETUP.md) — tiered dev tool install (`Brewfile`,
   `task tools:check` / `task tools:install`, updated `.devcontainer/`).
 
+## Phase 6 — OSS maturity (shipped, v0.7.0)
+
+Meta-engineering wave per [ADR-0019](adr/0019-oss-maturity-posture.md) /
+[ADR-0020](adr/0020-merge-gate-matrix.md):
+
+- [x] MkDocs Material docs site + GitHub Pages (`docs.yaml`), README badge.
+- [x] CodeQL, OpenSSF Scorecard, RBAC audit job; SonarCloud scaffolded (disabled).
+- [x] Release attestations (cosign sign-blob, `actions/attest`, signed Helm OCI).
+- [x] Community docs (`CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, DCO), engineering
+  standards split (`docs/development/*`), assurance docs.
+- [x] Grafana dashboard + PrometheusRule (0.6.0/0.7.0); metrics catalog in
+  [OBSERVABILITY.md](OBSERVABILITY.md).
+
+Exit criteria: docs site live, posture workflows green — **met**. Further badge
+work is deprioritized in favour of Phase 7 (2026-06-09 audit litmus test: *does
+the artifact help a user run the operator, or help the repo look run?*).
+
+## Phase 7 — Production hardening & operator table stakes
+
+Driven by the 2026-06-09 audit train (architecture, edge-case, test-quality,
+docs, release lanes + critical design review). These items serve adopters
+**deciding whether to commit** and therefore precede further MQ-surface depth.
+New decisions: [ADR-0021](adr/0021-attribute-api-shape.md) –
+[ADR-0025](adr/0025-cel-first-admission-validation.md).
+
+### 7a — Reliability fixes (P0/P1, land first)
+
+- [ ] **Deletion deadlocks** (EC-P0-01/EC-P0-02): evaluate `DeletionTimestamp`
+  before requiring a ready connection; `ReleaseConnection` tolerates missing
+  Secrets; envtest locks T1/T2. Per [ADR-0022](adr/0022-deletion-and-adoption-policy.md)
+  / [ADR-0023](adr/0023-connection-client-cache-lifecycle.md).
+- [ ] **QMC hot loop** (ARCH-01/EC-P1-02): stop `Ready` False→True flapping on
+  every reconcile; status-change-only patches + predicates; one `Available`
+  event per transition (ADR-0015 compliance); envtest lock T4.
+- [ ] **MQSC injection** (EC-P1-04): enum/pattern validation for
+  `userSource`/`checkClient`/`authorities[]` + shared quoting helper per
+  [ADR-0024](adr/0024-mqsc-command-construction-hygiene.md); webhook envtest T6.
+- [ ] **Periodic drift resync** (ARCH-04/EC-P1-01, ADR-0010 gap): configurable
+  jittered `RequeueAfter` on successful syncs (default 5–10 min) + drift
+  detection metric; makes `/readyz` MQ-health real again (EC-P2-06); envtest
+  locks T3/T3b.
+- [ ] **Client cache lifecycle** (ARCH-02/03, EC-P2-01): identity-keyed cache,
+  replace-on-rotation with transport close, bounded size — per
+  [ADR-0023](adr/0023-connection-client-cache-lifecycle.md).
+- [ ] `RecoverPanic` on all controllers (EC-P1-05); log swallowed `List` errors
+  in connection fan-out (EC-P2-02, ARCH-10); fix transient
+  `RequeueAfter`+error conflict (EC-P3-02).
+
+### 7b — Operator table stakes
+
+- [ ] **`spec.suspend` + reconcile-now annotation** (MKR-01; makes the FAQ
+  claim true — currently documents a non-existent annotation, DOC-02).
+- [ ] **Watch referenced Secrets** (MKR-02/EC-P1-03): credential rotation and
+  fixed-Secret recovery become event-driven; envtest lock T5.
+- [ ] **`spec.deletionPolicy` (`Delete`/`Orphan`) + force-orphan annotation;
+  `spec.adoptionPolicy` (`Adopt`/`AdoptIfMatching`/`FailIfExists`)** — per
+  [ADR-0022](adr/0022-deletion-and-adoption-policy.md); brownfield-safe semantics.
+- [ ] **Retry/backoff + circuit breaker around mqweb** (MKR-03) with breaker
+  state metric; per-request context deadlines distinct from the 60 s client cap.
+- [ ] **Configurable, jittered requeue intervals** (MKR-05): QMC health 30 s,
+  connection-wait 15 s, transient 30 s, drift resync — manager flags.
+- [ ] **CEL-first validation** per [ADR-0025](adr/0025-cel-first-admission-validation.md):
+  stateless rules to `x-kubernetes-validations`; webhook shrinks to stateful
+  checks; cert-manager becomes optional (`webhooks.enabled=false` documented).
+- [ ] **Secret RBAC/cache scoping** (ARCH-05): filtered informer cache for
+  Secrets; align ARCHITECTURE.md least-privilege claim. Require explicit
+  `username` (or loud warning on the `admin` default, ARCH-12).
+
+### 7c — Code & test health
+
+- [ ] **Collapse the 5-way type switches** (ARCH-06, critical review §2.6):
+  `MQObject` interface or generics across `reconcile_shared.go` /
+  `status_helpers.go` / `drift_policy.go`; one generic workload reconcile
+  skeleton. **Precondition for any new CRD kind.**
+- [ ] **Wrong-behavior fixes** (test audit): observe-only CHLAUTH/AUTHREC must
+  not SET missing objects (WB-01/F01); typed wrap errors replace substring
+  event classification (WB-02/F02, ADR-0014 compliance); per-kind status-patch
+  tests assert re-read state (WB-03/F03).
+- [ ] Delete dead helpers + padding tests (ARCH-09/F04); envtest gaps for
+  Channel/Topic/AuthorityRecord paths (F07) — lifts `internal/controller`
+  coverage (87.6%) honestly.
+- [ ] **E2E flake triage** (ARCH-07): 2 of last 6 main runs failed with
+  reruns green; duration variance 13–34 min.
+- [ ] Fix `task changelog` clobbering `CHANGELOG.md` (release audit P1-2:
+  `cliff.toml` `output` vs preview tasks).
+
+### 7d — Docs truth wave
+
+- [ ] Fix drift-semantics contradiction in INSTALL_AND_USE.md (DOC-01);
+  remove/implement FAQ `suspend` entry (DOC-02 — closes with 7b);
+  cert-manager in prerequisites (DOC-03); uninstall covers auth CRs (DOC-09);
+  broken ADR-0006 links (DOC-04); cert `Ready` wait in UPGRADE.md (DOC-07);
+  version pins → current release (DOC-08); remaining link/anchor fixes
+  (DOC-05/10/11/12); doc-map sync (DOC-13).
+
+Exit criteria: all EC-P0/P1 closed with envtest locks; suspend/deletion/
+adoption/resync shipped and documented; CEL migration complete with golden
+parity; coverage floor intact without padding; e2e flake rate addressed.
+
+## Phase 8 — API maturation (v1beta1 readiness)
+
+- [ ] **Typed attribute fields + escape hatch** per
+  [ADR-0021](adr/0021-attribute-api-shape.md): promote drift-checked keys to
+  typed, CEL-validated spec fields; exclusivity rule; schema goldens.
+- [ ] Published **API stability statement**: what `v1alpha1` guarantees, what
+  graduation to `v1beta1` requires (conversion webhook, deprecation policy).
+- [ ] Optional: DISPLAY **capability probing** per
+  [ADR-0024](adr/0024-mqsc-command-construction-hygiene.md) §4, replacing
+  hand-maintained per-version safe lists.
+- [ ] `v1beta1` graduation of all six kinds with conversion webhook once 8a/8b
+  are stable for one minor release.
+
+## Phase 9 — MQ surface depth (resequenced from Phase 5)
+
+- [ ] Additional CHLAUTH rule types: `USERMAP`, `SSLPEERMAP`, `QMGRMAP` —
+  CRD fields, mqrest SET/GET + drift, integration + e2e (daily-backlog
+  AUTH-3a…AUTH-6).
+- [ ] AuthorityRecord channel/namelist profile parity with queue profiles.
+- [ ] BLOCKADDR integration + e2e coverage (AUTH-1/AUTH-2).
+- [ ] Further channel types (SDR/RCVR) behind the same quality bar — only
+  after the ARCH-06 refactor (7c) makes new kinds cheap.
+
 ## Later / candidate work
 
-- Optional PCF adapter behind the existing `MQAdmin` port for environments
-  without `mqweb`.
-- Metrics/dashboards and richer status reporting.
-- Documentation site (Helm chart is published to GHCR OCI on release tags; `.tgz`
-  remains attached to GitHub Releases).
+- PCF adapter behind `MQAdmin` — **parked** per the 2026-06-09 note in
+  [ADR-0017](adr/0017-pcf-adapter-behind-mqadmin.md): implemented only if a
+  concrete no-mqweb adopter commits. Scaffold stays as the compile-time
+  contract check.
+- Multi-tenancy / governance boundary (`MQProject`-style allowlists, MKR-09)
+  and `QueueSet`-style generators (MKR-12) — evaluate on demand signal only.
+- Property-based tests for MQSC/attribute reconciliation (MKR-10,
+  `pgregory.net/rapid`): idempotency and determinism properties.
+- `testcontainers-go` for the Docker MQ integration tier (MKR-07) — prototype
+  and compare flake/runtime before replacing `hack/mq-docker`.
+- OpenTelemetry tracing `Reconcile → mqweb` (MKR-08 tail).
 - Commit generated `docs/schemas/mqweb-swagger.json` per target MQ version.
 - [x] **Admission:** envtest assertion for unknown-attribute warnings (Queue, Topic,
   Channel) via `internal/webhook/v1alpha1/suite_test.go`.
