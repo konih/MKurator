@@ -89,35 +89,12 @@ func patchSyncedDrift(
 	message string,
 	opts syncStatusOpts,
 ) error {
-	emitSyncedTransitionEvent(recorder, obj, metav1.ConditionFalse, messagingv1alpha1.ReasonDriftDetected, message)
-
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDriftDetected, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Topic:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDriftDetected, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Channel:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDriftDetected, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.ChannelAuthRule:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDriftDetected, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.AuthorityRecord:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDriftDetected, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		return status.Update(ctx, o)
-	default:
-		return fmt.Errorf("patchSyncedDrift: unsupported type %T", obj)
-	}
+	return patchSyncedStatus(ctx, status, recorder, obj, syncedStatusPatch{
+		conditionStatus: metav1.ConditionFalse,
+		reason:          messagingv1alpha1.ReasonDriftDetected,
+		generation:      generation,
+		message:         message,
+		opts:            opts,
+		emitEvent:       true,
+	})
 }

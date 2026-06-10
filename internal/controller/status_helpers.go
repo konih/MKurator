@@ -43,49 +43,11 @@ func findCondition(conditions []metav1.Condition, condType string) (metav1.Condi
 }
 
 func applyMQObjectStatusFields(obj client.Object, opts syncStatusOpts, message string, lastSync *metav1.Time) {
-	exists := opts.mqObjectExists
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		o.Status.Message = message
-		if lastSync != nil {
-			o.Status.LastSyncTime = lastSync
-		}
-		if exists != nil {
-			o.Status.MQObjectExists = exists
-		}
-	case *messagingv1alpha1.Topic:
-		o.Status.Message = message
-		if lastSync != nil {
-			o.Status.LastSyncTime = lastSync
-		}
-		if exists != nil {
-			o.Status.MQObjectExists = exists
-		}
-	case *messagingv1alpha1.Channel:
-		o.Status.Message = message
-		if lastSync != nil {
-			o.Status.LastSyncTime = lastSync
-		}
-		if exists != nil {
-			o.Status.MQObjectExists = exists
-		}
-	case *messagingv1alpha1.ChannelAuthRule:
-		o.Status.Message = message
-		if lastSync != nil {
-			o.Status.LastSyncTime = lastSync
-		}
-		if exists != nil {
-			o.Status.MQObjectExists = exists
-		}
-	case *messagingv1alpha1.AuthorityRecord:
-		o.Status.Message = message
-		if lastSync != nil {
-			o.Status.LastSyncTime = lastSync
-		}
-		if exists != nil {
-			o.Status.MQObjectExists = exists
-		}
+	mo, err := mqObjectFrom(obj)
+	if err != nil {
+		return
 	}
+	updateMQStatusFields(mo, opts, message, lastSync)
 }
 
 func boolPtr(b bool) *bool {

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,7 +61,6 @@ func reconcileWorkloadSuspended(
 	return ctrl.Result{}, nil
 }
 
-//nolint:dupl // per-kind status patch shape matches patchSyncedProgressing
 func patchSyncedSuspended(
 	ctx context.Context,
 	status client.StatusWriter,
@@ -71,37 +69,13 @@ func patchSyncedSuspended(
 	generation int64,
 	message string,
 ) error {
-	emitSyncedTransitionEvent(recorder, obj, metav1.ConditionFalse, messagingv1alpha1.ReasonSuspended, message)
-
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonSuspended, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Topic:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonSuspended, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Channel:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonSuspended, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.ChannelAuthRule:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonSuspended, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.AuthorityRecord:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonSuspended, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	default:
-		return fmt.Errorf("patchSyncedSuspended: unsupported type %T", obj)
-	}
+	return patchSyncedStatus(ctx, status, recorder, obj, syncedStatusPatch{
+		conditionStatus: metav1.ConditionFalse,
+		reason:          messagingv1alpha1.ReasonSuspended,
+		generation:      generation,
+		message:         message,
+		emitEvent:       true,
+	})
 }
 
 func workloadReconcilePredicates() predicate.Predicate {

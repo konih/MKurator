@@ -2,9 +2,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
+
 	"time"
+
+	"github.com/go-logr/logr"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -537,6 +541,41 @@ func TestWatchConnectionStatus(t *testing.T) {
 		t.Fatalf("non-connection object should yield no requests, got %d", len(reqs))
 	}
 	_ = watchConnectionStatus(cl)
+}
+
+func TestAppendDependentsOrLog_ListError(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	s := runtime.NewScheme()
+	cl := fake.NewClientBuilder().WithScheme(s).Build()
+	reqs := appendDependentsOrLog(ctx, cl, logr.Discard(), "ns", "qm1", "Queue",
+		func() *messagingv1alpha1.QueueList { return &messagingv1alpha1.QueueList{} },
+		func(l *messagingv1alpha1.QueueList) []*messagingv1alpha1.Queue { return nil },
+		nil,
+	)
+	if len(reqs) != 0 {
+		t.Fatalf("requests = %d, want 0 when list fails", len(reqs))
+	}
+}
+
+func TestMQObjectFrom_Unsupported(t *testing.T) {
+	t.Parallel()
+	_, err := mqObjectFrom(&messagingv1alpha1.QueueManagerConnection{})
+	if err == nil {
+		t.Fatal("expected error for non-workload type")
+	}
+}
+
+func TestSetSyncedError_UnsupportedType(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	conn := &messagingv1alpha1.QueueManagerConnection{
+		ObjectMeta: metav1.ObjectMeta{Name: "qm1", Namespace: "ns"},
+	}
+	_, err := setSyncedError(ctx, nil, nil, conn, 1, fmt.Errorf("fail"), syncStatusOpts{})
+	if err == nil {
+		t.Fatal("expected error for unsupported type")
+	}
 }
 
 func TestConnectionRefName_Unsupported(t *testing.T) {

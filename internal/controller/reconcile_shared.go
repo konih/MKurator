@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,6 +25,70 @@ import (
 )
 
 const forceOrphanAnnotationValue = "true"
+
+func mqObjectFrom(obj client.Object) (MQObject, error) {
+	mo, ok := obj.(MQObject)
+	if !ok {
+		return nil, fmt.Errorf("unsupported workload type %T", obj)
+	}
+	return mo, nil
+}
+
+func updateMQStatusFields(
+	mo MQObject,
+	opts syncStatusOpts,
+	message string,
+	lastSync *metav1.Time,
+) {
+	fields := mo.GetMQStatusFields()
+	fields.Message = message
+	if lastSync != nil {
+		fields.LastSyncTime = lastSync
+	}
+	if opts.mqObjectExists != nil {
+		fields.MQObjectExists = opts.mqObjectExists
+	}
+}
+
+type syncedStatusPatch struct {
+	conditionStatus metav1.ConditionStatus
+	reason          string
+	generation      int64
+	message         string
+	opts            syncStatusOpts
+	lastSync        *metav1.Time
+	setObservedGen  bool
+	emitEvent       bool
+}
+
+func patchSyncedStatus(
+	ctx context.Context,
+	status client.StatusWriter,
+	recorder events.EventRecorder,
+	obj client.Object,
+	patch syncedStatusPatch,
+) error {
+	mo, err := mqObjectFrom(obj)
+	if err != nil {
+		return fmt.Errorf("patch synced status: %w", err)
+	}
+	if patch.emitEvent {
+		emitSyncedTransitionEvent(recorder, obj, patch.conditionStatus, patch.reason, patch.message)
+	}
+	setCondition(
+		mo.GetMQConditions(),
+		messagingv1alpha1.ConditionSynced,
+		patch.conditionStatus,
+		patch.reason,
+		patch.message,
+		patch.generation,
+	)
+	if patch.setObservedGen {
+		mo.SetStatusObservedGeneration(patch.generation)
+	}
+	updateMQStatusFields(mo, patch.opts, patch.message, patch.lastSync)
+	return status.Update(ctx, obj)
+}
 
 func resolveConnection(
 	ctx context.Context,
@@ -59,20 +124,11 @@ func waitForConnectionReady(
 }
 
 func syncedConditions(obj client.Object) []metav1.Condition {
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		return o.Status.Conditions
-	case *messagingv1alpha1.Topic:
-		return o.Status.Conditions
-	case *messagingv1alpha1.Channel:
-		return o.Status.Conditions
-	case *messagingv1alpha1.ChannelAuthRule:
-		return o.Status.Conditions
-	case *messagingv1alpha1.AuthorityRecord:
-		return o.Status.Conditions
-	default:
+	mo, err := mqObjectFrom(obj)
+	if err != nil {
 		return nil
 	}
+	return *mo.GetMQConditions()
 }
 
 func emitSyncedTransitionEvent(
@@ -86,7 +142,6 @@ func emitSyncedTransitionEvent(
 	}
 }
 
-//nolint:dupl // progressing vs deleting share the same per-kind status patch shape
 func patchSyncedProgressing(
 	ctx context.Context,
 	status client.StatusWriter,
@@ -95,37 +150,13 @@ func patchSyncedProgressing(
 	generation int64,
 	message string,
 ) error {
-	emitSyncedTransitionEvent(recorder, obj, metav1.ConditionFalse, messagingv1alpha1.ReasonProgressing, message)
-
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonProgressing, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Topic:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonProgressing, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Channel:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonProgressing, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.ChannelAuthRule:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonProgressing, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.AuthorityRecord:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonProgressing, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	default:
-		return fmt.Errorf("patchSyncedProgressing: unsupported type %T", obj)
-	}
+	return patchSyncedStatus(ctx, status, recorder, obj, syncedStatusPatch{
+		conditionStatus: metav1.ConditionFalse,
+		reason:          messagingv1alpha1.ReasonProgressing,
+		generation:      generation,
+		message:         message,
+		emitEvent:       true,
+	})
 }
 
 func setSyncedError(
@@ -145,44 +176,14 @@ func setSyncedError(
 		requeue = ctrl.Result{RequeueAfter: TransientRequeueInterval()}
 	}
 
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, reason, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		if statusErr := status.Update(ctx, o); statusErr != nil {
-			return requeue, statusErr
-		}
-	case *messagingv1alpha1.Topic:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, reason, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		if statusErr := status.Update(ctx, o); statusErr != nil {
-			return requeue, statusErr
-		}
-	case *messagingv1alpha1.Channel:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, reason, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		if statusErr := status.Update(ctx, o); statusErr != nil {
-			return requeue, statusErr
-		}
-	case *messagingv1alpha1.ChannelAuthRule:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, reason, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		if statusErr := status.Update(ctx, o); statusErr != nil {
-			return requeue, statusErr
-		}
-	case *messagingv1alpha1.AuthorityRecord:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, reason, message, generation)
-		applyMQObjectStatusFields(o, opts, message, nil)
-		if statusErr := status.Update(ctx, o); statusErr != nil {
-			return requeue, statusErr
-		}
-	default:
-		return ctrl.Result{}, fmt.Errorf("setSyncedError: unsupported type %T", obj)
+	if patchErr := patchSyncedStatus(ctx, status, recorder, obj, syncedStatusPatch{
+		conditionStatus: metav1.ConditionFalse,
+		reason:          reason,
+		generation:      generation,
+		message:         message,
+		opts:            opts,
+	}); patchErr != nil {
+		return requeue, patchErr
 	}
 
 	if errors.Is(err, mqadmin.ErrTransient) {
@@ -200,46 +201,19 @@ func patchSyncedAvailable(
 	message string,
 	opts syncStatusOpts,
 ) error {
-	emitSyncedTransitionEvent(recorder, obj, metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable, message)
 	now := metav1.Now()
-
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable, message, generation)
-		o.Status.ObservedGeneration = generation
-		applyMQObjectStatusFields(o, opts, message, &now)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Topic:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable, message, generation)
-		o.Status.ObservedGeneration = generation
-		applyMQObjectStatusFields(o, opts, message, &now)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Channel:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable, message, generation)
-		o.Status.ObservedGeneration = generation
-		applyMQObjectStatusFields(o, opts, message, &now)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.ChannelAuthRule:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable, message, generation)
-		o.Status.ObservedGeneration = generation
-		applyMQObjectStatusFields(o, opts, message, &now)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.AuthorityRecord:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionTrue, messagingv1alpha1.ReasonAvailable, message, generation)
-		o.Status.ObservedGeneration = generation
-		applyMQObjectStatusFields(o, opts, message, &now)
-		return status.Update(ctx, o)
-	default:
-		return fmt.Errorf("patchSyncedAvailable: unsupported type %T", obj)
-	}
+	return patchSyncedStatus(ctx, status, recorder, obj, syncedStatusPatch{
+		conditionStatus: metav1.ConditionTrue,
+		reason:          messagingv1alpha1.ReasonAvailable,
+		generation:      generation,
+		message:         message,
+		opts:            opts,
+		lastSync:        &now,
+		setObservedGen:  true,
+		emitEvent:       true,
+	})
 }
 
-//nolint:dupl // progressing vs deleting share the same per-kind status patch shape
 func patchSyncedDeleting(
 	ctx context.Context,
 	status client.StatusWriter,
@@ -248,37 +222,13 @@ func patchSyncedDeleting(
 	generation int64,
 	message string,
 ) error {
-	emitSyncedTransitionEvent(recorder, obj, metav1.ConditionFalse, messagingv1alpha1.ReasonDeleting, message)
-
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDeleting, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Topic:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDeleting, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Channel:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDeleting, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.ChannelAuthRule:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDeleting, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.AuthorityRecord:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonDeleting, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	default:
-		return fmt.Errorf("patchSyncedDeleting: unsupported type %T", obj)
-	}
+	return patchSyncedStatus(ctx, status, recorder, obj, syncedStatusPatch{
+		conditionStatus: metav1.ConditionFalse,
+		reason:          messagingv1alpha1.ReasonDeleting,
+		generation:      generation,
+		message:         message,
+		emitEvent:       true,
+	})
 }
 
 func forceOrphanRequested(obj metav1.Object) bool {
@@ -358,28 +308,10 @@ func orphanFinalizeWorkload(
 	}
 	recordNormalEvent(recorder, obj, messagingv1alpha1.ReasonOrphaned, message)
 
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		controllerutil.RemoveFinalizer(o, finalizer)
-		return ctrl.Result{}, c.Update(ctx, o)
-	case *messagingv1alpha1.Topic:
-		controllerutil.RemoveFinalizer(o, finalizer)
-		return ctrl.Result{}, c.Update(ctx, o)
-	case *messagingv1alpha1.Channel:
-		controllerutil.RemoveFinalizer(o, finalizer)
-		return ctrl.Result{}, c.Update(ctx, o)
-	case *messagingv1alpha1.ChannelAuthRule:
-		controllerutil.RemoveFinalizer(o, finalizer)
-		return ctrl.Result{}, c.Update(ctx, o)
-	case *messagingv1alpha1.AuthorityRecord:
-		controllerutil.RemoveFinalizer(o, finalizer)
-		return ctrl.Result{}, c.Update(ctx, o)
-	default:
-		return ctrl.Result{}, fmt.Errorf("orphanFinalizeWorkload: unsupported type %T", obj)
-	}
+	controllerutil.RemoveFinalizer(obj, finalizer)
+	return ctrl.Result{}, c.Update(ctx, obj)
 }
 
-//nolint:dupl // per-kind status patch shape matches patchSyncedDeleting
 func patchSyncedOrphaned(
 	ctx context.Context,
 	status client.StatusWriter,
@@ -388,54 +320,74 @@ func patchSyncedOrphaned(
 	generation int64,
 	message string,
 ) error {
-	emitSyncedTransitionEvent(recorder, obj, metav1.ConditionFalse, messagingv1alpha1.ReasonOrphaned, message)
-
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonOrphaned, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Topic:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonOrphaned, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.Channel:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonOrphaned, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.ChannelAuthRule:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonOrphaned, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	case *messagingv1alpha1.AuthorityRecord:
-		setCondition(&o.Status.Conditions, messagingv1alpha1.ConditionSynced,
-			metav1.ConditionFalse, messagingv1alpha1.ReasonOrphaned, message, generation)
-		applyMQObjectStatusFields(o, syncStatusOpts{}, message, nil)
-		return status.Update(ctx, o)
-	default:
-		return fmt.Errorf("patchSyncedOrphaned: unsupported type %T", obj)
-	}
+	return patchSyncedStatus(ctx, status, recorder, obj, syncedStatusPatch{
+		conditionStatus: metav1.ConditionFalse,
+		reason:          messagingv1alpha1.ReasonOrphaned,
+		generation:      generation,
+		message:         message,
+		emitEvent:       true,
+	})
 }
 
 func connectionRefName(obj client.Object) (string, error) {
-	switch o := obj.(type) {
-	case *messagingv1alpha1.Queue:
-		return o.Spec.ConnectionRef.Name, nil
-	case *messagingv1alpha1.Topic:
-		return o.Spec.ConnectionRef.Name, nil
-	case *messagingv1alpha1.Channel:
-		return o.Spec.ConnectionRef.Name, nil
-	case *messagingv1alpha1.ChannelAuthRule:
-		return o.Spec.ConnectionRef.Name, nil
-	case *messagingv1alpha1.AuthorityRecord:
-		return o.Spec.ConnectionRef.Name, nil
-	default:
-		return "", fmt.Errorf("connectionRefName: unsupported type %T", obj)
+	mo, err := mqObjectFrom(obj)
+	if err != nil {
+		return "", err
 	}
+	return mo.ConnectionRefName(), nil
+}
+
+type mqWorkloadObject interface {
+	MQObject
+	client.Object
+}
+
+func appendListDependents[T mqWorkloadObject, L client.ObjectList](
+	ctx context.Context,
+	c client.Client,
+	ns, connName, kind string,
+	newList func() L,
+	itemsFn func(L) []T,
+	reqs []reconcile.Request,
+) ([]reconcile.Request, error) {
+	list := newList()
+	if err := c.List(ctx, list, client.InNamespace(ns)); err != nil {
+		return reqs, fmt.Errorf("list %s: %w", kind, err)
+	}
+	for _, item := range itemsFn(list) {
+		if item.ConnectionRefName() == connName {
+			reqs = append(reqs, reconcile.Request{
+				NamespacedName: types.NamespacedName{Namespace: ns, Name: item.GetName()},
+			})
+		}
+	}
+	return reqs, nil
+}
+
+func appendDependentsOrLog[T mqWorkloadObject, L client.ObjectList](
+	ctx context.Context,
+	c client.Client,
+	logger logr.Logger,
+	ns, connName, kind string,
+	newList func() L,
+	itemsFn func(L) []T,
+	reqs []reconcile.Request,
+) []reconcile.Request {
+	added, err := appendListDependents(ctx, c, ns, connName, kind, newList, itemsFn, reqs)
+	if err != nil {
+		logger.Error(err, "list dependent resources for connection fan-out",
+			"namespace", ns, "connection", connName, "kind", kind)
+		return reqs
+	}
+	return added
+}
+
+func mqObjectItems[T mqWorkloadObject, S ~[]E, E any](items S, ptr func(*E) T) []T {
+	out := make([]T, len(items))
+	for i := range items {
+		out[i] = ptr(&items[i])
+	}
+	return out
 }
 
 func requestsForConnection(
@@ -444,79 +396,55 @@ func requestsForConnection(
 	conn *messagingv1alpha1.QueueManagerConnection,
 ) []reconcile.Request {
 	logger := log.FromContext(ctx)
-	var reqs []reconcile.Request
 	ns := conn.Namespace
 	connName := conn.Name
+	var reqs []reconcile.Request
 
-	queueList := &messagingv1alpha1.QueueList{}
-	if err := c.List(ctx, queueList, client.InNamespace(ns)); err == nil {
-		for i := range queueList.Items {
-			if queueList.Items[i].Spec.ConnectionRef.Name == connName {
-				reqs = append(reqs, reconcile.Request{
-					NamespacedName: types.NamespacedName{Namespace: ns, Name: queueList.Items[i].Name},
-				})
-			}
-		}
-	} else {
-		logger.Error(err, "list dependent resources for connection fan-out",
-			"namespace", ns, "connection", connName, "kind", "Queue")
-	}
-
-	topicList := &messagingv1alpha1.TopicList{}
-	if err := c.List(ctx, topicList, client.InNamespace(ns)); err == nil {
-		for i := range topicList.Items {
-			if topicList.Items[i].Spec.ConnectionRef.Name == connName {
-				reqs = append(reqs, reconcile.Request{
-					NamespacedName: types.NamespacedName{Namespace: ns, Name: topicList.Items[i].Name},
-				})
-			}
-		}
-	} else {
-		logger.Error(err, "list dependent resources for connection fan-out",
-			"namespace", ns, "connection", connName, "kind", "Topic")
-	}
-
-	channelList := &messagingv1alpha1.ChannelList{}
-	if err := c.List(ctx, channelList, client.InNamespace(ns)); err == nil {
-		for i := range channelList.Items {
-			if channelList.Items[i].Spec.ConnectionRef.Name == connName {
-				reqs = append(reqs, reconcile.Request{
-					NamespacedName: types.NamespacedName{Namespace: ns, Name: channelList.Items[i].Name},
-				})
-			}
-		}
-	} else {
-		logger.Error(err, "list dependent resources for connection fan-out",
-			"namespace", ns, "connection", connName, "kind", "Channel")
-	}
-
-	authRuleList := &messagingv1alpha1.ChannelAuthRuleList{}
-	if err := c.List(ctx, authRuleList, client.InNamespace(ns)); err == nil {
-		for i := range authRuleList.Items {
-			if authRuleList.Items[i].Spec.ConnectionRef.Name == connName {
-				reqs = append(reqs, reconcile.Request{
-					NamespacedName: types.NamespacedName{Namespace: ns, Name: authRuleList.Items[i].Name},
-				})
-			}
-		}
-	} else {
-		logger.Error(err, "list dependent resources for connection fan-out",
-			"namespace", ns, "connection", connName, "kind", "ChannelAuthRule")
-	}
-
-	authRecList := &messagingv1alpha1.AuthorityRecordList{}
-	if err := c.List(ctx, authRecList, client.InNamespace(ns)); err == nil {
-		for i := range authRecList.Items {
-			if authRecList.Items[i].Spec.ConnectionRef.Name == connName {
-				reqs = append(reqs, reconcile.Request{
-					NamespacedName: types.NamespacedName{Namespace: ns, Name: authRecList.Items[i].Name},
-				})
-			}
-		}
-	} else {
-		logger.Error(err, "list dependent resources for connection fan-out",
-			"namespace", ns, "connection", connName, "kind", "AuthorityRecord")
-	}
+	reqs = appendDependentsOrLog(ctx, c, logger, ns, connName, "Queue",
+		func() *messagingv1alpha1.QueueList { return &messagingv1alpha1.QueueList{} },
+		func(l *messagingv1alpha1.QueueList) []*messagingv1alpha1.Queue {
+			return mqObjectItems(l.Items, func(q *messagingv1alpha1.Queue) *messagingv1alpha1.Queue { return q })
+		},
+		reqs,
+	)
+	reqs = appendDependentsOrLog(ctx, c, logger, ns, connName, "Topic",
+		func() *messagingv1alpha1.TopicList { return &messagingv1alpha1.TopicList{} },
+		func(l *messagingv1alpha1.TopicList) []*messagingv1alpha1.Topic {
+			return mqObjectItems(l.Items, func(t *messagingv1alpha1.Topic) *messagingv1alpha1.Topic { return t })
+		},
+		reqs,
+	)
+	reqs = appendDependentsOrLog(ctx, c, logger, ns, connName, "Channel",
+		func() *messagingv1alpha1.ChannelList { return &messagingv1alpha1.ChannelList{} },
+		func(l *messagingv1alpha1.ChannelList) []*messagingv1alpha1.Channel {
+			return mqObjectItems(l.Items, func(ch *messagingv1alpha1.Channel) *messagingv1alpha1.Channel { return ch })
+		},
+		reqs,
+	)
+	reqs = appendDependentsOrLog(ctx, c, logger, ns, connName, "ChannelAuthRule",
+		func() *messagingv1alpha1.ChannelAuthRuleList { return &messagingv1alpha1.ChannelAuthRuleList{} },
+		func(l *messagingv1alpha1.ChannelAuthRuleList) []*messagingv1alpha1.ChannelAuthRule {
+			return mqObjectItems(
+				l.Items,
+				func(r *messagingv1alpha1.ChannelAuthRule) *messagingv1alpha1.ChannelAuthRule {
+					return r
+				},
+			)
+		},
+		reqs,
+	)
+	reqs = appendDependentsOrLog(ctx, c, logger, ns, connName, "AuthorityRecord",
+		func() *messagingv1alpha1.AuthorityRecordList { return &messagingv1alpha1.AuthorityRecordList{} },
+		func(l *messagingv1alpha1.AuthorityRecordList) []*messagingv1alpha1.AuthorityRecord {
+			return mqObjectItems(
+				l.Items,
+				func(a *messagingv1alpha1.AuthorityRecord) *messagingv1alpha1.AuthorityRecord {
+					return a
+				},
+			)
+		},
+		reqs,
+	)
 
 	return reqs
 }
