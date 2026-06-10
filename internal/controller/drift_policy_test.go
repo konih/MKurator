@@ -73,6 +73,112 @@ func TestReconcileMQObjectState_ObserveOnlyNotFound(t *testing.T) {
 	}
 }
 
+func TestReconcileMQObjectState_NoDefineWhenAttributesMatch(t *testing.T) {
+	t.Parallel()
+	called := false
+	exists, msg, err := reconcileMQObjectState(
+		false,
+		messagingv1alpha1.AdoptionPolicyAdopt,
+		false,
+		true,
+		map[string]string{"maxdepth": "5000"},
+		map[string]string{"maxdepth": "5000"},
+		[]string{"maxdepth"},
+		"queue \"APP.Q\"",
+		func() error {
+			called = true
+			return nil
+		},
+	)
+	if err != nil || msg != "" || !exists || called {
+		t.Fatalf("exists=%v msg=%q err=%v called=%v", exists, msg, err, called)
+	}
+}
+
+func TestReconcileMQObjectState_DefinesWhenMissing(t *testing.T) {
+	t.Parallel()
+	called := false
+	exists, msg, err := reconcileMQObjectState(
+		false,
+		messagingv1alpha1.AdoptionPolicyAdopt,
+		false,
+		false,
+		nil,
+		map[string]string{"maxdepth": "5000"},
+		[]string{"maxdepth"},
+		"queue \"APP.Q\"",
+		func() error {
+			called = true
+			return nil
+		},
+	)
+	if err != nil || msg != "" || !exists || !called {
+		t.Fatalf("exists=%v msg=%q err=%v called=%v", exists, msg, err, called)
+	}
+}
+
+func TestReconcileMQObjectState_PubSubCaseInsensitive(t *testing.T) {
+	t.Parallel()
+	called := false
+	exists, msg, err := reconcileMQObjectState(
+		false,
+		messagingv1alpha1.AdoptionPolicyAdopt,
+		false,
+		true,
+		map[string]string{"pub": "enabled", "sub": "enabled"},
+		map[string]string{"pub": "ENABLED", "sub": "ENABLED"},
+		[]string{"pub", "sub"},
+		"topic \"RETAIL.ORDERS\"",
+		func() error {
+			called = true
+			return nil
+		},
+	)
+	if err != nil || msg != "" || !exists || called {
+		t.Fatalf("exists=%v msg=%q err=%v called=%v", exists, msg, err, called)
+	}
+}
+
+func TestReconcileMQObjectState_ChannelTrptypeDrift(t *testing.T) {
+	t.Parallel()
+	called := false
+	exists, msg, err := reconcileMQObjectState(
+		false,
+		messagingv1alpha1.AdoptionPolicyAdopt,
+		false,
+		true,
+		map[string]string{"trptype": "tcp"},
+		map[string]string{"trptype": "lu62"},
+		[]string{"trptype"},
+		"channel \"ORDERS.APP\"",
+		func() error {
+			called = true
+			return nil
+		},
+	)
+	if err != nil || msg != "" || !exists || !called {
+		t.Fatalf("exists=%v msg=%q err=%v called=%v", exists, msg, err, called)
+	}
+}
+
+func TestReconcileMQObjectState_ObserveOnlyNoDrift(t *testing.T) {
+	t.Parallel()
+	exists, msg, err := reconcileMQObjectState(
+		true,
+		messagingv1alpha1.AdoptionPolicyAdopt,
+		false,
+		true,
+		map[string]string{"maxdepth": "5000"},
+		map[string]string{"maxdepth": "5000"},
+		[]string{"maxdepth"},
+		"queue \"APP.Q\"",
+		func() error { return errors.New("define should not run") },
+	)
+	if err != nil || msg != "" || !exists {
+		t.Fatalf("exists=%v msg=%q err=%v", exists, msg, err)
+	}
+}
+
 func TestReconcileMQObjectState_DefaultDefinesOnDrift(t *testing.T) {
 	t.Parallel()
 	called := false

@@ -46,6 +46,16 @@ func TestAttributesNeedUpdate_SkipsNonDriftKeys(t *testing.T) {
 	}
 }
 
+func TestAttributesNeedUpdate_PubSubCaseInsensitive(t *testing.T) {
+	t.Parallel()
+	checkKeys := []string{"pub", "sub"}
+	desired := map[string]string{"pub": "enabled", "sub": "enabled"}
+	observed := map[string]string{"pub": "ENABLED", "sub": "ENABLED"}
+	if AttributesNeedUpdate(desired, observed, checkKeys) {
+		t.Fatal("expected no update when pub/sub differ only by case")
+	}
+}
+
 func TestAttributeDriftsForKeys(t *testing.T) {
 	t.Parallel()
 	drifts := AttributeDriftsForKeys(
