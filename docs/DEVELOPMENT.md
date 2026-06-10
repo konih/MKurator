@@ -570,6 +570,10 @@ failing). See [ARCHITECTURE.md](ARCHITECTURE.md#operator-runtime-concerns) and
   `username` + `mqAdminPassword`; factory also accepts `password`).
 - **envtest binaries missing**: `task test:run` downloads them via
   `setup-envtest` on first run (needs network).
+- **E2e duration / flakes**: full `task test:e2e` and CI `e2e (kustomize)` often
+  take 13–34 minutes (image pulls, MQ readiness). Intermittent reds on `main` have
+  frequently passed on **Re-run failed jobs** with no code change — rerun once before
+  treating a failure as a regression.
 
 ## Before you push
 

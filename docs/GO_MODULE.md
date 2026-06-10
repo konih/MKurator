@@ -170,7 +170,7 @@ flowchart BT
 | **Unit** | `internal/controller/*_test.go`, `internal/adapter/mqrest`, `internal/validation`, `internal/webhook` (table tests) | Mock `mqadmin.Admin`; `httptest` for REST | `task test:run` |
 | **envtest** | `*_envtest_test.go`, `suite_test.go` under `internal/controller`, `internal/webhook` | Real API server; mocked `Admin`; CRDs from `config/` | `task test:run` |
 | **Schema contract** | `test/schema` | None — compares CRD OpenAPI fragments to goldens | `task test:schema` (via `task verify`) |
-| **Integration** | `test/integration`, `internal/adapter/mqrest/*_integration_test.go` | Docker IBM MQ; tag `integration`, env `KURATOR_INTEGRATION_MQ=1` | `task test:integration` |
+| **Integration** | `test/integration/mq/*_integration_test.go` | Docker IBM MQ; tag `integration`, env `KURATOR_INTEGRATION_MQ=1` | `task test:integration` |
 | **e2e** | `test/e2e` | kind + QM; tag `e2e`, env `KURATOR_E2E_MQ=1` | `task test:e2e` |
 
 **Rules of thumb:**
