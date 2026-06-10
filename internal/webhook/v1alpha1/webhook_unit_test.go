@@ -223,10 +223,14 @@ func TestQueueManagerConnectionWebhookValidateInvalidSpec(t *testing.T) {
 
 	conn := &messagingv1alpha1.QueueManagerConnection{
 		ObjectMeta: metav1.ObjectMeta{Name: "bad", Namespace: "ns"},
-		Spec:       messagingv1alpha1.QueueManagerConnectionSpec{},
+		Spec: messagingv1alpha1.QueueManagerConnectionSpec{
+			QueueManager:         "QM1",
+			Endpoint:             "https://mq.example:9443",
+			CredentialsSecretRef: messagingv1alpha1.SecretReference{Name: "missing"},
+		},
 	}
 	if _, err := v.validate(context.Background(), conn); err == nil {
-		t.Fatal("expected validation error for empty spec")
+		t.Fatal("expected validation error for missing credentials secret")
 	}
 }
 
@@ -335,24 +339,6 @@ func TestChannelAuthRuleWebhookValidateCreateRuleTypeTable(t *testing.T) {
 		spec    messagingv1alpha1.ChannelAuthRuleSpec
 		wantErr bool
 	}{
-		{
-			name: "addressmap missing address",
-			spec: messagingv1alpha1.ChannelAuthRuleSpec{
-				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
-				ChannelName:   "ORDERS.APP",
-				RuleType:      messagingv1alpha1.ChannelAuthRuleTypeAddressMap,
-			},
-			wantErr: true,
-		},
-		{
-			name: "blockaddr missing address",
-			spec: messagingv1alpha1.ChannelAuthRuleSpec{
-				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
-				ChannelName:   "ORDERS.APP",
-				RuleType:      messagingv1alpha1.ChannelAuthRuleTypeBlockAddr,
-			},
-			wantErr: true,
-		},
 		{
 			name: "blockaddr valid",
 			spec: messagingv1alpha1.ChannelAuthRuleSpec{

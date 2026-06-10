@@ -21,7 +21,7 @@ const credentialsUsernameDefaultWarningFmt = `credentials Secret %q has no usern
 	`(expected one of username, user, or mqAdminUser); mqweb login will default to "admin" — ` +
 	`set an explicit username for production`
 
-// ValidateQueueManagerConnectionSpec runs admission validation for QueueManagerConnection spec fields.
+// ValidateQueueManagerConnectionSpec runs stateful admission validation for QueueManagerConnection.
 func ValidateQueueManagerConnectionSpec(
 	ctx context.Context,
 	reader client.Reader,
@@ -34,19 +34,7 @@ func ValidateQueueManagerConnectionSpec(
 		errs     field.ErrorList
 	)
 
-	if spec.QueueManager == "" {
-		errs = append(errs, field.Required(field.NewPath("spec").Child("queueManager"), "queueManager is required"))
-	}
-	if spec.Endpoint == "" {
-		errs = append(errs, field.Required(field.NewPath("spec").Child("endpoint"), "endpoint is required"))
-	} else if !strings.HasPrefix(spec.Endpoint, "https://") {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("endpoint"), spec.Endpoint,
-			"endpoint must use HTTPS (https://)"))
-	}
-	if spec.CredentialsSecretRef.Name == "" {
-		errs = append(errs, field.Required(field.NewPath("spec").Child("credentialsSecretRef").Child("name"),
-			"credentialsSecretRef.name is required"))
-	} else {
+	if spec.CredentialsSecretRef.Name != "" {
 		secretPath := field.NewPath("spec").Child("credentialsSecretRef").Child("name")
 		secretErrs, credSecret := getSecretOrErrors(ctx, reader, namespace, spec.CredentialsSecretRef.Name, secretPath)
 		errs = append(errs, secretErrs...)

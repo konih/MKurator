@@ -13,16 +13,6 @@ import (
 	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
 )
 
-func TestValidateQueueManagerConnectionSpecRequiredFields(t *testing.T) {
-	t.Parallel()
-	cl := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
-
-	spec := &messagingv1alpha1.QueueManagerConnectionSpec{}
-	if _, errs := ValidateQueueManagerConnectionSpec(context.Background(), cl, "ns", nil, spec); len(errs) < 3 {
-		t.Fatalf("expected required field errors, got %v", errs)
-	}
-}
-
 func TestValidateQueueManagerConnectionDeleteWithTopic(t *testing.T) {
 	t.Parallel()
 	scheme := runtime.NewScheme()
@@ -99,17 +89,6 @@ func TestValidateQueueManagerConnectionSpec(t *testing.T) {
 	secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: "ns"}}
 	cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(secret).Build()
 
-	t.Run("http endpoint rejected", func(t *testing.T) {
-		t.Parallel()
-		spec := &messagingv1alpha1.QueueManagerConnectionSpec{
-			QueueManager:         "QM1",
-			Endpoint:             "http://mq.example:9443",
-			CredentialsSecretRef: messagingv1alpha1.SecretReference{Name: "creds"},
-		}
-		if _, errs := ValidateQueueManagerConnectionSpec(context.Background(), cl, "ns", nil, spec); len(errs) == 0 {
-			t.Fatal("expected endpoint error")
-		}
-	})
 	t.Run("missing credentials secret", func(t *testing.T) {
 		t.Parallel()
 		spec := &messagingv1alpha1.QueueManagerConnectionSpec{

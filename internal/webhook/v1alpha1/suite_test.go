@@ -260,7 +260,7 @@ var _ = Describe("Validating admission webhooks", func() {
 		err := webhookK8sClient.Create(ctx, rule)
 		Expect(err).To(HaveOccurred())
 		Expect(apierrors.IsInvalid(err)).To(BeTrue())
-		Expect(err.Error()).To(ContainSubstring("spec.address"))
+		Expect(err.Error()).To(ContainSubstring("address"))
 	})
 
 	It("allows ChannelAuthRule USERMAP when Channel exists (deferred MQSC fields)", func() {
