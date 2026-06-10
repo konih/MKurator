@@ -22,6 +22,151 @@ import (
 	mqadmintest "github.com/konih/mkurator/test/mocks/mqadmin"
 )
 
+func allWorkloadKinds(ns string, generation int64) []client.Object {
+	return []client.Object{
+		&messagingv1alpha1.Queue{ObjectMeta: metav1.ObjectMeta{Name: "q1", Namespace: ns, Generation: generation}},
+		&messagingv1alpha1.Topic{ObjectMeta: metav1.ObjectMeta{Name: "t1", Namespace: ns, Generation: generation}},
+		&messagingv1alpha1.Channel{ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: ns, Generation: generation}},
+		&messagingv1alpha1.ChannelAuthRule{
+			ObjectMeta: metav1.ObjectMeta{Name: "car1", Namespace: ns, Generation: generation},
+		},
+		&messagingv1alpha1.AuthorityRecord{
+			ObjectMeta: metav1.ObjectMeta{Name: "auth1", Namespace: ns, Generation: generation},
+		},
+	}
+}
+
+type patchedStatusExpect struct {
+	syncedStatus      metav1.ConditionStatus
+	syncedReason      string
+	message           string
+	observedGen       int64
+	wantLastSync      bool
+	mqObjectExists    *bool
+	statusObservedGen int64
+}
+
+func unitConditionStatus(conditions []metav1.Condition, condType string) metav1.ConditionStatus {
+	for _, c := range conditions {
+		if c.Type == condType {
+			return c.Status
+		}
+	}
+	return ""
+}
+
+func unitConditionReason(conditions []metav1.Condition, condType string) string {
+	for _, c := range conditions {
+		if c.Type == condType {
+			return c.Reason
+		}
+	}
+	return ""
+}
+
+func unitConditionObservedGeneration(conditions []metav1.Condition, condType string) int64 {
+	for _, c := range conditions {
+		if c.Type == condType {
+			return c.ObservedGeneration
+		}
+	}
+	return 0
+}
+
+func workloadStatusFields(obj client.Object) (
+	message string,
+	lastSync *metav1.Time,
+	mqExists *bool,
+	observedGen int64,
+) {
+	switch o := obj.(type) {
+	case *messagingv1alpha1.Queue:
+		return o.Status.Message, o.Status.LastSyncTime, o.Status.MQObjectExists, o.Status.ObservedGeneration
+	case *messagingv1alpha1.Topic:
+		return o.Status.Message, o.Status.LastSyncTime, o.Status.MQObjectExists, o.Status.ObservedGeneration
+	case *messagingv1alpha1.Channel:
+		return o.Status.Message, o.Status.LastSyncTime, o.Status.MQObjectExists, o.Status.ObservedGeneration
+	case *messagingv1alpha1.ChannelAuthRule:
+		return o.Status.Message, o.Status.LastSyncTime, o.Status.MQObjectExists, o.Status.ObservedGeneration
+	case *messagingv1alpha1.AuthorityRecord:
+		return o.Status.Message, o.Status.LastSyncTime, o.Status.MQObjectExists, o.Status.ObservedGeneration
+	default:
+		return "", nil, nil, 0
+	}
+}
+
+func rereadWorkload(ctx context.Context, t *testing.T, cl client.Client, obj client.Object) client.Object {
+	t.Helper()
+	key := client.ObjectKeyFromObject(obj)
+	switch obj.(type) {
+	case *messagingv1alpha1.Queue:
+		got := &messagingv1alpha1.Queue{}
+		if err := cl.Get(ctx, key, got); err != nil {
+			t.Fatal(err)
+		}
+		return got
+	case *messagingv1alpha1.Topic:
+		got := &messagingv1alpha1.Topic{}
+		if err := cl.Get(ctx, key, got); err != nil {
+			t.Fatal(err)
+		}
+		return got
+	case *messagingv1alpha1.Channel:
+		got := &messagingv1alpha1.Channel{}
+		if err := cl.Get(ctx, key, got); err != nil {
+			t.Fatal(err)
+		}
+		return got
+	case *messagingv1alpha1.ChannelAuthRule:
+		got := &messagingv1alpha1.ChannelAuthRule{}
+		if err := cl.Get(ctx, key, got); err != nil {
+			t.Fatal(err)
+		}
+		return got
+	case *messagingv1alpha1.AuthorityRecord:
+		got := &messagingv1alpha1.AuthorityRecord{}
+		if err := cl.Get(ctx, key, got); err != nil {
+			t.Fatal(err)
+		}
+		return got
+	default:
+		t.Fatalf("unsupported type %T", obj)
+		return nil
+	}
+}
+
+func assertPatchedWorkloadStatus(t *testing.T, obj client.Object, want patchedStatusExpect) {
+	t.Helper()
+	conds := syncedConditions(obj)
+	if status := unitConditionStatus(conds, messagingv1alpha1.ConditionSynced); status != want.syncedStatus {
+		t.Fatalf("%T Synced status = %q, want %q", obj, status, want.syncedStatus)
+	}
+	if reason := unitConditionReason(conds, messagingv1alpha1.ConditionSynced); reason != want.syncedReason {
+		t.Fatalf("%T Synced reason = %q, want %q", obj, reason, want.syncedReason)
+	}
+	if gen := unitConditionObservedGeneration(conds, messagingv1alpha1.ConditionSynced); gen != want.observedGen {
+		t.Fatalf("%T condition ObservedGeneration = %d, want %d", obj, gen, want.observedGen)
+	}
+	msg, lastSync, mqExists, statusGen := workloadStatusFields(obj)
+	if msg != want.message {
+		t.Fatalf("%T message = %q, want %q", obj, msg, want.message)
+	}
+	if want.wantLastSync && lastSync == nil {
+		t.Fatalf("%T LastSyncTime nil, want set", obj)
+	}
+	if !want.wantLastSync && lastSync != nil {
+		t.Fatalf("%T LastSyncTime = %v, want nil", obj, lastSync)
+	}
+	if want.mqObjectExists != nil {
+		if mqExists == nil || *mqExists != *want.mqObjectExists {
+			t.Fatalf("%T mqObjectExists = %v, want %v", obj, mqExists, want.mqObjectExists)
+		}
+	}
+	if want.statusObservedGen != 0 && statusGen != want.statusObservedGen {
+		t.Fatalf("%T Status.ObservedGeneration = %d, want %d", obj, statusGen, want.statusObservedGen)
+	}
+}
+
 func TestRequestsForConnection_EnqueuesDependents(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -201,69 +346,99 @@ func TestWaitForConnectionReady_AlreadyReady(t *testing.T) {
 	}
 }
 
-func TestPatchSyncedAvailable_Queue(t *testing.T) {
+func TestPatchSyncedAvailable_AllKinds(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	ns := "mkurator-system"
 	s := unitSchemeOrFatal(t)
-	q := &messagingv1alpha1.Queue{
-		ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: ns, Generation: 2},
-	}
-	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(q).WithObjects(q).Build()
-	recorder := events.NewFakeRecorder(1)
+	const generation int64 = 2
+	const message = "synced"
 	exists := true
-	if err := patchSyncedAvailable(ctx, cl.Status(), recorder, q, 2, "synced",
-		syncStatusOpts{mqObjectExists: &exists}); err != nil {
-		t.Fatal(err)
+	opts := syncStatusOpts{mqObjectExists: &exists}
+	want := patchedStatusExpect{
+		syncedStatus:      metav1.ConditionTrue,
+		syncedReason:      messagingv1alpha1.ReasonAvailable,
+		message:           message,
+		observedGen:       generation,
+		wantLastSync:      true,
+		mqObjectExists:    &exists,
+		statusObservedGen: generation,
 	}
-	updated := &messagingv1alpha1.Queue{}
-	if err := cl.Get(ctx, client.ObjectKeyFromObject(q), updated); err != nil {
-		t.Fatal(err)
-	}
-	if updated.Status.ObservedGeneration != 2 {
-		t.Fatalf("ObservedGeneration = %d", updated.Status.ObservedGeneration)
-	}
-	if updated.Status.Message != "synced" || updated.Status.LastSyncTime == nil {
-		t.Fatalf("status fields = message %q lastSync %v", updated.Status.Message, updated.Status.LastSyncTime)
-	}
-	if updated.Status.MQObjectExists == nil || !*updated.Status.MQObjectExists {
-		t.Fatalf("mqObjectExists = %v", updated.Status.MQObjectExists)
-	}
-	select {
-	case ev := <-recorder.Events:
-		if !strings.Contains(ev, corev1.EventTypeNormal) || !strings.Contains(ev, messagingv1alpha1.ReasonAvailable) {
-			t.Fatalf("event = %q", ev)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("expected available event")
+
+	for _, obj := range allWorkloadKinds(ns, generation) {
+		t.Run(client.ObjectKeyFromObject(obj).Name, func(t *testing.T) {
+			t.Parallel()
+			cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
+			recorder := events.NewFakeRecorder(1)
+			if err := patchSyncedAvailable(ctx, cl.Status(), recorder, obj, generation, message, opts); err != nil {
+				t.Fatal(err)
+			}
+			got := rereadWorkload(ctx, t, cl, obj)
+			assertPatchedWorkloadStatus(t, got, want)
+			select {
+			case ev := <-recorder.Events:
+				if !strings.Contains(ev, corev1.EventTypeNormal) ||
+					!strings.Contains(ev, messagingv1alpha1.ReasonAvailable) {
+					t.Fatalf("event = %q", ev)
+				}
+			case <-time.After(time.Second):
+				t.Fatal("expected available event")
+			}
+		})
 	}
 }
 
-func TestPatchSyncedProgressing_Channel(t *testing.T) {
+func TestPatchSyncedProgressing_AllKinds(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	ns := "mkurator-system"
 	s := unitSchemeOrFatal(t)
-	ch := &messagingv1alpha1.Channel{
-		ObjectMeta: metav1.ObjectMeta{Name: "app", Namespace: ns, Generation: 1},
+	const generation int64 = 1
+	const message = "waiting"
+	want := patchedStatusExpect{
+		syncedStatus: metav1.ConditionFalse,
+		syncedReason: messagingv1alpha1.ReasonProgressing,
+		message:      message,
+		observedGen:  generation,
 	}
-	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(ch).WithObjects(ch).Build()
-	if err := patchSyncedProgressing(ctx, cl.Status(), nil, ch, 1, "waiting"); err != nil {
-		t.Fatal(err)
+
+	for _, obj := range allWorkloadKinds(ns, generation) {
+		t.Run(client.ObjectKeyFromObject(obj).Name, func(t *testing.T) {
+			t.Parallel()
+			cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
+			if err := patchSyncedProgressing(ctx, cl.Status(), nil, obj, generation, message); err != nil {
+				t.Fatal(err)
+			}
+			got := rereadWorkload(ctx, t, cl, obj)
+			assertPatchedWorkloadStatus(t, got, want)
+		})
 	}
 }
 
-func TestPatchSyncedDeleting_Topic(t *testing.T) {
+func TestPatchSyncedDeleting_AllKinds(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	ns := "mkurator-system"
 	s := unitSchemeOrFatal(t)
-	topic := &messagingv1alpha1.Topic{
-		ObjectMeta: metav1.ObjectMeta{Name: "retail", Namespace: ns, Generation: 1},
+	const generation int64 = 1
+	const message = "deleting"
+	want := patchedStatusExpect{
+		syncedStatus: metav1.ConditionFalse,
+		syncedReason: messagingv1alpha1.ReasonDeleting,
+		message:      message,
+		observedGen:  generation,
 	}
-	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(topic).WithObjects(topic).Build()
-	if err := patchSyncedDeleting(ctx, cl.Status(), nil, topic, 1, "deleting"); err != nil {
-		t.Fatal(err)
+
+	for _, obj := range allWorkloadKinds(ns, generation) {
+		t.Run(client.ObjectKeyFromObject(obj).Name, func(t *testing.T) {
+			t.Parallel()
+			cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
+			if err := patchSyncedDeleting(ctx, cl.Status(), nil, obj, generation, message); err != nil {
+				t.Fatal(err)
+			}
+			got := rereadWorkload(ctx, t, cl, obj)
+			assertPatchedWorkloadStatus(t, got, want)
+		})
 	}
 }
 
@@ -388,39 +563,33 @@ func TestSetSyncedError_TransientChannel(t *testing.T) {
 	}
 }
 
-func TestPatchSyncedAvailable_ChannelAuthRule(t *testing.T) {
+func TestPatchSyncedDrift_AllKinds(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	ns := "mkurator-system"
 	s := unitSchemeOrFatal(t)
-	rule := &messagingv1alpha1.ChannelAuthRule{
-		ObjectMeta: metav1.ObjectMeta{Name: "car1", Namespace: ns, Generation: 2},
-	}
-	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(rule).WithObjects(rule).Build()
-	if err := patchSyncedAvailable(ctx, cl.Status(), nil, rule, 2, "synced", syncStatusOpts{}); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestPatchSyncedDrift_MQObjects(t *testing.T) {
-	t.Parallel()
-	ctx := context.Background()
-	ns := "mkurator-system"
-	s := unitSchemeOrFatal(t)
+	const generation int64 = 1
+	const message = "drift"
 	exists := true
 	opts := syncStatusOpts{mqObjectExists: &exists}
-	cases := []client.Object{
-		&messagingv1alpha1.Queue{ObjectMeta: metav1.ObjectMeta{Name: "q1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.Topic{ObjectMeta: metav1.ObjectMeta{Name: "t1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.Channel{ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.ChannelAuthRule{ObjectMeta: metav1.ObjectMeta{Name: "car1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.AuthorityRecord{ObjectMeta: metav1.ObjectMeta{Name: "auth1", Namespace: ns, Generation: 1}},
+	want := patchedStatusExpect{
+		syncedStatus:   metav1.ConditionFalse,
+		syncedReason:   messagingv1alpha1.ReasonDriftDetected,
+		message:        message,
+		observedGen:    generation,
+		mqObjectExists: &exists,
 	}
-	for _, obj := range cases {
-		cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
-		if err := patchSyncedDrift(ctx, cl.Status(), nil, obj, 1, "drift", opts); err != nil {
-			t.Fatalf("%T: %v", obj, err)
-		}
+
+	for _, obj := range allWorkloadKinds(ns, generation) {
+		t.Run(client.ObjectKeyFromObject(obj).Name, func(t *testing.T) {
+			t.Parallel()
+			cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
+			if err := patchSyncedDrift(ctx, cl.Status(), nil, obj, generation, message, opts); err != nil {
+				t.Fatal(err)
+			}
+			got := rereadWorkload(ctx, t, cl, obj)
+			assertPatchedWorkloadStatus(t, got, want)
+		})
 	}
 }
 
@@ -458,31 +627,30 @@ func TestSetSyncedError_AuthorityRecord(t *testing.T) {
 	}
 }
 
-func TestPatchSyncedProgressing_ChannelAuthRule(t *testing.T) {
+func TestPatchSyncedOrphaned_AllKinds(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	ns := "mkurator-system"
 	s := unitSchemeOrFatal(t)
-	rule := &messagingv1alpha1.ChannelAuthRule{
-		ObjectMeta: metav1.ObjectMeta{Name: "car1", Namespace: ns, Generation: 1},
+	const generation int64 = 1
+	const message = "orphaned"
+	want := patchedStatusExpect{
+		syncedStatus: metav1.ConditionFalse,
+		syncedReason: messagingv1alpha1.ReasonOrphaned,
+		message:      message,
+		observedGen:  generation,
 	}
-	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(rule).WithObjects(rule).Build()
-	if err := patchSyncedProgressing(ctx, cl.Status(), nil, rule, 1, "waiting"); err != nil {
-		t.Fatal(err)
-	}
-}
 
-func TestPatchSyncedDeleting_AuthorityRecord(t *testing.T) {
-	t.Parallel()
-	ctx := context.Background()
-	ns := "mkurator-system"
-	s := unitSchemeOrFatal(t)
-	auth := &messagingv1alpha1.AuthorityRecord{
-		ObjectMeta: metav1.ObjectMeta{Name: "auth1", Namespace: ns, Generation: 1},
-	}
-	cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(auth).WithObjects(auth).Build()
-	if err := patchSyncedDeleting(ctx, cl.Status(), nil, auth, 1, "deleting"); err != nil {
-		t.Fatal(err)
+	for _, obj := range allWorkloadKinds(ns, generation) {
+		t.Run(client.ObjectKeyFromObject(obj).Name, func(t *testing.T) {
+			t.Parallel()
+			cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
+			if err := patchSyncedOrphaned(ctx, cl.Status(), nil, obj, generation, message); err != nil {
+				t.Fatal(err)
+			}
+			got := rereadWorkload(ctx, t, cl, obj)
+			assertPatchedWorkloadStatus(t, got, want)
+		})
 	}
 }
 
@@ -552,26 +720,6 @@ func TestDeletionAwaitingConnection_Requeues(t *testing.T) {
 	result, err := deletionAwaitingConnection(ctx, cl.Status(), nil, q, 1, notFound)
 	if err != nil || result.RequeueAfter != 15*time.Second {
 		t.Fatalf("result=%+v err=%v", result, err)
-	}
-}
-
-func TestPatchSyncedOrphaned_AllKinds(t *testing.T) {
-	t.Parallel()
-	ctx := context.Background()
-	ns := "mkurator-system"
-	s := unitSchemeOrFatal(t)
-	cases := []client.Object{
-		&messagingv1alpha1.Queue{ObjectMeta: metav1.ObjectMeta{Name: "q1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.Topic{ObjectMeta: metav1.ObjectMeta{Name: "t1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.Channel{ObjectMeta: metav1.ObjectMeta{Name: "c1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.ChannelAuthRule{ObjectMeta: metav1.ObjectMeta{Name: "car1", Namespace: ns, Generation: 1}},
-		&messagingv1alpha1.AuthorityRecord{ObjectMeta: metav1.ObjectMeta{Name: "auth1", Namespace: ns, Generation: 1}},
-	}
-	for _, obj := range cases {
-		cl := fake.NewClientBuilder().WithScheme(s).WithStatusSubresource(obj).WithObjects(obj).Build()
-		if err := patchSyncedOrphaned(ctx, cl.Status(), nil, obj, 1, "orphaned"); err != nil {
-			t.Fatalf("%T: %v", obj, err)
-		}
 	}
 }
 
