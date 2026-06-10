@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
 	"github.com/konih/mkurator/internal/mqadmin"
@@ -648,6 +649,49 @@ func TestQueueManagerConnectionReconciler_ReconcileNotFound(t *testing.T) {
 		t.Fatalf("Reconcile: %v", err)
 	}
 	_ = result
+}
+
+func TestQueueReconciler_FirstPassAddsFinalizerWithoutSynced(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	ns := "mkurator-system"
+	key := types.NamespacedName{Namespace: ns, Name: "orders"}
+	s := unitSchemeOrFatal(t)
+
+	conn := readyConnForUnit(ns)
+	q := &messagingv1alpha1.Queue{
+		ObjectMeta: metav1.ObjectMeta{Name: "orders", Namespace: ns, Generation: 1},
+		Spec: messagingv1alpha1.QueueSpec{
+			ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+			QueueName:     "APP.ORDERS",
+			Type:          messagingv1alpha1.QueueTypeLocal,
+		},
+	}
+
+	cl := fake.NewClientBuilder().
+		WithScheme(s).
+		WithStatusSubresource(q, conn).
+		WithObjects(conn, q).
+		Build()
+
+	mockFactory := mqadmintest.NewMockFactory(t)
+	mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mqadmintest.NewMockAdmin(t), nil).Once()
+
+	rec := &QueueReconciler{Client: cl, Scheme: s, MQFactory: mockFactory}
+	if _, err := rec.Reconcile(ctx, ctrl.Request{NamespacedName: key}); err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+
+	updated := &messagingv1alpha1.Queue{}
+	if err := cl.Get(ctx, key, updated); err != nil {
+		t.Fatal(err)
+	}
+	if !controllerutil.ContainsFinalizer(updated, messagingv1alpha1.QueueFinalizer) {
+		t.Fatal("expected finalizer added")
+	}
+	if conditionStatus(updated.Status.Conditions, messagingv1alpha1.ConditionSynced) != "" {
+		t.Fatalf("expected empty Synced on first pass, got %v", updated.Status.Conditions)
+	}
 }
 
 func readyConnForUnit(ns string) *messagingv1alpha1.QueueManagerConnection {

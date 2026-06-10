@@ -135,6 +135,33 @@ func TestAnnotationValue(t *testing.T) {
 	}
 }
 
+func TestWorkloadLifecycleChanged(t *testing.T) {
+	t.Parallel()
+	p := workloadLifecycleChanged{}
+	base := &messagingv1alpha1.Queue{
+		ObjectMeta: metav1.ObjectMeta{Name: "orders", Generation: 1},
+	}
+
+	withFinalizer := base.DeepCopy()
+	withFinalizer.Finalizers = []string{messagingv1alpha1.QueueFinalizer}
+	if !p.Update(event.UpdateEvent{ObjectOld: base, ObjectNew: withFinalizer}) {
+		t.Fatal("expected reconcile when finalizer added")
+	}
+	if p.Update(event.UpdateEvent{ObjectOld: withFinalizer, ObjectNew: withFinalizer}) {
+		t.Fatal("expected no reconcile when finalizer unchanged")
+	}
+
+	now := metav1.Now()
+	deleting := withFinalizer.DeepCopy()
+	deleting.DeletionTimestamp = &now
+	if !p.Update(event.UpdateEvent{ObjectOld: withFinalizer, ObjectNew: deleting}) {
+		t.Fatal("expected reconcile when deletionTimestamp set")
+	}
+	if p.Update(event.UpdateEvent{ObjectOld: base, ObjectNew: &messagingv1alpha1.QueueManagerConnection{}}) {
+		t.Fatal("expected no reconcile for non-workload types")
+	}
+}
+
 func TestReconcileRequestedAnnotationChanged(t *testing.T) {
 	t.Parallel()
 	p := reconcileRequestedAnnotationChanged{}

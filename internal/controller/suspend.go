@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/events"
@@ -107,7 +108,26 @@ func workloadReconcilePredicates() predicate.Predicate {
 	return predicate.Or(
 		predicate.GenerationChangedPredicate{},
 		reconcileRequestedAnnotationChanged{},
+		workloadLifecycleChanged{},
 	)
+}
+
+// workloadLifecycleChanged enqueues when finalizers or deletionTimestamp change.
+// GenerationChangedPredicate alone skips finalizer-only updates (e2e first-sync stall).
+type workloadLifecycleChanged struct {
+	predicate.Funcs
+}
+
+func (workloadLifecycleChanged) Update(e event.UpdateEvent) bool {
+	oldMeta, okOld := e.ObjectOld.(metav1.Object)
+	newMeta, okNew := e.ObjectNew.(metav1.Object)
+	if !okOld || !okNew {
+		return false
+	}
+	if !oldMeta.GetDeletionTimestamp().Equal(newMeta.GetDeletionTimestamp()) {
+		return true
+	}
+	return !slices.Equal(oldMeta.GetFinalizers(), newMeta.GetFinalizers())
 }
 
 type reconcileRequestedAnnotationChanged struct {
