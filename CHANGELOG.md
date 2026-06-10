@@ -9,7 +9,39 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 
 ## [Unreleased]
 
-## [0.7.1](https://github.com/konih/mkurator/compare/v0.7.0..v0.7.1) - 2026-06-10
+### Bug Fixes
+
+- **controller:** Classify events via typed wrap errors [ac1e3db](https://github.com/konih/mkurator/commit/ac1e3db9e50541611eead69fd242a0d455ca31a1)
+
+- **controller:** Observe-only auth skips SET when missing [9a813ed](https://github.com/konih/mkurator/commit/9a813edb4bb65f650423ac14bbb7447a08464fb1)
+
+- **controller:** Requeue workloads after finalizer add [dace653](https://github.com/konih/mkurator/commit/dace653f481d99fc748f292c924df7c0bf8fe199)
+
+- **controller:** Stabilize QMC Ready under secret watch [a1194f0](https://github.com/konih/mkurator/commit/a1194f09b08709f048ce1e749e3b77bb69c7266e)
+
+- **controller:** Preserve QMC Ready on transient ping [6c524e4](https://github.com/konih/mkurator/commit/6c524e455102150d2522add19d271b5f717b720e)
+
+
+### Features
+
+- **mqrest:** Add mqweb retry and circuit breaker [07d5bfd](https://github.com/konih/mkurator/commit/07d5bfd34128ab4e1d274718701d8750a40d3942)
+
+- **api:** Add deletion and adoption lifecycle policies [d251b95](https://github.com/konih/mkurator/commit/d251b956697634aee7189896e741dab643762315)
+
+- **runtime:** Scope Secret cache and warn on admin default [2282ed9](https://github.com/konih/mkurator/commit/2282ed9ec548da50fc66f7abee3821d2bca5c5e3)
+
+- **controller:** Watch referenced Secrets for QMC recovery [2360da2](https://github.com/konih/mkurator/commit/2360da24373d5bcaee2371cd8a8c9c18c2bc78a5)
+
+- **controller:** Add spec.suspend and reconcile-now [e5785b2](https://github.com/konih/mkurator/commit/e5785b24839315ebec79a511699771bb049c7c8a)
+
+- **controller:** Expose configurable requeue intervals [b0272c7](https://github.com/konih/mkurator/commit/b0272c7b6da8f34cbe64aefbe1db465151b83d45)
+
+
+### Refactoring
+
+- **controller:** Delete dead drift helpers and padding tests [61317c7](https://github.com/konih/mkurator/commit/61317c7c2010ad982e958f1defb24026979bc6ce)
+
+## [0.7.1](https://github.com/konih/mkurator/compare/v0.7.0..v0.7.1) - 2026-06-09
 
 ### Bug Fixes
 
@@ -32,11 +64,9 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 
 ## [0.7.0](https://github.com/konih/mkurator/compare/v0.6.0..v0.7.0) - 2026-06-06
 
-### Added
+### Bug Fixes
 
-- OSS maturity: governance files, published MkDocs site, CodeQL/Scorecard/audit-rbac CI, release
-  attestations, engineering standards split, go-arch-lint, sample CR contract tests, FAQ, glossary,
-  and `task scrub` pre-commit gate.
+- **test:** Stabilize Helm e2e metrics and raise coverage floor [06c3354](https://github.com/konih/mkurator/commit/06c3354055f7b665061553733a8e3ed7b6158073)
 
 ## [0.6.0](https://github.com/konih/mkurator/compare/v0.5.3..v0.6.0) - 2026-06-03
 

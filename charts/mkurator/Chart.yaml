@@ -2,8 +2,8 @@ apiVersion: v2
 name: mkurator
 description: Kubernetes operator for declarative IBM MQ resources on an existing queue manager
 type: application
-version: 0.7.1
-appVersion: "0.7.1"
+version: 0.8.0
+appVersion: "0.8.0"
 kubeVersion: ">=1.28.0-0"
 home: https://github.com/konih/mkurator
 icon: https://raw.githubusercontent.com/konih/mkurator/main/docs/images/mkurator-logo.png
