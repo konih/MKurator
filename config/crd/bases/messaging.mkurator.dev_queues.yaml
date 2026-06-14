@@ -159,8 +159,8 @@ spec:
               rule: '!has(self.maxDepth) || !has(self.attributes) || !self.attributes.exists(k,
                 k.lowerAscii() == ''maxdepth'')'
             - message: description field and attributes.descr are mutually exclusive
-              rule: self.description.size() == 0 || !has(self.attributes) || !self.attributes.exists(k,
-                k.lowerAscii() == 'descr')
+              rule: '!has(self.description) || self.description.size() == 0 || !has(self.attributes)
+                || !self.attributes.exists(k, k.lowerAscii() == ''descr'')'
           status:
             description: QueueStatus defines the observed state of Queue.
             properties:

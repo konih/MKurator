@@ -152,7 +152,7 @@ var _ = Describe("Validating admission webhooks", func() {
 			Spec: messagingv1alpha1.QueueSpec{
 				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
 				QueueName:     "APP.ORDERS",
-				Attributes:    map[string]string{"maxdepth": "1000"},
+				Attributes:    map[string]string{"maxdepth": "1000", "descr": "Orders intake queue"},
 			},
 		}
 		Expect(webhookK8sClient.Create(ctx, q)).To(Succeed())
