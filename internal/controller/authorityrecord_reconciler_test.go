@@ -134,6 +134,68 @@ var _ = Describe("AuthorityRecordReconciler", func() {
 		Expect(updated.Status.LastSyncTime).NotTo(BeNil())
 	})
 
+	It("applies AUTHREC for channel profile when the connection is Ready", func() {
+		const channelProfile = "ORDERS.APP"
+
+		conn := readyConnection(ns, "qm1")
+		Expect(k8sClient.Create(ctx, conn)).To(Succeed())
+		conn.Status = messagingv1alpha1.QueueManagerConnectionStatus{
+			Conditions: []metav1.Condition{{
+				Type:               messagingv1alpha1.ConditionReady,
+				Status:             metav1.ConditionTrue,
+				Reason:             messagingv1alpha1.ReasonAvailable,
+				LastTransitionTime: metav1.Now(),
+			}},
+		}
+		Expect(k8sClient.Status().Update(ctx, conn)).To(Succeed())
+
+		auth := sampleAuthorityRecord(ns, "app-channel-chg-dsp", "qm1", channelProfile)
+		auth.Spec.ObjectType = messagingv1alpha1.AuthorityObjectTypeChannel
+		auth.Spec.Authorities = []string{"CHG", "DSP"}
+		Expect(k8sClient.Create(ctx, auth)).To(Succeed())
+
+		desired := mqadmin.AuthoritySpec{
+			Profile:     channelProfile,
+			ObjectType:  mqadmin.AuthorityObjectTypeChannel,
+			Principal:   "app",
+			Authorities: []string{"CHG", "DSP"},
+		}
+
+		mockAdmin := mqadmintest.NewMockAdmin(GinkgoT())
+		mockAdmin.EXPECT().GetAuthority(mock.Anything, desired).Return(nil, mqadmin.ErrNotFound).Once()
+		mockAdmin.EXPECT().SetAuthority(mock.Anything, desired).Return(nil).Once()
+
+		mockFactory := mqadmintest.NewMockFactory(GinkgoT())
+		mockFactory.EXPECT().ForConnection(mock.Anything, mock.Anything).Return(mockAdmin, nil)
+
+		rec := &AuthorityRecordReconciler{
+			Client:    k8sClient,
+			Scheme:    k8sClient.Scheme(),
+			MQFactory: mockFactory,
+		}
+
+		_, err := rec.Reconcile(ctx, reconcile.Request{
+			NamespacedName: types.NamespacedName{Namespace: ns, Name: "app-channel-chg-dsp"},
+		})
+		Expect(err).NotTo(HaveOccurred())
+
+		result, err := rec.Reconcile(ctx, reconcile.Request{
+			NamespacedName: types.NamespacedName{Namespace: ns, Name: "app-channel-chg-dsp"},
+		})
+		Expect(err).NotTo(HaveOccurred())
+		expectDriftResyncRequeue(result)
+
+		updated := &messagingv1alpha1.AuthorityRecord{}
+		Expect(k8sClient.Get(ctx, types.NamespacedName{Namespace: ns, Name: "app-channel-chg-dsp"}, updated)).
+			To(Succeed())
+		Expect(conditionStatus(updated.Status.Conditions, messagingv1alpha1.ConditionSynced)).
+			To(Equal(metav1.ConditionTrue))
+		Expect(updated.Status.MQObjectExists).NotTo(BeNil())
+		Expect(*updated.Status.MQObjectExists).To(BeTrue())
+		Expect(updated.Status.Message).To(Equal("AuthorityRecord matches spec"))
+		Expect(updated.Status.LastSyncTime).NotTo(BeNil())
+	})
+
 	It("skips SET when AUTHREC already matches", func() {
 		conn := readyConnection(ns, "qm1")
 		Expect(k8sClient.Create(ctx, conn)).To(Succeed())
