@@ -9,6 +9,19 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 
 ## [Unreleased]
 
+### Bug Fixes
+
+- **auth:** USERMAP drift polish and validation breadth (AUTH-3b) [1a064fb](https://github.com/conduit-ops/MKurator/commit/1a064fb4c15dbac37562a43c225b36709c2261fd)
+
+
+### Features
+
+- **auth:** QMGRMAP CHLAUTH remoteQueueManager field [d113d4f](https://github.com/conduit-ops/MKurator/commit/d113d4f7362febbddbacbf175cffdd794afb423b)
+
+- **channelauth:** SSLPEERMAP CHLAUTH CRD and mqrest [68ea774](https://github.com/conduit-ops/MKurator/commit/68ea77415b416b157fb26c39102c0327c6ee57fa)
+
+- **channelauthrule:** USERMAP CHLAUTH CRD and mqrest SET [8f09d62](https://github.com/conduit-ops/MKurator/commit/8f09d62a784bf65b72469707e968d0b7d11a3276)
+
 ## [0.9.3](https://github.com/conduit-ops/MKurator/compare/v0.9.2..v0.9.3) - 2026-06-14
 
 ### Features
@@ -17,7 +30,7 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 
 - **topic:** Add defPersistence typed field (#38) ([#38](https://github.com/conduit-ops/MKurator/pull/38), )[64e61b1](https://github.com/conduit-ops/MKurator/commit/64e61b1458a6606a2e94d7b8fd956d13653d4bc9)
 
-## [0.9.2](https://github.com/conduit-ops/MKurator/compare/v0.9.1..v0.9.2) - 2026-06-14(https://github.com/conduit-ops/MKurator/compare/v0.9.1..v0.9.2) - 2026-06-14
+## [0.9.2](https://github.com/conduit-ops/MKurator/compare/v0.9.1..v0.9.2) - 2026-06-14
 
 ### Features
 
