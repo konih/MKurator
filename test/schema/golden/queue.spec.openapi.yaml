@@ -32,6 +32,15 @@ properties:
     - Delete
     - Orphan
     type: string
+  maxDepth:
+    description: |-
+      MaxDepth is the maximum number of messages the queue can hold (MQSC MAXDEPTH).
+      Mutually exclusive with attributes.maxdepth; typed field takes precedence when folded
+      into the attribute map for mqadmin.
+    format: int32
+    maximum: 999999999
+    minimum: 1
+    type: integer
   queueName:
     description: QueueName is the IBM MQ object name.
     maxLength: 48
@@ -77,3 +86,6 @@ x-kubernetes-validations:
   rule: self.type != 'remote' || (has(self.attributes) && (('rqmname' in self.attributes
     && size(self.attributes['rqmname']) > 0) || ('remotemanager' in self.attributes
     && size(self.attributes['remotemanager']) > 0)))
+- message: maxDepth field and attributes.maxdepth are mutually exclusive
+  rule: '!has(self.maxDepth) || !has(self.attributes) || !self.attributes.exists(k,
+    k.lowerAscii() == ''maxdepth'')'

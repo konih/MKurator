@@ -29,6 +29,22 @@ func TestToMQQueueSpec(t *testing.T) {
 	}
 }
 
+func TestToMQQueueSpecTypedMaxDepth(t *testing.T) {
+	t.Parallel()
+	depth := int32(10000)
+	q := &messagingv1alpha1.Queue{
+		Spec: messagingv1alpha1.QueueSpec{
+			QueueName: "APP.ORDERS",
+			Type:      messagingv1alpha1.QueueTypeLocal,
+			MaxDepth:  &depth,
+		},
+	}
+	spec := toMQQueueSpec(q)
+	if spec.Attributes["maxdepth"] != "10000" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestConnectionReady(t *testing.T) {
 	t.Parallel()
 	ready := &messagingv1alpha1.QueueManagerConnection{

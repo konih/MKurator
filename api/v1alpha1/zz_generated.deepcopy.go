@@ -533,6 +533,11 @@ func (in *QueueSpec) DeepCopyInto(out *QueueSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.MaxDepth != nil {
+		in, out := &in.MaxDepth, &out.MaxDepth
+		*out = new(int32)
+		**out = **in
+	}
 	out.WorkloadLifecyclePolicies = in.WorkloadLifecyclePolicies
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -196,6 +197,9 @@ func toMQQueueSpec(q *messagingv1alpha1.Queue) mqadmin.QueueSpec {
 	attrs := map[string]string{}
 	for k, v := range q.Spec.Attributes {
 		attrs[mqadmin.NormalizeAttrKey(k)] = v
+	}
+	if q.Spec.MaxDepth != nil {
+		attrs[mqadmin.NormalizeAttrKey("maxdepth")] = strconv.FormatInt(int64(*q.Spec.MaxDepth), 10)
 	}
 	return mqadmin.QueueSpec{
 		Name:       q.Spec.QueueName,

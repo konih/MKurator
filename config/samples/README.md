@@ -151,6 +151,7 @@ spec:
 | `connectionRef.name` | `qm1` | Must match a **Ready** `QueueManagerConnection` |
 | `queueName` | `APP.ORDERS` | Actual IBM MQ object name |
 | `type` | `local` | `QLOCAL`; see also `alias` and `remote` samples below |
+| `maxDepth` | *(optional)* | Typed alternative to `attributes.maxdepth`; mutually exclusive ([ADR-0021](../docs/adr/0021-attribute-api-shape.md)) |
 | `attributes.maxdepth` | `"5000"` | String in YAML; sent as numeric to mqweb |
 | `attributes.descr` | Human-readable text | Mapped to MQSC `DESCR` |
 

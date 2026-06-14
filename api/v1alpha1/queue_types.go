@@ -18,6 +18,7 @@ const (
 // +kubebuilder:validation:XValidation:rule="self.type != 'alias' || (has(self.attributes) && (('targq' in self.attributes && size(self.attributes['targq']) > 0) || ('target' in self.attributes && size(self.attributes['target']) > 0)))",message="alias queues require attribute targq (or target)"
 // +kubebuilder:validation:XValidation:rule="self.type != 'remote' || (has(self.attributes) && (('xmitq' in self.attributes && size(self.attributes['xmitq']) > 0) || ('transmissionqueue' in self.attributes && size(self.attributes['transmissionqueue']) > 0)))",message="remote queues require attribute xmitq (or transmissionqueue)"
 // +kubebuilder:validation:XValidation:rule="self.type != 'remote' || (has(self.attributes) && (('rqmname' in self.attributes && size(self.attributes['rqmname']) > 0) || ('remotemanager' in self.attributes && size(self.attributes['remotemanager']) > 0)))",message="remote queues require attribute rqmname (or remotemanager)"
+// +kubebuilder:validation:XValidation:rule="!has(self.maxDepth) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'maxdepth')",message="maxDepth field and attributes.maxdepth are mutually exclusive"
 type QueueSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -43,6 +44,14 @@ type QueueSpec struct {
 	// Drift-checked vs define-only keys: docs/ATTRIBUTE_RECONCILIATION.md.
 	// +optional
 	Attributes map[string]string `json:"attributes,omitempty"`
+
+	// MaxDepth is the maximum number of messages the queue can hold (MQSC MAXDEPTH).
+	// Mutually exclusive with attributes.maxdepth; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=999999999
+	// +optional
+	MaxDepth *int32 `json:"maxDepth,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional

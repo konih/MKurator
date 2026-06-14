@@ -68,7 +68,8 @@ Before **`v1beta1` graduation**, `v1alpha1` will gain ([ROADMAP.md](ROADMAP.md#p
 
 During **8a**, existing manifests that use only `spec.attributes` remain valid.
 New typed fields are optional; setting both a typed field and the same key in
-`attributes` is rejected at admission (no silent merge).
+`attributes` is rejected at admission (no silent merge). The first promoted field
+is `Queue.spec.maxDepth` (alternative to `attributes.maxdepth`).
 
 ## Graduation to `v1beta1` (future)
 

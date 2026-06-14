@@ -48,6 +48,23 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("targq"))
 	})
 
+	It("rejects Queue with both maxDepth and attributes.maxdepth", func() {
+		ctx := context.Background()
+		depth := int32(5000)
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Queue{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-maxdepth", Namespace: ns},
+			Spec: messagingv1alpha1.QueueSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				QueueName:     "APP.ORDERS",
+				MaxDepth:      &depth,
+				Attributes:    map[string]string{"maxdepth": "5000"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("maxDepth"))
+	})
+
 	It("rejects ChannelAuthRule ADDRESSMAP without address", func() {
 		ctx := context.Background()
 		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.ChannelAuthRule{
