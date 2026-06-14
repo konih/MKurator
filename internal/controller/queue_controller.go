@@ -216,6 +216,12 @@ func toMQQueueSpec(q *messagingv1alpha1.Queue) mqadmin.QueueSpec {
 	if q.Spec.TargetQueue != "" {
 		attrs[mqadmin.NormalizeAttrKey("targq")] = q.Spec.TargetQueue
 	}
+	if q.Spec.XmitQueue != "" {
+		attrs[mqadmin.NormalizeAttrKey("xmitq")] = q.Spec.XmitQueue
+	}
+	if q.Spec.RemoteQueueManager != "" {
+		attrs[mqadmin.NormalizeAttrKey("rqmname")] = q.Spec.RemoteQueueManager
+	}
 	return mqadmin.QueueSpec{
 		Name:       q.Spec.QueueName,
 		Type:       mqadmin.QueueType(q.Spec.Type),

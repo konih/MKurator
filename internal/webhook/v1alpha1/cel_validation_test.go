@@ -48,6 +48,74 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("targetQueue"))
 	})
 
+	It("rejects remote Queue without xmitQueue or xmitq", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Queue{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-remote-xmit", Namespace: ns},
+			Spec: messagingv1alpha1.QueueSpec{
+				ConnectionRef:      messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				QueueName:          "REMOTE.Q",
+				Type:               messagingv1alpha1.QueueTypeRemote,
+				RemoteQueueManager: "QM2",
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("xmitQueue"))
+	})
+
+	It("rejects remote Queue without remoteQueueManager or rqmname", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Queue{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-remote-rqm", Namespace: ns},
+			Spec: messagingv1alpha1.QueueSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				QueueName:     "REMOTE.Q",
+				Type:          messagingv1alpha1.QueueTypeRemote,
+				XmitQueue:     "SYSTEM.DEFAULT.XMIT.QUEUE",
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("remoteQueueManager"))
+	})
+
+	It("rejects remote Queue with both xmitQueue and attributes.xmitq", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Queue{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-remote-xmit-both", Namespace: ns},
+			Spec: messagingv1alpha1.QueueSpec{
+				ConnectionRef:      messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				QueueName:          "REMOTE.Q",
+				Type:               messagingv1alpha1.QueueTypeRemote,
+				XmitQueue:          "SYSTEM.DEFAULT.XMIT.QUEUE",
+				RemoteQueueManager: "QM2",
+				Attributes:         map[string]string{"xmitq": "SYSTEM.DEFAULT.XMIT.QUEUE"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("xmitQueue"))
+	})
+
+	It("rejects remote Queue with both remoteQueueManager and attributes.rqmname", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Queue{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-remote-rqm-both", Namespace: ns},
+			Spec: messagingv1alpha1.QueueSpec{
+				ConnectionRef:      messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				QueueName:          "REMOTE.Q",
+				Type:               messagingv1alpha1.QueueTypeRemote,
+				XmitQueue:          "SYSTEM.DEFAULT.XMIT.QUEUE",
+				RemoteQueueManager: "QM2",
+				Attributes:         map[string]string{"rqmname": "QM2"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("remoteQueueManager"))
+	})
+
 	It("rejects alias Queue with both targetQueue and attributes.targq", func() {
 		ctx := context.Background()
 		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Queue{

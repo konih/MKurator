@@ -90,6 +90,36 @@ func TestToMQQueueSpecTypedTargetQueue(t *testing.T) {
 	}
 }
 
+func TestToMQQueueSpecTypedXmitQueue(t *testing.T) {
+	t.Parallel()
+	q := &messagingv1alpha1.Queue{
+		Spec: messagingv1alpha1.QueueSpec{
+			QueueName: "APP.ORDERS.REMOTE",
+			Type:      messagingv1alpha1.QueueTypeRemote,
+			XmitQueue: "SYSTEM.DEFAULT.XMIT.QUEUE",
+		},
+	}
+	spec := toMQQueueSpec(q)
+	if spec.Attributes["xmitq"] != "SYSTEM.DEFAULT.XMIT.QUEUE" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
+func TestToMQQueueSpecTypedRemoteQueueManager(t *testing.T) {
+	t.Parallel()
+	q := &messagingv1alpha1.Queue{
+		Spec: messagingv1alpha1.QueueSpec{
+			QueueName:          "APP.ORDERS.REMOTE",
+			Type:               messagingv1alpha1.QueueTypeRemote,
+			RemoteQueueManager: "QM2",
+		},
+	}
+	spec := toMQQueueSpec(q)
+	if spec.Attributes["rqmname"] != "QM2" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestToMQQueueSpecTypedGetPut(t *testing.T) {
 	t.Parallel()
 	q := &messagingv1alpha1.Queue{
