@@ -9,6 +9,7 @@ const TopicFinalizer = "messaging.mkurator.dev/topic"
 
 // TopicSpec defines an administrative topic object on a referenced queue manager.
 // +kubebuilder:validation:XValidation:rule="!has(self.topicString) || self.topicString.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'topstr' || k.lowerAscii() == 'topicstr')",message="topicString field and attributes.topstr (or topicstr) are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.description) || self.description.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'descr')",message="description field and attributes.descr are mutually exclusive"
 type TopicSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -35,6 +36,12 @@ type TopicSpec struct {
 	// takes precedence when folded into the attribute map for mqadmin.
 	// +optional
 	TopicString string `json:"topicString,omitempty"`
+
+	// Description is the topic description (MQSC DESCR).
+	// Mutually exclusive with attributes.descr; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +optional
+	Description string `json:"description,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional

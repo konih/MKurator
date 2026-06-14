@@ -47,6 +47,20 @@ func TestToMQTopicSpecTypedTopicString(t *testing.T) {
 	}
 }
 
+func TestToMQTopicSpecTypedDescription(t *testing.T) {
+	t.Parallel()
+	topic := &messagingv1alpha1.Topic{
+		Spec: messagingv1alpha1.TopicSpec{
+			TopicName:   "RETAIL.ORDERS",
+			Description: "Retail orders topic",
+		},
+	}
+	spec := toMQTopicSpec(topic)
+	if spec.Attributes["descr"] != "Retail orders topic" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestTopicReconciler_SyncedWithoutDefine(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

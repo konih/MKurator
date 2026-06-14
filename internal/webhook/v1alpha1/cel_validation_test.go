@@ -149,6 +149,22 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("topicString"))
 	})
 
+	It("rejects Topic with both description and attributes.descr", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Topic{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-topic-descr", Namespace: ns},
+			Spec: messagingv1alpha1.TopicSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				TopicName:     "RETAIL.ORDERS",
+				Description:   "Retail orders topic",
+				Attributes:    map[string]string{"descr": "Retail orders topic"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("description"))
+	})
+
 	It("rejects Queue with both maxDepth and attributes.maxdepth", func() {
 		ctx := context.Background()
 		depth := int32(5000)

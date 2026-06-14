@@ -93,6 +93,12 @@ spec:
                 - Delete
                 - Orphan
                 type: string
+              description:
+                description: |-
+                  Description is the topic description (MQSC DESCR).
+                  Mutually exclusive with attributes.descr; typed field takes precedence when folded
+                  into the attribute map for mqadmin.
+                type: string
               suspend:
                 description: Suspend pauses MQ reconciliation for this object. Status
                   shows Synced=False ReasonSuspended.
@@ -130,6 +136,9 @@ spec:
               rule: '!has(self.topicString) || self.topicString.size() == 0 || !has(self.attributes)
                 || !self.attributes.exists(k, k.lowerAscii() == ''topstr'' || k.lowerAscii()
                 == ''topicstr'')'
+            - message: description field and attributes.descr are mutually exclusive
+              rule: '!has(self.description) || self.description.size() == 0 || !has(self.attributes)
+                || !self.attributes.exists(k, k.lowerAscii() == ''descr'')'
           status:
             description: TopicStatus defines the observed state of Topic.
             properties:
