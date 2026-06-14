@@ -187,6 +187,107 @@ func TestIntegration_GetChannelAuth_UserMap(t *testing.T) {
 	}
 }
 
+func TestIntegration_GetChannelAuth_UserMap_UserSourceChannel(t *testing.T) {
+	requireIntegration(t)
+	ctx := testContext(t)
+	channel := channelNameForTest(t.Name())
+	clientUser := clientUserForTest(t.Name())
+
+	c, err := newIntegrationClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chSpec := mqadmin.ChannelSpec{
+		Name: channel,
+		Type: mqadmin.ChannelTypeSvrconn,
+		Attributes: map[string]string{
+			"trptype": "tcp",
+		},
+	}
+	authSpec := mqadmin.ChannelAuthSpec{
+		ChannelName: channel,
+		RuleType:    mqadmin.ChannelAuthRuleTypeUserMap,
+		ClientUser:  clientUser,
+		UserSource:  "CHANNEL",
+		Description: "integration usermap channel source",
+	}
+	t.Cleanup(func() {
+		_ = c.DeleteChannelAuth(context.Background(), authSpec)
+		_ = c.DeleteChannel(context.Background(), chSpec)
+	})
+
+	if err := c.DefineChannel(ctx, chSpec); err != nil {
+		t.Fatalf("DefineChannel: %v", err)
+	}
+	if err := c.SetChannelAuth(ctx, authSpec); err != nil {
+		t.Fatalf("SetChannelAuth: %v", err)
+	}
+
+	state, err := c.GetChannelAuth(ctx, authSpec)
+	if err != nil {
+		t.Fatalf("GetChannelAuth: %v", err)
+	}
+	if !strings.EqualFold(state.ClientUser, clientUser) {
+		t.Fatalf("clientUser = %q, want %q", state.ClientUser, clientUser)
+	}
+	if !strings.EqualFold(state.UserSource, "CHANNEL") {
+		t.Fatalf("userSource = %q, want CHANNEL", state.UserSource)
+	}
+	if mqadmin.ChannelAuthNeedsUpdate(authSpec, state) {
+		t.Fatalf("ChannelAuthNeedsUpdate after set; state=%+v", state)
+	}
+}
+
+func TestIntegration_DeleteChannelAuth_UserMap(t *testing.T) {
+	requireIntegration(t)
+	ctx := testContext(t)
+	channel := channelNameForTest(t.Name())
+	clientUser := clientUserForTest(t.Name())
+
+	c, err := newIntegrationClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chSpec := mqadmin.ChannelSpec{
+		Name: channel,
+		Type: mqadmin.ChannelTypeSvrconn,
+		Attributes: map[string]string{
+			"trptype": "tcp",
+		},
+	}
+	authSpec := mqadmin.ChannelAuthSpec{
+		ChannelName: channel,
+		RuleType:    mqadmin.ChannelAuthRuleTypeUserMap,
+		ClientUser:  clientUser,
+		UserSource:  "MAP",
+		McaUser:     "app",
+	}
+	t.Cleanup(func() {
+		_ = c.DeleteChannelAuth(context.Background(), authSpec)
+		_ = c.DeleteChannel(context.Background(), chSpec)
+	})
+
+	if err := c.DefineChannel(ctx, chSpec); err != nil {
+		t.Fatalf("DefineChannel: %v", err)
+	}
+	if err := c.SetChannelAuth(ctx, authSpec); err != nil {
+		t.Fatalf("SetChannelAuth: %v", err)
+	}
+	if err := c.DeleteChannelAuth(ctx, authSpec); err != nil {
+		t.Fatalf("DeleteChannelAuth: %v", err)
+	}
+
+	_, err = c.GetChannelAuth(ctx, authSpec)
+	if err == nil {
+		t.Fatal("expected not found after delete")
+	}
+	if !errors.Is(err, mqadmin.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
 func TestIntegration_GetChannelAuth_BlockUser(t *testing.T) {
 	requireIntegration(t)
 	ctx := testContext(t)
