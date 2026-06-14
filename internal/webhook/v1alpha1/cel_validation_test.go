@@ -198,6 +198,22 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("maxMsgLength"))
 	})
 
+	It("rejects Channel with both transportType and attributes.trptype", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Channel{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-channel-trptype", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:   "ORDERS.APP",
+				TransportType: messagingv1alpha1.ChannelTransportTypeTCP,
+				Attributes:    map[string]string{"trptype": "tcp"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("transportType"))
+	})
+
 	It("rejects Queue with both maxDepth and attributes.maxdepth", func() {
 		ctx := context.Background()
 		depth := int32(5000)

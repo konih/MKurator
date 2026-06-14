@@ -13,12 +13,24 @@ const (
 	ChannelTypeSvrconn ChannelType = "svrconn"
 )
 
+// ChannelTransportType is the channel transport protocol (MQSC TRPTYPE).
+// +kubebuilder:validation:Enum=tcp;lu62
+type ChannelTransportType string
+
+const (
+	// ChannelTransportTypeTCP is TCP/IP transport (typical for SVRCONN).
+	ChannelTransportTypeTCP ChannelTransportType = "tcp"
+	// ChannelTransportTypeLU62 is SNA LU6.2 transport.
+	ChannelTransportTypeLU62 ChannelTransportType = "lu62"
+)
+
 // ChannelFinalizer ensures the MQ channel is deleted before the CR is removed.
 const ChannelFinalizer = "messaging.mkurator.dev/channel"
 
 // ChannelSpec defines a channel to maintain on a referenced queue manager.
 // +kubebuilder:validation:XValidation:rule="!has(self.description) || self.description.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'descr')",message="description field and attributes.descr are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.maxMsgLength) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'maxmsgl')",message="maxMsgLength field and attributes.maxmsgl are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.transportType) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'trptype')",message="transportType field and attributes.trptype are mutually exclusive"
 type ChannelSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -58,6 +70,12 @@ type ChannelSpec struct {
 	// +kubebuilder:validation:Maximum=999999999
 	// +optional
 	MaxMsgLength *int32 `json:"maxMsgLength,omitempty"`
+
+	// TransportType is the channel transport protocol (MQSC TRPTYPE).
+	// Mutually exclusive with attributes.trptype; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +optional
+	TransportType ChannelTransportType `json:"transportType,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional

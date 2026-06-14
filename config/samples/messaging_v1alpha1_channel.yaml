@@ -10,5 +10,4 @@ spec:
   type: svrconn
   description: Application server-connection channel
   maxMsgLength: 4194304
-  attributes:
-    trptype: tcp
+  transportType: tcp

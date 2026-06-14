@@ -198,6 +198,21 @@ func TestToMQChannelSpecTypedMaxMsgLength(t *testing.T) {
 	}
 }
 
+func TestToMQChannelSpecTypedTransportType(t *testing.T) {
+	t.Parallel()
+	channel := &messagingv1alpha1.Channel{
+		Spec: messagingv1alpha1.ChannelSpec{
+			ChannelName:   "ORDERS.APP",
+			Type:          messagingv1alpha1.ChannelTypeSvrconn,
+			TransportType: messagingv1alpha1.ChannelTransportTypeTCP,
+		},
+	}
+	spec := toMQChannelSpec(channel)
+	if spec.Attributes["trptype"] != "tcp" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestToMQChannelSpec(t *testing.T) {
 	t.Parallel()
 	channel := &messagingv1alpha1.Channel{

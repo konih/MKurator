@@ -66,6 +66,15 @@ properties:
     description: Suspend pauses MQ reconciliation for this object. Status shows Synced=False
       ReasonSuspended.
     type: boolean
+  transportType:
+    description: |-
+      TransportType is the channel transport protocol (MQSC TRPTYPE).
+      Mutually exclusive with attributes.trptype; typed field takes precedence when folded
+      into the attribute map for mqadmin.
+    enum:
+    - tcp
+    - lu62
+    type: string
   type:
     default: svrconn
     description: Type is the channel kind to define. Only svrconn is reconciled in
@@ -84,3 +93,6 @@ x-kubernetes-validations:
 - message: maxMsgLength field and attributes.maxmsgl are mutually exclusive
   rule: '!has(self.maxMsgLength) || !has(self.attributes) || !self.attributes.exists(k,
     k.lowerAscii() == ''maxmsgl'')'
+- message: transportType field and attributes.trptype are mutually exclusive
+  rule: '!has(self.transportType) || !has(self.attributes) || !self.attributes.exists(k,
+    k.lowerAscii() == ''trptype'')'
