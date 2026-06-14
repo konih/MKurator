@@ -26,6 +26,8 @@ const (
 	mqChannelSslPeerMapPrereqCRName = "e2e-sslpeermap-channel"
 	mqChannelQMGRMapCRName          = "e2e-qmgrmap-car"
 	mqChannelQMGRMapPrereqCRName    = "e2e-qmgrmap-channel"
+	mqChannelObserveOnlyCRName       = "e2e-observeonly-car"
+	mqChannelObserveOnlyPrereqCRName = "e2e-observeonly-channel"
 	mqChannelPrereqCRName     = "e2e-dev-app-channel"
 	mqAuthorityCRName         = "e2e-app-orders-get-put"
 )
@@ -337,9 +339,13 @@ var _ = Describe("Post-manager IBM MQ auth", Label("mq", "mq-auth-serial"), Seri
 		kubectlForceRemoveNamespaced("channelauthrule", mqChannelBlockAddrCRName, ns)
 		kubectlForceRemoveNamespaced("channelauthrule", mqChannelUserMapCRName, ns)
 		kubectlForceRemoveNamespaced("channelauthrule", mqChannelSslPeerMapCRName, ns)
+		kubectlForceRemoveNamespaced("channelauthrule", mqChannelQMGRMapCRName, ns)
+		kubectlForceRemoveNamespaced("channelauthrule", mqChannelObserveOnlyCRName, ns)
 		kubectlForceRemoveNamespaced("authorityrecord", mqAuthorityCRName, ns)
 		kubectlForceRemoveNamespaced("channel", mqChannelUserMapPrereqCRName, ns)
 		kubectlForceRemoveNamespaced("channel", mqChannelSslPeerMapPrereqCRName, ns)
+		kubectlForceRemoveNamespaced("channel", mqChannelQMGRMapPrereqCRName, ns)
+		kubectlForceRemoveNamespaced("channel", mqChannelObserveOnlyPrereqCRName, ns)
 		kubectlForceRemoveNamespaced("channel", mqChannelPrereqCRName, ns)
 		kubectlForceRemoveNamespaced("queuemanagerconnection", mqConnectionName, ns)
 	})
@@ -741,6 +747,108 @@ spec:
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(ok).To(BeFalse(), "QMGRMAP CHLAUTH for channel %s should be removed from MQ after CR delete", channelObject)
 		}).WithTimeout(KubectlWaitDuration).WithPolling(3 * time.Second).Should(Succeed())
+	})
+
+	It("reports ChannelAuthRule drift without SET when observe-only is set", func() {
+		specName := CurrentSpecReport().FullText()
+		clientUser := e2eClientUserForTest(specName)
+		channelObject := e2eChannelNameForTest(specName)
+
+		Expect(kubectlApply(connectionManifest(ns))).To(Succeed())
+
+		channelYAML := fmt.Sprintf(`apiVersion: messaging.mkurator.dev/v1alpha1
+kind: Channel
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  channelName: %s
+  type: svrconn
+  attributes:
+    trptype: tcp
+`, mqChannelObserveOnlyPrereqCRName, ns, mqConnectionName, channelObject)
+		Expect(applyWithWebhookRetry(channelYAML)).To(Succeed())
+
+		Eventually(func(g Gomega) {
+			out, runErr := runKubectl("get", "channel", mqChannelObserveOnlyPrereqCRName, "-n", ns,
+				"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+			g.Expect(runErr).NotTo(HaveOccurred())
+			g.Expect(out).To(Equal("True"), "Channel %s must be Synced before observe-only ChannelAuthRule", mqChannelObserveOnlyPrereqCRName)
+		}).WithTimeout(mqSyncedEventuallyTimeout).WithPolling(5 * time.Second).Should(Succeed())
+
+		client, err := newMQClient()
+		Expect(err).NotTo(HaveOccurred())
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		manualSpec := mqadmin.ChannelAuthSpec{
+			ChannelName: channelObject,
+			RuleType:    mqadmin.ChannelAuthRuleTypeUserMap,
+			ClientUser:  clientUser,
+			UserSource:  "MAP",
+			McaUser:     "manual-app",
+			Description: "manual drift seed",
+		}
+		Expect(client.SetChannelAuth(ctx, manualSpec)).To(Succeed())
+		DeferCleanup(func() {
+			cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cleanupCancel()
+			_ = client.DeleteChannelAuth(cleanupCtx, manualSpec)
+		})
+
+		carYAML := fmt.Sprintf(`apiVersion: messaging.mkurator.dev/v1alpha1
+kind: ChannelAuthRule
+metadata:
+  name: %s
+  namespace: %s
+  annotations:
+    messaging.mkurator.dev/drift-policy: observe-only
+spec:
+  connectionRef:
+    name: %s
+  channelName: %s
+  ruleType: USERMAP
+  clientUser: "%s"
+  userSource: MAP
+  mcaUser: app
+  description: cr desired rule
+`, mqChannelObserveOnlyCRName, ns, mqConnectionName, channelObject, clientUser)
+		Expect(applyWithWebhookRetry(carYAML)).To(Succeed())
+
+		Eventually(func(g Gomega) {
+			status, runErr := runKubectl("get", "channelauthrule", mqChannelObserveOnlyCRName, "-n", ns,
+				"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+			g.Expect(runErr).NotTo(HaveOccurred())
+			g.Expect(status).To(Equal("False"))
+
+			reason, runErr := runKubectl("get", "channelauthrule", mqChannelObserveOnlyCRName, "-n", ns,
+				"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].reason}")
+			g.Expect(runErr).NotTo(HaveOccurred())
+			g.Expect(reason).To(Equal("DriftDetected"))
+
+			message, runErr := runKubectl("get", "channelauthrule", mqChannelObserveOnlyCRName, "-n", ns,
+				"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].message}")
+			g.Expect(runErr).NotTo(HaveOccurred())
+			g.Expect(message).To(ContainSubstring("observe-only"))
+		}).WithTimeout(mqSyncedEventuallyTimeout).WithPolling(5 * time.Second).Should(Succeed())
+
+		crSpec := mqadmin.ChannelAuthSpec{
+			ChannelName: channelObject,
+			RuleType:    mqadmin.ChannelAuthRuleTypeUserMap,
+			ClientUser:  clientUser,
+			UserSource:  "MAP",
+			McaUser:     "app",
+			Description: "cr desired rule",
+		}
+		ok, err := channelAuthMatches(ctx, client, crSpec)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ok).To(BeFalse(), "MQ should retain manual CHLAUTH, not CR spec")
+
+		manualOk, err := channelAuthMatches(ctx, client, manualSpec)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(manualOk).To(BeTrue(), "MQ CHLAUTH should still match manual seed")
 	})
 
 	// BLOCKUSER CHLAUTH edge cases: test/integration/mq (TestIntegration_GetChannelAuth_BlockUser).
