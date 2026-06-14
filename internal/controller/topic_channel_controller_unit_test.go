@@ -167,6 +167,21 @@ func TestTopicReconciler_SetsDesiredMQSCInStatus(t *testing.T) {
 	}
 }
 
+func TestToMQChannelSpecTypedDescription(t *testing.T) {
+	t.Parallel()
+	channel := &messagingv1alpha1.Channel{
+		Spec: messagingv1alpha1.ChannelSpec{
+			ChannelName: "ORDERS.APP",
+			Type:        messagingv1alpha1.ChannelTypeSvrconn,
+			Description: "Application server-connection channel",
+		},
+	}
+	spec := toMQChannelSpec(channel)
+	if spec.Attributes["descr"] != "Application server-connection channel" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestToMQChannelSpec(t *testing.T) {
 	t.Parallel()
 	channel := &messagingv1alpha1.Channel{

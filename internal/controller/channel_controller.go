@@ -209,6 +209,9 @@ func toMQChannelSpec(channel *messagingv1alpha1.Channel) mqadmin.ChannelSpec {
 	for k, v := range channel.Spec.Attributes {
 		attrs[mqadmin.NormalizeAttrKey(k)] = v
 	}
+	if channel.Spec.Description != "" {
+		attrs[mqadmin.NormalizeAttrKey("descr")] = channel.Spec.Description
+	}
 	chType := mqadmin.ChannelTypeSvrconn
 	if channel.Spec.Type != "" {
 		chType = mqadmin.ChannelType(channel.Spec.Type)

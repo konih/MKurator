@@ -8,7 +8,7 @@ spec:
     name: qm1
   channelName: ORDERS.APP
   type: svrconn
+  description: Application server-connection channel
   attributes:
-    descr: Application server-connection channel
     trptype: tcp
     maxmsgl: "4194304"
