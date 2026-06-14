@@ -25,6 +25,15 @@ properties:
     required:
     - name
     type: object
+  defPersistence:
+    description: |-
+      DefPersistence is the default message persistence for new messages (MQSC DEFPSIST).
+      Mutually exclusive with attributes.defpsist; typed field takes precedence when folded
+      into the attribute map for mqadmin.
+    enum:
+    - "yes"
+    - "no"
+    type: string
   deletionPolicy:
     default: Delete
     description: DeletionPolicy controls MQ cleanup when the CR is deleted.
@@ -98,3 +107,6 @@ x-kubernetes-validations:
 - message: description field and attributes.descr are mutually exclusive
   rule: '!has(self.description) || self.description.size() == 0 || !has(self.attributes)
     || !self.attributes.exists(k, k.lowerAscii() == ''descr'')'
+- message: defPersistence field and attributes.defpsist are mutually exclusive
+  rule: '!has(self.defPersistence) || !has(self.attributes) || !self.attributes.exists(k,
+    k.lowerAscii() == ''defpsist'')'

@@ -204,6 +204,9 @@ func toMQQueueSpec(q *messagingv1alpha1.Queue) mqadmin.QueueSpec {
 	if q.Spec.Description != "" {
 		attrs[mqadmin.NormalizeAttrKey("descr")] = q.Spec.Description
 	}
+	if q.Spec.DefPersistence != "" {
+		attrs[mqadmin.NormalizeAttrKey("defpsist")] = string(q.Spec.DefPersistence)
+	}
 	return mqadmin.QueueSpec{
 		Name:       q.Spec.QueueName,
 		Type:       mqadmin.QueueType(q.Spec.Type),
