@@ -9,7 +9,15 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 
 ## [Unreleased]
 
-## [0.9.2](https://github.com/conduit-ops/MKurator/compare/v0.9.1..v0.9.2) - 2026-06-14
+## [0.9.3](https://github.com/conduit-ops/MKurator/compare/v0.9.2..v0.9.3) - 2026-06-14
+
+### Features
+
+- **topic:** Add publishScope and subscribeScope typed fields (#39) ([#39](https://github.com/conduit-ops/MKurator/pull/39), )[aef117d](https://github.com/conduit-ops/MKurator/commit/aef117d07972da9ee59efd053c1d86549bf96ac5)
+
+- **topic:** Add defPersistence typed field (#38) ([#38](https://github.com/conduit-ops/MKurator/pull/38), )[64e61b1](https://github.com/conduit-ops/MKurator/commit/64e61b1458a6606a2e94d7b8fd956d13653d4bc9)
+
+## [0.9.2](https://github.com/conduit-ops/MKurator/compare/v0.9.1..v0.9.2) - 2026-06-14(https://github.com/conduit-ops/MKurator/compare/v0.9.1..v0.9.2) - 2026-06-14
 
 ### Features
 

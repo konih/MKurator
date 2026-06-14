@@ -339,9 +339,10 @@ parity; coverage floor intact without padding; e2e flake rate addressed.
 
 ## Phase 8 — API maturation (v1beta1 readiness)
 
-- [ ] **Typed attribute fields + escape hatch** per
+- [x] **Typed attribute fields + escape hatch** per
   [ADR-0021](adr/0021-attribute-api-shape.md): promote drift-checked keys to
   typed, CEL-validated spec fields; exclusivity rule; schema goldens.
+  Queue/Topic/Channel drift keys complete (v0.9.3).
 - [x] Published **API stability statement**: [API_STABILITY.md](API_STABILITY.md) —
   what `v1alpha1` guarantees, what graduation to `v1beta1` requires (conversion
   webhook, deprecation policy).
