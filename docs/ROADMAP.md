@@ -357,7 +357,7 @@ parity; coverage floor intact without padding; e2e flake rate addressed.
 - [ ] Additional CHLAUTH rule types: `SSLPEERMAP`, `QMGRMAP` — CRD fields,
   mqrest SET/GET + drift, integration + e2e (daily-backlog AUTH-5…AUTH-6).
 - [x] `USERMAP` CHLAUTH — `clientUser`/`mcaUser` CRD fields, mqrest SET/DISPLAY,
-  reconciler + drift, Docker integration (AUTH-3a #42), kind e2e (AUTH-4).
+  reconciler + drift (AUTH-3b), Docker integration (AUTH-3a #42), kind e2e (AUTH-4 #43).
 - [ ] AuthorityRecord channel/namelist profile parity with queue profiles.
 - [x] BLOCKADDR integration + e2e coverage (AUTH-1/AUTH-2) — #40 Docker integration, #41 kind e2e.
 - [ ] Further channel types (SDR/RCVR) behind the same quality bar — only

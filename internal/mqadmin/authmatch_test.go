@@ -129,6 +129,48 @@ func TestChannelAuthNeedsUpdateUserMap(t *testing.T) {
 	}
 }
 
+func TestChannelAuthNeedsUpdateUserMapEmptyObservedClientUser(t *testing.T) {
+	t.Parallel()
+	desired := ChannelAuthSpec{
+		ChannelName: "CH1",
+		RuleType:    ChannelAuthRuleTypeUserMap,
+		ClientUser:  "johndoe",
+		UserSource:  "MAP",
+		McaUser:     "orders-app",
+	}
+	observed := &ChannelAuthState{
+		ChannelName: "CH1",
+		RuleType:    ChannelAuthRuleTypeUserMap,
+		UserSource:  "MAP",
+		McaUser:     "orders-app",
+		CheckClient: "ASQMGR",
+	}
+	if !ChannelAuthNeedsUpdate(desired, observed) {
+		t.Fatal("expected update when DISPLAY omits CLNTUSER (empty observed clientUser)")
+	}
+}
+
+func TestChannelAuthNeedsUpdateUserMapUserSourceChannel(t *testing.T) {
+	t.Parallel()
+	desired := ChannelAuthSpec{
+		ChannelName: "CH1",
+		RuleType:    ChannelAuthRuleTypeUserMap,
+		ClientUser:  "johndoe",
+		UserSource:  "CHANNEL",
+	}
+	observed := &ChannelAuthState{
+		ChannelName: "CH1",
+		RuleType:    ChannelAuthRuleTypeUserMap,
+		ClientUser:  "johndoe",
+		UserSource:  "channel",
+		McaUser:     "legacy-mca",
+		CheckClient: "ASQMGR",
+	}
+	if ChannelAuthNeedsUpdate(desired, observed) {
+		t.Fatal("expected no update when USERSRC CHANNEL and desired mcaUser is unset")
+	}
+}
+
 func TestAuthoritySetsEqualDifferentLengths(t *testing.T) {
 	t.Parallel()
 	if authoritySetsEqual([]string{"GET", "PUT"}, []string{"GET"}) {

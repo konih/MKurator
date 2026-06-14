@@ -362,6 +362,17 @@ func TestChannelAuthRuleWebhookValidateCreateRuleTypeTable(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "usermap userSource channel valid",
+			spec: messagingv1alpha1.ChannelAuthRuleSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:   "ORDERS.APP",
+				RuleType:      messagingv1alpha1.ChannelAuthRuleTypeUserMap,
+				ClientUser:    "johndoe",
+				UserSource:    messagingv1alpha1.ChannelAuthUserSourceChannel,
+			},
+			wantErr: false,
+		},
+		{
 			name: "sslpeermap passes without deferred sslPeer field",
 			spec: messagingv1alpha1.ChannelAuthRuleSpec{
 				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},

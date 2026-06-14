@@ -19,10 +19,15 @@ func ChannelAuthNeedsUpdate(desired ChannelAuthSpec, observed *ChannelAuthState)
 	if !strings.EqualFold(strings.TrimSpace(desired.ClientUser), strings.TrimSpace(observed.ClientUser)) {
 		return true
 	}
-	if !strings.EqualFold(strings.TrimSpace(desired.McaUser), strings.TrimSpace(observed.McaUser)) {
+	// Only compare SET-managed fields when desired is non-empty. USERMAP DISPLAY often
+	// returns CHCKCLNT(ASQMGR) and may surface MCAUSER even when USERSRC is CHANNEL;
+	// empty desired means the operator does not manage that attribute on SET.
+	if strings.TrimSpace(desired.McaUser) != "" &&
+		!strings.EqualFold(strings.TrimSpace(desired.McaUser), strings.TrimSpace(observed.McaUser)) {
 		return true
 	}
-	if !strings.EqualFold(strings.TrimSpace(desired.UserSource), strings.TrimSpace(observed.UserSource)) {
+	if strings.TrimSpace(desired.UserSource) != "" &&
+		!strings.EqualFold(strings.TrimSpace(desired.UserSource), strings.TrimSpace(observed.UserSource)) {
 		return true
 	}
 	if strings.TrimSpace(desired.CheckClient) != "" &&
