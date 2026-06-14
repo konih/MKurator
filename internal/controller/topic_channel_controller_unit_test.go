@@ -244,6 +244,38 @@ func TestToMQChannelSpecTypedMcaUser(t *testing.T) {
 	}
 }
 
+func TestToMQChannelSpecTypedMaxInstances(t *testing.T) {
+	t.Parallel()
+	maxInstances := int32(100)
+	channel := &messagingv1alpha1.Channel{
+		Spec: messagingv1alpha1.ChannelSpec{
+			ChannelName:  "ORDERS.APP",
+			Type:         messagingv1alpha1.ChannelTypeSvrconn,
+			MaxInstances: &maxInstances,
+		},
+	}
+	spec := toMQChannelSpec(channel)
+	if spec.Attributes["maxinst"] != "100" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
+func TestToMQChannelSpecTypedMaxInstancesClient(t *testing.T) {
+	t.Parallel()
+	maxInstancesClient := int32(50)
+	channel := &messagingv1alpha1.Channel{
+		Spec: messagingv1alpha1.ChannelSpec{
+			ChannelName:        "ORDERS.APP",
+			Type:               messagingv1alpha1.ChannelTypeSvrconn,
+			MaxInstancesClient: &maxInstancesClient,
+		},
+	}
+	spec := toMQChannelSpec(channel)
+	if spec.Attributes["maxinstc"] != "50" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestToMQChannelSpec(t *testing.T) {
 	t.Parallel()
 	channel := &messagingv1alpha1.Channel{

@@ -225,6 +225,12 @@ func toMQChannelSpec(channel *messagingv1alpha1.Channel) mqadmin.ChannelSpec {
 	if channel.Spec.McaUser != "" {
 		attrs[mqadmin.NormalizeAttrKey("mcauser")] = channel.Spec.McaUser
 	}
+	if channel.Spec.MaxInstances != nil {
+		attrs[mqadmin.NormalizeAttrKey("maxinst")] = strconv.FormatInt(int64(*channel.Spec.MaxInstances), 10)
+	}
+	if channel.Spec.MaxInstancesClient != nil {
+		attrs[mqadmin.NormalizeAttrKey("maxinstc")] = strconv.FormatInt(int64(*channel.Spec.MaxInstancesClient), 10)
+	}
 	chType := mqadmin.ChannelTypeSvrconn
 	if channel.Spec.Type != "" {
 		chType = mqadmin.ChannelType(channel.Spec.Type)

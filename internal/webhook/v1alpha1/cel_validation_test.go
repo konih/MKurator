@@ -247,6 +247,40 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("mcaUser"))
 	})
 
+	It("rejects Channel with both maxInstances and attributes.maxinst", func() {
+		ctx := context.Background()
+		maxInstances := int32(100)
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Channel{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-channel-maxinst", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:   "ORDERS.APP",
+				MaxInstances:  &maxInstances,
+				Attributes:    map[string]string{"maxinst": "100"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("maxInstances"))
+	})
+
+	It("rejects Channel with both maxInstancesClient and attributes.maxinstc", func() {
+		ctx := context.Background()
+		maxInstancesClient := int32(50)
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Channel{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-channel-maxinstc", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelSpec{
+				ConnectionRef:      messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:        "ORDERS.APP",
+				MaxInstancesClient: &maxInstancesClient,
+				Attributes:         map[string]string{"maxinstc": "50"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("maxInstancesClient"))
+	})
+
 	It("rejects Queue with both maxDepth and attributes.maxdepth", func() {
 		ctx := context.Background()
 		depth := int32(5000)

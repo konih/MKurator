@@ -115,6 +115,24 @@ spec:
                   Mutually exclusive with attributes.descr; typed field takes precedence when folded
                   into the attribute map for mqadmin.
                 type: string
+              maxInstances:
+                description: |-
+                  MaxInstances is the maximum number of simultaneous channel instances (MQSC MAXINST).
+                  Mutually exclusive with attributes.maxinst; typed field takes precedence when folded
+                  into the attribute map for mqadmin.
+                format: int32
+                maximum: 999999999
+                minimum: 0
+                type: integer
+              maxInstancesClient:
+                description: |-
+                  MaxInstancesClient is the maximum number of client connections per channel instance
+                  (MQSC MAXINSTC). Mutually exclusive with attributes.maxinstc; typed field takes precedence
+                  when folded into the attribute map for mqadmin.
+                format: int32
+                maximum: 999999999
+                minimum: 0
+                type: integer
               maxMsgLength:
                 description: |-
                   MaxMsgLength is the maximum message length in bytes (MQSC MAXMSGL).
@@ -180,6 +198,13 @@ spec:
             - message: mcaUser field and attributes.mcauser are mutually exclusive
               rule: '!has(self.mcaUser) || self.mcaUser.size() == 0 || !has(self.attributes)
                 || !self.attributes.exists(k, k.lowerAscii() == ''mcauser'')'
+            - message: maxInstances field and attributes.maxinst are mutually exclusive
+              rule: '!has(self.maxInstances) || !has(self.attributes) || !self.attributes.exists(k,
+                k.lowerAscii() == ''maxinst'')'
+            - message: maxInstancesClient field and attributes.maxinstc are mutually
+                exclusive
+              rule: '!has(self.maxInstancesClient) || !has(self.attributes) || !self.attributes.exists(k,
+                k.lowerAscii() == ''maxinstc'')'
           status:
             description: ChannelStatus defines the observed state of Channel.
             properties:

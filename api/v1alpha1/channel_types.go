@@ -33,6 +33,8 @@ const ChannelFinalizer = "messaging.mkurator.dev/channel"
 // +kubebuilder:validation:XValidation:rule="!has(self.transportType) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'trptype')",message="transportType field and attributes.trptype are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.shareConv) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'sharecnv')",message="shareConv field and attributes.sharecnv are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.mcaUser) || self.mcaUser.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'mcauser')",message="mcaUser field and attributes.mcauser are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.maxInstances) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'maxinst')",message="maxInstances field and attributes.maxinst are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.maxInstancesClient) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'maxinstc')",message="maxInstancesClient field and attributes.maxinstc are mutually exclusive"
 type ChannelSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -93,6 +95,22 @@ type ChannelSpec struct {
 	// into the attribute map for mqadmin.
 	// +optional
 	McaUser string `json:"mcaUser,omitempty"`
+
+	// MaxInstances is the maximum number of simultaneous channel instances (MQSC MAXINST).
+	// Mutually exclusive with attributes.maxinst; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=999999999
+	// +optional
+	MaxInstances *int32 `json:"maxInstances,omitempty"`
+
+	// MaxInstancesClient is the maximum number of client connections per channel instance
+	// (MQSC MAXINSTC). Mutually exclusive with attributes.maxinstc; typed field takes precedence
+	// when folded into the attribute map for mqadmin.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=999999999
+	// +optional
+	MaxInstancesClient *int32 `json:"maxInstancesClient,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional

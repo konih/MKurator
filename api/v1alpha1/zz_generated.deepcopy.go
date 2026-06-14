@@ -296,6 +296,16 @@ func (in *ChannelSpec) DeepCopyInto(out *ChannelSpec) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.MaxInstances != nil {
+		in, out := &in.MaxInstances, &out.MaxInstances
+		*out = new(int32)
+		**out = **in
+	}
+	if in.MaxInstancesClient != nil {
+		in, out := &in.MaxInstancesClient, &out.MaxInstancesClient
+		*out = new(int32)
+		**out = **in
+	}
 	out.WorkloadLifecyclePolicies = in.WorkloadLifecyclePolicies
 }
 

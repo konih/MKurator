@@ -12,3 +12,5 @@ spec:
   transportType: tcp
   shareConv: 10
   mcaUser: appuser
+  maxInstances: 100
+  maxInstancesClient: 50
