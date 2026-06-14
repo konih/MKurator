@@ -17,6 +17,7 @@ const (
 const ChannelFinalizer = "messaging.mkurator.dev/channel"
 
 // ChannelSpec defines a channel to maintain on a referenced queue manager.
+// +kubebuilder:validation:XValidation:rule="!has(self.description) || self.description.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'descr')",message="description field and attributes.descr are mutually exclusive"
 type ChannelSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -42,6 +43,12 @@ type ChannelSpec struct {
 	// Drift-checked vs define-only keys: docs/ATTRIBUTE_RECONCILIATION.md.
 	// +optional
 	Attributes map[string]string `json:"attributes,omitempty"`
+
+	// Description is the channel description (MQSC DESCR).
+	// Mutually exclusive with attributes.descr; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +optional
+	Description string `json:"description,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional
