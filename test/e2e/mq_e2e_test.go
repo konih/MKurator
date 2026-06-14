@@ -16,11 +16,13 @@ import (
 )
 
 const (
-	mqConnectionName      = "e2e-qm1"
-	mqQueueMaxDepthV1     = "1000"
-	mqChannelAuthCRName   = "e2e-dev-app-addressmap"
-	mqChannelPrereqCRName = "e2e-dev-app-channel"
-	mqAuthorityCRName     = "e2e-app-orders-get-put"
+	mqConnectionName              = "e2e-qm1"
+	mqQueueMaxDepthV1             = "1000"
+	mqChannelAuthCRName           = "e2e-dev-app-addressmap"
+	mqChannelBlockAddrCRName      = "e2e-blockaddr-car"
+	mqChannelPrereqCRName         = "e2e-dev-app-channel"
+	mqChannelWildcardPrereqCRName = "e2e-wildcard-channel"
+	mqAuthorityCRName             = "e2e-app-orders-get-put"
 )
 
 func e2eLocalQueueSpec(name string) mqadmin.QueueSpec {
@@ -327,8 +329,10 @@ var _ = Describe("Post-manager IBM MQ auth", Label("mq", "mq-auth-serial"), Seri
 
 	AfterEach(func() {
 		kubectlForceRemoveNamespaced("channelauthrule", mqChannelAuthCRName, ns)
+		kubectlForceRemoveNamespaced("channelauthrule", mqChannelBlockAddrCRName, ns)
 		kubectlForceRemoveNamespaced("authorityrecord", mqAuthorityCRName, ns)
 		kubectlForceRemoveNamespaced("channel", mqChannelPrereqCRName, ns)
+		kubectlForceRemoveNamespaced("channel", mqChannelWildcardPrereqCRName, ns)
 		kubectlForceRemoveNamespaced("queuemanagerconnection", mqConnectionName, ns)
 	})
 
@@ -410,6 +414,79 @@ spec:
 			ok, err := channelAuthExists(ctx, client, carLookup)
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(ok).To(BeFalse(), "CHLAUTH for %s should be removed from MQ after CR delete", e2eChannelName)
+		}).WithTimeout(KubectlWaitDuration).WithPolling(3 * time.Second).Should(Succeed())
+	})
+
+	It("reconciles a BLOCKADDR ChannelAuthRule CR against the kind IBM MQ queue manager", func() {
+		blockAddr := e2eBlockAddrForTest(CurrentSpecReport().FullText())
+
+		Expect(kubectlApply(connectionManifest(ns))).To(Succeed())
+
+		// Admission requires a managed Channel CR; BLOCKADDR CHLAUTH uses channelName '*'.
+		wildcardChannelYAML := fmt.Sprintf(`apiVersion: messaging.mkurator.dev/v1alpha1
+kind: Channel
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  channelName: %s
+  type: svrconn
+  attributes:
+    trptype: tcp
+`, mqChannelWildcardPrereqCRName, ns, mqConnectionName, e2eBlockAddrChannelName)
+		Expect(applyWithWebhookRetry(wildcardChannelYAML)).To(Succeed())
+
+		carYAML := fmt.Sprintf(`apiVersion: messaging.mkurator.dev/v1alpha1
+kind: ChannelAuthRule
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  channelName: %s
+  ruleType: BLOCKADDR
+  address: %s
+  description: e2e blockaddr rule
+`, mqChannelBlockAddrCRName, ns, mqConnectionName, e2eBlockAddrChannelName, blockAddr)
+		Expect(applyWithWebhookRetry(carYAML)).To(Succeed())
+
+		Eventually(func(g Gomega) {
+			out, err := runKubectl("get", "channelauthrule", mqChannelBlockAddrCRName, "-n", ns,
+				"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(out).To(Equal("True"))
+		}).WithTimeout(mqSyncedEventuallyTimeout).WithPolling(5 * time.Second).Should(Succeed())
+
+		client, err := newMQClient()
+		Expect(err).NotTo(HaveOccurred())
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		carSpec := mqadmin.ChannelAuthSpec{
+			ChannelName: e2eBlockAddrChannelName,
+			RuleType:    mqadmin.ChannelAuthRuleTypeBlockAddr,
+			Address:     blockAddr,
+			Description: "e2e blockaddr rule",
+		}
+		ok, err := channelAuthMatches(ctx, client, carSpec)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ok).To(BeTrue(), "BLOCKADDR CHLAUTH for channel %s should match ChannelAuthRule spec", e2eBlockAddrChannelName)
+
+		Expect(kubectlDeleteWait("channelauthrule", mqChannelBlockAddrCRName, ns)).To(Succeed(),
+			"BLOCKADDR ChannelAuthRule CR delete should complete within %s", kubectlWaitTimeout)
+
+		carLookup := mqadmin.ChannelAuthSpec{
+			ChannelName: e2eBlockAddrChannelName,
+			RuleType:    mqadmin.ChannelAuthRuleTypeBlockAddr,
+			Address:     blockAddr,
+		}
+		Eventually(func(g Gomega) {
+			ok, err := channelAuthExists(ctx, client, carLookup)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(ok).To(BeFalse(), "BLOCKADDR CHLAUTH for channel %s should be removed from MQ after CR delete", e2eBlockAddrChannelName)
 		}).WithTimeout(KubectlWaitDuration).WithPolling(3 * time.Second).Should(Succeed())
 	})
 
