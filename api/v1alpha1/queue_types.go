@@ -14,12 +14,22 @@ const (
 	QueueTypeRemote QueueType = "remote"
 )
 
+// QueueDefaultPersistence is the default message persistence for new messages (MQSC DEFPSIST).
+// +kubebuilder:validation:Enum=yes;no
+type QueueDefaultPersistence string
+
+const (
+	QueueDefaultPersistenceYes QueueDefaultPersistence = "yes"
+	QueueDefaultPersistenceNo  QueueDefaultPersistence = "no"
+)
+
 // QueueSpec defines a queue to maintain on a referenced queue manager.
 // +kubebuilder:validation:XValidation:rule="self.type != 'alias' || (has(self.attributes) && (('targq' in self.attributes && size(self.attributes['targq']) > 0) || ('target' in self.attributes && size(self.attributes['target']) > 0)))",message="alias queues require attribute targq (or target)"
 // +kubebuilder:validation:XValidation:rule="self.type != 'remote' || (has(self.attributes) && (('xmitq' in self.attributes && size(self.attributes['xmitq']) > 0) || ('transmissionqueue' in self.attributes && size(self.attributes['transmissionqueue']) > 0)))",message="remote queues require attribute xmitq (or transmissionqueue)"
 // +kubebuilder:validation:XValidation:rule="self.type != 'remote' || (has(self.attributes) && (('rqmname' in self.attributes && size(self.attributes['rqmname']) > 0) || ('remotemanager' in self.attributes && size(self.attributes['remotemanager']) > 0)))",message="remote queues require attribute rqmname (or remotemanager)"
 // +kubebuilder:validation:XValidation:rule="!has(self.maxDepth) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'maxdepth')",message="maxDepth field and attributes.maxdepth are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.description) || self.description.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'descr')",message="description field and attributes.descr are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.defPersistence) || self.defPersistence == '' || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'defpsist')",message="defPersistence field and attributes.defpsist are mutually exclusive"
 type QueueSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -59,6 +69,12 @@ type QueueSpec struct {
 	// into the attribute map for mqadmin.
 	// +optional
 	Description string `json:"description,omitempty"`
+
+	// DefPersistence is the default message persistence for new messages (MQSC DEFPSIST).
+	// Mutually exclusive with attributes.defpsist; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +optional
+	DefPersistence QueueDefaultPersistence `json:"defPersistence,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional

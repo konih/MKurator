@@ -81,6 +81,22 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("description"))
 	})
 
+	It("rejects Queue with both defPersistence and attributes.defpsist", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Queue{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-defpsist", Namespace: ns},
+			Spec: messagingv1alpha1.QueueSpec{
+				ConnectionRef:  messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				QueueName:      "APP.ORDERS",
+				DefPersistence: messagingv1alpha1.QueueDefaultPersistenceYes,
+				Attributes:     map[string]string{"defpsist": "yes"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("defPersistence"))
+	})
+
 	It("rejects ChannelAuthRule ADDRESSMAP without address", func() {
 		ctx := context.Background()
 		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.ChannelAuthRule{

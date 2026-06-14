@@ -60,6 +60,21 @@ func TestToMQQueueSpecTypedDescription(t *testing.T) {
 	}
 }
 
+func TestToMQQueueSpecTypedDefPersistence(t *testing.T) {
+	t.Parallel()
+	q := &messagingv1alpha1.Queue{
+		Spec: messagingv1alpha1.QueueSpec{
+			QueueName:      "APP.ORDERS",
+			Type:           messagingv1alpha1.QueueTypeLocal,
+			DefPersistence: messagingv1alpha1.QueueDefaultPersistenceYes,
+		},
+	}
+	spec := toMQQueueSpec(q)
+	if spec.Attributes["defpsist"] != "yes" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestConnectionReady(t *testing.T) {
 	t.Parallel()
 	ready := &messagingv1alpha1.QueueManagerConnection{
