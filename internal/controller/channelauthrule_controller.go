@@ -202,16 +202,17 @@ func (r *ChannelAuthRuleReconciler) handleDeletion(
 
 func toMQChannelAuthSpec(rule *messagingv1alpha1.ChannelAuthRule) mqadmin.ChannelAuthSpec {
 	return mqadmin.ChannelAuthSpec{
-		ChannelName: rule.Spec.ChannelName,
-		RuleType:    mqadmin.ChannelAuthRuleType(rule.Spec.RuleType),
-		Address:     rule.Spec.Address,
-		UserList:    rule.Spec.UserList,
-		ClientUser:  rule.Spec.ClientUser,
-		SSLPeerName: rule.Spec.SslPeerName,
-		McaUser:     rule.Spec.McaUser,
-		UserSource:  string(rule.Spec.UserSource),
-		CheckClient: string(rule.Spec.CheckClient),
-		Description: rule.Spec.Description,
+		ChannelName:        rule.Spec.ChannelName,
+		RuleType:           mqadmin.ChannelAuthRuleType(rule.Spec.RuleType),
+		Address:            rule.Spec.Address,
+		UserList:           rule.Spec.UserList,
+		ClientUser:         rule.Spec.ClientUser,
+		SSLPeerName:        rule.Spec.SslPeerName,
+		RemoteQueueManager: rule.Spec.RemoteQueueManager,
+		McaUser:            rule.Spec.McaUser,
+		UserSource:         string(rule.Spec.UserSource),
+		CheckClient:        string(rule.Spec.CheckClient),
+		Description:        rule.Spec.Description,
 	}
 }
 

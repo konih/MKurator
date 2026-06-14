@@ -18,6 +18,7 @@ const attrReplace = "replace"
 const attrTrptype = "trptype"
 const attrMcaUser = "mcauser"
 const attrSslPeer = "sslpeer"
+const attrQmName = "qmname"
 
 // queueDisplayParameters lists attributes safe for runCommandJSON DISPLAY qlocal
 // on IBM MQ 9.4.x. Some keywords (e.g. maxmsglen, share, defopts) are rejected

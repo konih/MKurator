@@ -125,7 +125,11 @@ spec:
               mcaUser:
                 description: |-
                   McaUser maps to MCAUSER(...) for USERMAP (USERSRC MAP), SSLPEERMAP (USERSRC MAP),
-                  and ADDRESSMAP (USERSRC MAP) rules.
+                  QMGRMAP (USERSRC MAP), and ADDRESSMAP (USERSRC MAP) rules.
+                type: string
+              remoteQueueManager:
+                description: RemoteQueueManager maps to QMNAME(...) for QMGRMAP rules
+                  (remote partner queue manager name).
                 type: string
               ruleType:
                 description: RuleType maps to CHLAUTH TYPE(...).
@@ -150,7 +154,7 @@ spec:
                 type: string
               userSource:
                 description: UserSource maps to USERSRC(...) for ADDRESSMAP, USERMAP,
-                  and SSLPEERMAP rules.
+                  SSLPEERMAP, and QMGRMAP rules.
                 enum:
                 - CHANNEL
                 - NOACCESS
@@ -177,10 +181,13 @@ spec:
             - message: sslPeerName is required for SSLPEERMAP rules
               rule: self.ruleType != 'SSLPEERMAP' || (has(self.sslPeerName) && size(self.sslPeerName)
                 > 0)
+            - message: remoteQueueManager is required for QMGRMAP rules
+              rule: self.ruleType != 'QMGRMAP' || (has(self.remoteQueueManager) &&
+                size(self.remoteQueueManager) > 0)
             - message: mcaUser is required when userSource is MAP
-              rule: (self.ruleType != 'USERMAP' && self.ruleType != 'SSLPEERMAP')
-                || self.userSource != 'MAP' || (has(self.mcaUser) && size(self.mcaUser)
-                > 0)
+              rule: (self.ruleType != 'USERMAP' && self.ruleType != 'SSLPEERMAP' &&
+                self.ruleType != 'QMGRMAP') || self.userSource != 'MAP' || (has(self.mcaUser)
+                && size(self.mcaUser) > 0)
           status:
             description: ChannelAuthRuleStatus defines the observed state of ChannelAuthRule.
             properties:

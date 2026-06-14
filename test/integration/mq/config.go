@@ -134,3 +134,8 @@ func clientUserForTest(tName string) string {
 func sslPeerNameForTest(tName string) string {
 	return fmt.Sprintf("CN=kitp%05d,O=MKurator,C=US", testNameHash(tName)%100000)
 }
+
+// remoteQueueManagerForTest returns a unique remote queue manager name per test.
+func remoteQueueManagerForTest(tName string) string {
+	return fmt.Sprintf("QMK%05d", testNameHash(tName)%100000)
+}

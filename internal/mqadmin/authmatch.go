@@ -22,7 +22,13 @@ func ChannelAuthNeedsUpdate(desired ChannelAuthSpec, observed *ChannelAuthState)
 	if !strings.EqualFold(strings.TrimSpace(desired.SSLPeerName), strings.TrimSpace(observed.SSLPeerName)) {
 		return true
 	}
-	// Only compare SET-managed fields when desired is non-empty. USERMAP/SSLPEERMAP DISPLAY often
+	if !strings.EqualFold(
+		strings.TrimSpace(desired.RemoteQueueManager),
+		strings.TrimSpace(observed.RemoteQueueManager),
+	) {
+		return true
+	}
+	// Only compare SET-managed fields when desired is non-empty. USERMAP/SSLPEERMAP/QMGRMAP DISPLAY often
 	// returns CHCKCLNT(ASQMGR) and may surface MCAUSER even when USERSRC is CHANNEL;
 	// empty desired means the operator does not manage that attribute on SET.
 	if strings.TrimSpace(desired.McaUser) != "" &&
