@@ -2,7 +2,7 @@
 # Commit subjects use Conventional Commits with a gitmoji token (see AGENTS.md).
 
 [remote.github]
-owner = "konih"
+owner = "conduit-ops"
 repo = "mkurator"
 
 [changelog]
@@ -20,7 +20,7 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 body = """
 {% if version -%}
   {% if previous.version -%}
-    ## [{{ version | trim_start_matches(pat="v") }}](https://github.com/konih/mkurator/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+    ## [{{ version | trim_start_matches(pat="v") }}](https://github.com/conduit-ops/MKurator/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
   {% else -%}
     ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
   {% endif -%}
@@ -34,8 +34,8 @@ body = """
     - {% if commit.scope %}**{{ commit.scope }}:** {% endif %}\
       {% if commit.breaking %}[**breaking**] {% endif %}\
       {{ commit.message | upper_first }} \
-      {% if commit.remote.pr_number %}([#{{ commit.remote.pr_number }}](https://github.com/konih/mkurator/pull/{{ commit.remote.pr_number }}), ){% endif %}\
-      [{{ commit.id | truncate(length=7, end="") }}](https://github.com/konih/mkurator/commit/{{ commit.id }})
+      {% if commit.remote.pr_number %}([#{{ commit.remote.pr_number }}](https://github.com/conduit-ops/MKurator/pull/{{ commit.remote.pr_number }}), ){% endif %}\
+      [{{ commit.id | truncate(length=7, end="") }}](https://github.com/conduit-ops/MKurator/commit/{{ commit.id }})
   {% endfor %}
 {% endfor %}
 """

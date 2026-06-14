@@ -112,5 +112,5 @@ Use the process in [SECURITY.md](../SECURITY.md) — do not open public issues f
 
 ### Where is the full documentation site?
 
-Published docs: [konih.github.io/MKurator](https://konih.github.io/MKurator/). Source lives under
+Published docs: [conduit-ops.github.io/MKurator](https://conduit-ops.github.io/MKurator/). Source lives under
 [`docs/`](README.md).

@@ -7,7 +7,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	mqadmintest "github.com/konih/mkurator/test/mocks/mqadmin"
+	mqadmintest "github.com/conduit-ops/mkurator/test/mocks/mqadmin"
 )
 
 var _ = Describe("Controller wiring", func() {

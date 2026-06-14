@@ -1,8 +1,8 @@
 site_name: MKurator
 site_description: Kubernetes operator for declarative IBM MQ administration
-site_url: https://konih.github.io/MKurator/
-repo_url: https://github.com/konih/mkurator
-repo_name: konih/mkurator
+site_url: https://conduit-ops.github.io/MKurator/
+repo_url: https://github.com/conduit-ops/MKurator
+repo_name: conduit-ops/MKurator
 copyright: Copyright &copy; 2026 Konrad Heimel
 
 theme:
@@ -106,4 +106,4 @@ site_dir: site
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/konih/mkurator
+      link: https://github.com/conduit-ops/MKurator

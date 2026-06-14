@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 // FormatDefineQueueMQSC renders the DEFINE QLOCAL|QALIAS|QREMOTE ... REPLACE line

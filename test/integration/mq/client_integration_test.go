@@ -14,9 +14,9 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
-	"github.com/konih/mkurator/internal/adapter/mqrest"
-	"github.com/konih/mkurator/internal/mqadmin"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
+	"github.com/conduit-ops/mkurator/internal/adapter/mqrest"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 func requireIntegration(t *testing.T) {

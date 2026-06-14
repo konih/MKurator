@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 func TestCircuitBreakerConfigFromResilience(t *testing.T) {

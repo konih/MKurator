@@ -11,14 +11,14 @@ hide:
 
 <p class="mkurator-badges" markdown="1">
 
-[![CI](https://github.com/konih/mkurator/actions/workflows/ci.yaml/badge.svg)](https://github.com/konih/mkurator/actions/workflows/ci.yaml)
-[![E2E](https://github.com/konih/mkurator/actions/workflows/e2e.yaml/badge.svg)](https://github.com/konih/mkurator/actions/workflows/e2e.yaml)
-[![Docs](https://github.com/konih/mkurator/actions/workflows/docs.yaml/badge.svg)](https://github.com/konih/mkurator/actions/workflows/docs.yaml)
+[![CI](https://github.com/conduit-ops/MKurator/actions/workflows/ci.yaml/badge.svg)](https://github.com/conduit-ops/MKurator/actions/workflows/ci.yaml)
+[![E2E](https://github.com/conduit-ops/MKurator/actions/workflows/e2e.yaml/badge.svg)](https://github.com/conduit-ops/MKurator/actions/workflows/e2e.yaml)
+[![Docs](https://github.com/conduit-ops/MKurator/actions/workflows/docs.yaml/badge.svg)](https://github.com/conduit-ops/MKurator/actions/workflows/docs.yaml)
 <br />
-[![Release](https://img.shields.io/github/v/release/konih/mkurator?label=release)](https://github.com/konih/mkurator/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/konih/mkurator/blob/main/LICENSE)
-[![Go](https://img.shields.io/github/go-mod/go-version/konih/mkurator)](https://pkg.go.dev/github.com/konih/mkurator)
-[![Container](https://img.shields.io/badge/ghcr.io-konih%2Fmkurator-2496ED?logo=docker&logoColor=white)](https://github.com/konih/mkurator/pkgs/container/mkurator)
+[![Release](https://img.shields.io/github/v/release/conduit-ops/MKurator?label=release)](https://github.com/conduit-ops/MKurator/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/conduit-ops/MKurator/blob/main/LICENSE)
+[![Go](https://img.shields.io/github/go-mod/go-version/conduit-ops/mkurator)](https://pkg.go.dev/github.com/conduit-ops/mkurator)
+[![Container](https://img.shields.io/badge/ghcr.io-conduit-ops%2Fmkurator-2496ED?logo=docker&logoColor=white)](https://github.com/conduit-ops/MKurator/pkgs/container/mkurator)
 
 </p>
 

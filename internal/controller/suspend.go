@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
 )
 
 const suspendedMessage = "Reconciliation suspended"

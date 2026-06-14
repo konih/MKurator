@@ -10,7 +10,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
 )
 
 const (

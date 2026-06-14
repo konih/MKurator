@@ -1,4 +1,4 @@
-module github.com/konih/mkurator
+module github.com/conduit-ops/mkurator
 
 go 1.26.4
 

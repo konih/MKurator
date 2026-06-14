@@ -9,7 +9,7 @@
 [ADR-0005](0005-keep-tooling-lean.md) deliberately deferred org-scale machinery
 (`GOVERNANCE`, OpenSSF Scorecard, published docs site) while the project was a
 solo personal operator. MKurator now targets **external adoption** as open source
-(`github.com/konih/mkurator`). Contributors and adopters need public trust signals,
+(`github.com/conduit-ops/MKurator`). Contributors and adopters need public trust signals,
 published documentation, and contributor norms comparable to mature OSS operators —
 without copying unrelated inventory features or cert-manager-scale overhead.
 
@@ -24,7 +24,7 @@ We **selectively adopt** the following, superseding the matching ADR-0005 deferr
 | Area | Mechanism |
 | --- | --- |
 | **Community** | Root `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, `CONTRIBUTING.md` with DCO sign-off |
-| **Published docs** | MkDocs Material + GitHub Pages (`docs.yaml` CI) at `konih.github.io/MKurator/` |
+| **Published docs** | MkDocs Material + GitHub Pages (`docs.yaml` CI) at `conduit-ops.github.io/MKurator/` |
 | **Security posture CI** | CodeQL, OpenSSF Scorecard workflow, RBAC audit job (Polaris + kubeaudit) |
 | **Release attestations** | Extend [ADR-0016](0016-release-supply-chain.md): cosign sign-blob on release assets, `actions/attest`, signed Helm OCI chart |
 | **Engineering standards** | Split `docs/development/*` (guidelines, coding-standards, testing, tooling-setup) |

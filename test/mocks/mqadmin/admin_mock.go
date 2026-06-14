@@ -7,8 +7,8 @@ package mqadmintest
 import (
 	"context"
 
-	"github.com/konih/mkurator/api/v1alpha1"
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/api/v1alpha1"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -116,7 +116,7 @@ maintainers may ask you to amend commits if sign-off is missing on substantive c
 
 ## Reporting bugs
 
-**Open a [GitHub Issue](https://github.com/konih/mkurator/issues/new)** for bugs, regressions, and
+**Open a [GitHub Issue](https://github.com/conduit-ops/MKurator/issues/new)** for bugs, regressions, and
 feature requests. Do **not** use issues for security vulnerabilities — email
 **konrad.heimel@gmail.com** per [SECURITY.md](SECURITY.md).
 

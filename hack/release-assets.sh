@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Build release artifacts under dist/ for a tagged version.
 # Usage: hack/release-assets.sh <version> <image-repo>
-# Example: hack/release-assets.sh 0.1.0 ghcr.io/konih/mkurator
+# Example: hack/release-assets.sh 0.1.0 ghcr.io/conduit-ops/mkurator
 set -euo pipefail
 
 VERSION="${1:?version required (e.g. 0.1.0)}"
-IMAGE="${2:?image repository required (e.g. ghcr.io/konih/mkurator)}"
+IMAGE="${2:?image repository required (e.g. ghcr.io/conduit-ops/mkurator)}"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST="${ROOT}/dist"

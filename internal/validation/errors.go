@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
 )
 
 func invalidObject(gvk schema.GroupVersionKind, name string, errs field.ErrorList) error {

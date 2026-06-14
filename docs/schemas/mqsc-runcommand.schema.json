@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/konih/mkurator/schemas/mqsc-runcommand.json",
+  "$id": "https://github.com/conduit-ops/MKurator/schemas/mqsc-runcommand.json",
   "title": "IBM MQ REST API - /admin/action/qmgr/{qmgrName}/mqsc request bodies",
   "description": "Stable request shapes for the mqweb administrative MQSC endpoint. Derived from IBM MQ 9.2+ documentation. The full mqweb Swagger document is version-specific and must be fetched from /ibm/api/docs on a running server.",
   "oneOf": [

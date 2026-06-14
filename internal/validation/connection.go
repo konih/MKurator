@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
 )
 
 // ValidateConnectionRef ensures the referenced QueueManagerConnection exists in the same namespace and is not deleting.

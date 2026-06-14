@@ -13,7 +13,7 @@ fi
 
 for dir in "${dirs[@]}"; do
 	gofmt -w "${dir}"/*.go
-	go tool goimports -local github.com/konih/mkurator -w "${dir}"/*.go
+	go tool goimports -local github.com/conduit-ops/mkurator -w "${dir}"/*.go
 	for f in "${dir}"/*.go; do
 		if [[ "$f" == */api/v1alpha1/*_types.go ]]; then
 			continue

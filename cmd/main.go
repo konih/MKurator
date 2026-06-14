@@ -20,13 +20,13 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
-	"github.com/konih/mkurator/internal/adapter/mqrest"
-	"github.com/konih/mkurator/internal/cacheconfig"
-	"github.com/konih/mkurator/internal/controller"
-	"github.com/konih/mkurator/internal/health"
-	"github.com/konih/mkurator/internal/logging"
-	webhookv1alpha1 "github.com/konih/mkurator/internal/webhook/v1alpha1"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
+	"github.com/conduit-ops/mkurator/internal/adapter/mqrest"
+	"github.com/conduit-ops/mkurator/internal/cacheconfig"
+	"github.com/conduit-ops/mkurator/internal/controller"
+	"github.com/conduit-ops/mkurator/internal/health"
+	"github.com/conduit-ops/mkurator/internal/logging"
+	webhookv1alpha1 "github.com/conduit-ops/mkurator/internal/webhook/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 

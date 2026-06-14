@@ -10,7 +10,7 @@ if [[ -z "${RENOVATE_TOKEN:-}" ]]; then
   RENOVATE_TOKEN="$(gh auth token)"
 fi
 
-REPO_PATH="${ROOT}/.renovate/repos/github.com/konih/mkurator"
+REPO_PATH="${ROOT}/.renovate/repos/github.com/conduit-ops/mkurator"
 mkdir -p "$(dirname "${REPO_PATH}")"
 if [[ ! -d "${REPO_PATH}/.git" ]]; then
   git clone --local . "${REPO_PATH}"
@@ -21,7 +21,7 @@ docker run --rm --user "$(id -u):$(id -g)" \
   -e "RENOVATE_TOKEN=${RENOVATE_TOKEN}" \
   -e RENOVATE_BASE_DIR=/tmp/renovate \
   -e RENOVATE_PLATFORM=github \
-  -e RENOVATE_REPOSITORIES=konih/mkurator \
+  -e RENOVATE_REPOSITORIES=conduit-ops/MKurator \
   -e RENOVATE_ONBOARDING=false \
   -e 'RENOVATE_FORCE={"schedule":null}' \
   -e LOG_LEVEL="${LOG_LEVEL:-info}" \

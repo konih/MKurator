@@ -3,7 +3,7 @@ package controller
 import (
 	"testing"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
 )
 
 func TestOrphanDeletionRequested(t *testing.T) {

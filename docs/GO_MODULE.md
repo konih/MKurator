@@ -10,13 +10,13 @@ behaviour (manager, reconcilers, webhooks) see
 
 | Item | Value |
 |------|--------|
-| **Module path** | `github.com/konih/mkurator` |
+| **Module path** | `github.com/conduit-ops/MKurator` |
 | **API group** | `messaging.mkurator.dev` |
 | **API version** | `v1alpha1` |
 | **Entrypoint** | `cmd/main.go` |
 | **Go version** | Floor in `go.mod` (`go` directive); CI uses the pinned toolchain via `GOTOOLCHAIN` |
 
-The Git repository is [konih/mkurator](https://github.com/konih/mkurator); a local
+The Git repository is [conduit-ops/MKurator](https://github.com/conduit-ops/MKurator); a local
 clone may use another directory name (for example `IBM-Message-Queue-Operator`).
 
 ## Repository map (Go packages)

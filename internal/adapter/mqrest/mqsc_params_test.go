@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 func TestDefineQueueParameters(t *testing.T) {

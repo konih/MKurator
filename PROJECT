@@ -7,5 +7,5 @@ domain: mkurator.dev
 layout:
 - go.kubebuilder.io/v4
 projectName: mkurator
-repo: github.com/konih/mkurator
+repo: github.com/conduit-ops/mkurator
 version: "3"

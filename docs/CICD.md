@@ -170,7 +170,7 @@ Runs in order within the job:
    scheduled govulncheck workflow (Renovate runs weekly).
 
 CI then uploads `coverage.out` as a workflow artifact, prints a **job summary**
-(`go tool cover -func`), and publishes to [Codecov](https://codecov.io/gh/konih/mkurator)
+(`go tool cover -func`), and publishes to [Codecov](https://codecov.io/gh/conduit-ops/MKurator)
 (`codecov.yml`) via `codecov/codecov-action` using the repository secret
 `CODECOV_TOKEN` with `fail_ci_if_error: true` (upload failures fail the job;
 `codecov.yml` uses `target: auto` only — no strict coverage gate in CI).

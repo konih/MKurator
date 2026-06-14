@@ -45,7 +45,7 @@ before upgrading.
 |------|-----|------------|
 | **&lt; 0.5.0** | **0.5.0+** | New CRDs: `ChannelAuthRule`, `AuthorityRecord`. Validating webhooks on by default (cert-manager TLS). Review [INSTALL_AND_USE.md](INSTALL_AND_USE.md) auth sections. |
 | **0.3.x** | **0.4.0+** | Validating webhooks and QMC delete protection. Ensure cert-manager is installed if using Helm/Kustomize webhook bundles. |
-| **0.2.x** | **0.3.0+** | Module and image registry moved to `konih/mkurator` ([ADR-0006](adr/0006-project-name-kurator.md)). Update `image.repository` / install manifest URLs. |
+| **0.2.x** | **0.3.0+** | Module and image registry moved to `conduit-ops/MKurator` ([ADR-0006](adr/0006-project-name-kurator.md)). Update `image.repository` / install manifest URLs. |
 
 Semantic versioning: **patch** — bug fixes, safe rolling image bump; **minor** —
 new CR fields or kinds, may need CRD apply; **major** (or `feat!` / `BREAKING CHANGE`)
@@ -119,12 +119,12 @@ a documented reason.
 ## Operator image upgrade
 
 **Kustomize / manifest install:** apply the new `install.yaml`; the Deployment rolls
-out with the pinned `ghcr.io/konih/mkurator:<version>` image.
+out with the pinned `ghcr.io/conduit-ops/mkurator:<version>` image.
 
 **Helm:**
 
 ```sh
-helm upgrade --install mkurator oci://ghcr.io/konih/mkurator \
+helm upgrade --install mkurator oci://ghcr.io/conduit-ops/mkurator \
   --version "${VERSION}" \
   --namespace mkurator-system \
   --reuse-values \

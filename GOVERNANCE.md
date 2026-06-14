@@ -2,7 +2,7 @@
 
 MKurator is an open-source Kubernetes operator for IBM MQ, maintained as a
 personal OSS project under
-[github.com/konih/mkurator](https://github.com/konih/mkurator). This document
+[github.com/conduit-ops/MKurator](https://github.com/conduit-ops/MKurator). This document
 describes how decisions are made, who is responsible for what, and how the
 project continues if the maintainer is unavailable.
 
@@ -12,7 +12,7 @@ This governance model applies to:
 
 - The **MKurator** operator, Helm chart, CRDs, and documentation in this repository
 - Release artifacts published to GHCR and GitHub Releases
-- Public documentation at [konih.github.io/MKurator](https://konih.github.io/MKurator/)
+- Public documentation at [conduit-ops.github.io/MKurator](https://conduit-ops.github.io/MKurator/)
 
 It does **not** cover downstream deployments, fork-specific policies, IBM MQ
 licensing for your queue managers, or private runbooks.

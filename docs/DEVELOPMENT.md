@@ -5,7 +5,7 @@ contributor guidelines see [CONTRIBUTING.md](CONTRIBUTING.md); for Go style and
 agent workflow see [../AGENTS.md](../AGENTS.md); for design see
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
-The Git repository is [konih/mkurator](https://github.com/konih/mkurator); your
+The Git repository is [conduit-ops/MKurator](https://github.com/conduit-ops/MKurator); your
 local clone directory may differ (for example `IBM-Message-Queue-Operator`).
 See [ADR-0006](adr/0006-project-name-kurator.md).
 

@@ -14,7 +14,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 
-	"github.com/konih/mkurator/test/utils"
+	"github.com/conduit-ops/mkurator/test/utils"
 )
 
 const e2eCleanupTimeout = 5 * time.Minute

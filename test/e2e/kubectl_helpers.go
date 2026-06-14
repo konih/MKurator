@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/konih/mkurator/test/utils"
+	"github.com/conduit-ops/mkurator/test/utils"
 )
 
 // kubectlWaitTimeout is passed to kubectl delete --wait and kubectl wait.

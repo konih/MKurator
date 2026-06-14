@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/konih/mkurator/test/utils"
+	"github.com/conduit-ops/mkurator/test/utils"
 )
 
 // serviceAccountName created for the project

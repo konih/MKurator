@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/events"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
-	"github.com/konih/mkurator/internal/mqadmin"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 const (

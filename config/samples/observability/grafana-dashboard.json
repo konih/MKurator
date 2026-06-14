@@ -69,7 +69,7 @@
       "targetBlank": true,
       "title": "Observability guide",
       "type": "link",
-      "url": "https://github.com/konih/mkurator/blob/main/docs/OBSERVABILITY.md"
+      "url": "https://github.com/conduit-ops/MKurator/blob/main/docs/OBSERVABILITY.md"
     }
   ],
   "liveNow": false,

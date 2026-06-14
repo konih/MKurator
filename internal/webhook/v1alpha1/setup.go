@@ -9,7 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/konih/mkurator/internal/validation"
+	"github.com/conduit-ops/mkurator/internal/validation"
 )
 
 func admissionResult(

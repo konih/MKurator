@@ -5,10 +5,10 @@ type: application
 version: 0.9.0
 appVersion: "0.9.0"
 kubeVersion: ">=1.28.0-0"
-home: https://github.com/konih/mkurator
-icon: https://raw.githubusercontent.com/konih/mkurator/main/docs/images/mkurator-logo.png
+home: https://github.com/conduit-ops/MKurator
+icon: https://raw.githubusercontent.com/conduit-ops/MKurator/main/docs/images/mkurator-logo.png
 sources:
-  - https://github.com/konih/mkurator
+  - https://github.com/conduit-ops/MKurator
 keywords:
   - ibm-mq
   - messaging

@@ -17,9 +17,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
-	"github.com/konih/mkurator/internal/metrics"
-	"github.com/konih/mkurator/internal/mqadmin"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
+	"github.com/conduit-ops/mkurator/internal/metrics"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 // QueueManagerConnectionReconciler reconciles QueueManagerConnection objects.

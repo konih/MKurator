@@ -19,7 +19,7 @@ Pick one:
 | Helm (recommended) | [INSTALL_AND_USE.md — Install the operator](INSTALL_AND_USE.md#install-the-operator) |
 | Kustomize / release manifests | [INSTALL_AND_USE.md — Install the operator](INSTALL_AND_USE.md#install-the-operator) |
 
-Release artifacts: [GitHub Releases](https://github.com/konih/mkurator/releases) (`install.yaml`,
+Release artifacts: [GitHub Releases](https://github.com/conduit-ops/MKurator/releases) (`install.yaml`,
 `install-crds.yaml`, Helm chart on GHCR).
 
 ## Connect and create a queue

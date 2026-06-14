@@ -7,7 +7,7 @@
 ## Context
 
 The operator shipped as **Kurator** ([ADR-0006](0006-project-name-kurator.md)) with
-module `github.com/konih/kurator`, API group `messaging.kurator.dev`, and Helm chart
+module `github.com/conduit-ops/mkurator`, API group `messaging.kurator.dev`, and Helm chart
 `charts/kurator`. The maintainer renamed the GitHub repository to `mkurator` and
 wanted the product name **MKurator** (emphasising MQ curation) reflected consistently
 in module paths, CRDs, namespaces, images, and docs.
@@ -16,8 +16,8 @@ in module paths, CRDs, namespaces, images, and docs.
 
 - **Display name**: **MKurator**
 - **Slug / identifiers**: `mkurator` (namespaces, images, kind cluster, chart dir)
-- **Go module**: `github.com/konih/mkurator`
-- **GitHub / GHCR**: `github.com/konih/mkurator`, `ghcr.io/konih/mkurator`
+- **Go module**: `github.com/conduit-ops/mkurator`
+- **GitHub / GHCR**: `github.com/conduit-ops/MKurator`, `ghcr.io/conduit-ops/mkurator`
 - **API group / domain**: `messaging.mkurator.dev`, version `v1alpha1` (breaking)
 - **System namespace**: `mkurator-system` (was `kurator-system`)
 - **E2E namespaces**: `mkurator-e2e-*` (was `kurator-e2e-*`)
@@ -31,7 +31,7 @@ in module paths, CRDs, namespaces, images, and docs.
   and reinstalling `messaging.mkurator.dev` CRDs; existing CRs must be migrated or
   recreated.
 - All kubebuilder markers, generated CRDs, RBAC, webhooks, and samples regenerated.
-- CI image references and `cliff.toml` repo updated to `konih/mkurator`.
+- CI image references and `cliff.toml` repo updated to `conduit-ops/MKurator`.
 - Local kind clusters named `kurator` continue to work via `CLUSTER_NAME=kurator` until
   recreated; new defaults use `mkurator`.
 - Workspace directory may remain `IBM-Message-Queue-Operator`; module path is authoritative.

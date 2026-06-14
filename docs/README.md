@@ -4,7 +4,7 @@
 |---|------------|
 | 🎯 | Install and manage MQ objects on your queue manager → [INSTALL_AND_USE.md](INSTALL_AND_USE.md) |
 | 🎯 | FAQ and glossary → [FAQ.md](FAQ.md) · [GLOSSARY.md](GLOSSARY.md) |
-| 📖 | Published documentation site → [konih.github.io/MKurator](https://konih.github.io/MKurator/) |
+| 📖 | Published documentation site → [conduit-ops.github.io/MKurator](https://conduit-ops.github.io/MKurator/) |
 | 🛠️ | Install dev tools → [LOCAL_SETUP.md](LOCAL_SETUP.md) |
 | 🛠️ | Hack on the operator locally → [DEVELOPMENT.md](DEVELOPMENT.md) |
 | 🛠️ | What to regenerate / test after a code change → [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) |

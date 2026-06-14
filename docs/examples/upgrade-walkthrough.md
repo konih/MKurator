@@ -6,14 +6,14 @@ Full runbook: [UPGRADE.md](../UPGRADE.md). This page summarizes the happy path.
 
 ## Before you upgrade
 
-1. Read release notes for the target version on [GitHub Releases](https://github.com/konih/mkurator/releases).
+1. Read release notes for the target version on [GitHub Releases](https://github.com/conduit-ops/MKurator/releases).
 2. Back up custom resources: `kubectl get queue,topic,channel,qmc,car,auth -A -o yaml > mkurator-crs.yaml`
 3. Note your current chart/app version: `helm list -A` or deployment image tag.
 
 ## Helm upgrade
 
 ```bash
-helm upgrade mkurator oci://ghcr.io/konih/mkurator --version <X.Y.Z> -n mkurator-system
+helm upgrade mkurator oci://ghcr.io/conduit-ops/mkurator --version <X.Y.Z> -n mkurator-system
 ```
 
 Or upgrade from a release tarball:

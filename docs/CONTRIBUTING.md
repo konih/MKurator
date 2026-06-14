@@ -140,9 +140,9 @@ manifests) must be visible in the commit and changelog.
    Commits style).
 
 ```text
-refactor!: :recycle: rename module to github.com/konih/mkurator
+refactor!: :recycle: rename module to github.com/conduit-ops/MKurator
 
-BREAKING CHANGE: import paths and container image registry moved to konih/mkurator.
+BREAKING CHANGE: import paths and container image registry moved to conduit-ops/MKurator.
 ```
 
 Breaking commits appear under **Breaking Changes** in [CHANGELOG.md](../CHANGELOG.md).

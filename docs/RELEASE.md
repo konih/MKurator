@@ -175,12 +175,12 @@ Fix forward with a new patch tag instead.
 
 ## What CI publishes
 
-The [release workflow](https://github.com/konih/mkurator/actions/workflows/release.yaml)
+The [release workflow](https://github.com/conduit-ops/MKurator/actions/workflows/release.yaml)
 (on tag push):
 
 | Output | Location |
 |--------|----------|
-| Container image | `ghcr.io/konih/mkurator:0.3.0` (and `:v0.3.0`), multi-arch |
+| Container image | `ghcr.io/conduit-ops/mkurator:0.3.0` (and `:v0.3.0`), multi-arch |
 | OCI SBOM + SLSA provenance | GHCR attestations on the image |
 | GitHub Release | Notes from git-cliff + install section; attached files below |
 | `install-crds.yaml` | Kustomize CRD bundle |
@@ -188,7 +188,7 @@ The [release workflow](https://github.com/konih/mkurator/actions/workflows/relea
 | `mkurator-0.3.0.tgz` | Helm chart tarball |
 | `sbom.spdx.json` | SPDX SBOM |
 | `checksums.txt` | SHA256 of release files |
-| Helm chart (OCI) | `oci://ghcr.io/konih/mkurator` |
+| Helm chart (OCI) | `oci://ghcr.io/conduit-ops/mkurator` |
 
 Release notes are assembled by
 [`hack/assemble-release-notes.sh`](../hack/assemble-release-notes.sh) (git-cliff
@@ -199,7 +199,7 @@ Committed history lives in repo-root [`CHANGELOG.md`](../CHANGELOG.md).
 Local dry-run of install manifests (without pushing):
 
 ```sh
-bash hack/release-assets.sh 0.3.0 ghcr.io/konih/mkurator
+bash hack/release-assets.sh 0.3.0 ghcr.io/conduit-ops/mkurator
 ls -la dist/
 ```
 
@@ -226,26 +226,26 @@ workflow_dispatch after fixing generation on the tagged commit.
 
 ## Verify after release
 
-1. Open [GitHub Releases](https://github.com/konih/mkurator/releases) — notes, attachments, tag.
-2. Pull the image: `docker pull ghcr.io/konih/mkurator:0.3.0`
+1. Open [GitHub Releases](https://github.com/conduit-ops/MKurator/releases) — notes, attachments, tag.
+2. Pull the image: `docker pull ghcr.io/conduit-ops/mkurator:0.3.0`
 3. Optional cosign verify on the container image (substitute digest from GHCR):
 
 ```sh
 cosign verify \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/konih/mkurator/.+' \
-  ghcr.io/konih/mkurator@sha256:<digest>
+  --certificate-identity-regexp '^https://github.com/conduit-ops/MKurator/.+' \
+  ghcr.io/conduit-ops/mkurator@sha256:<digest>
 ```
 
 4. Optional verify signed release assets (Sigstore bundle):
 
 ```sh
 VERSION=0.6.0   # replace with the tag you published
-curl -sLO "https://github.com/konih/mkurator/releases/download/v${VERSION}/checksums.txt"
-curl -sLO "https://github.com/konih/mkurator/releases/download/v${VERSION}/checksums.txt.sigstore.json"
+curl -sLO "https://github.com/conduit-ops/MKurator/releases/download/v${VERSION}/checksums.txt"
+curl -sLO "https://github.com/conduit-ops/MKurator/releases/download/v${VERSION}/checksums.txt.sigstore.json"
 cosign verify-blob --bundle checksums.txt.sigstore.json --certificate-oidc-issuer \
   https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp '^https://github.com/konih/mkurator/.+' \
+  --certificate-identity-regexp '^https://github.com/conduit-ops/MKurator/.+' \
   --checksum checksums.txt
 ```
 
@@ -253,8 +253,8 @@ cosign verify-blob --bundle checksums.txt.sigstore.json --certificate-oidc-issue
 
 ```sh
 VERSION=0.5.2   # replace with the tag you just published
-curl -sLO "https://github.com/konih/mkurator/releases/download/v${VERSION}/install-crds.yaml"
-curl -sLO "https://github.com/konih/mkurator/releases/download/v${VERSION}/install.yaml"
+curl -sLO "https://github.com/conduit-ops/MKurator/releases/download/v${VERSION}/install-crds.yaml"
+curl -sLO "https://github.com/conduit-ops/MKurator/releases/download/v${VERSION}/install.yaml"
 kubectl apply -f install-crds.yaml
 kubectl apply -f install.yaml
 ```

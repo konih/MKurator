@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 const attrMaxDepth = "maxdepth"

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/konih/mkurator/internal/adapter/mqpcf"
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/adapter/mqpcf"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 func TestNewClient_RequiresQueueManager(t *testing.T) {

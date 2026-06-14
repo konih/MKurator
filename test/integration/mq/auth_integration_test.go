@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 func TestIntegration_GetChannelAuth(t *testing.T) {

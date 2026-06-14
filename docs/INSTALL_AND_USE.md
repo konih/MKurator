@@ -96,15 +96,15 @@ Pick one method. All paths install the same CRDs and controller.
 ### Option A — GitHub Release manifests (Kustomize)
 
 Download the release tag you intend to run from
-[GitHub Releases](https://github.com/konih/mkurator/releases). The examples below
+[GitHub Releases](https://github.com/conduit-ops/MKurator/releases). The examples below
 use **`0.7.1`** (or the tag you downloaded from GitHub Releases). Older tags
 (before `v0.5.0`) do not include `ChannelAuthRule` and `AuthorityRecord`; check
 release notes before upgrading.
 
 ```sh
 VERSION=0.7.1   # replace with your release tag
-curl -sLO "https://github.com/konih/mkurator/releases/download/v${VERSION}/install-crds.yaml"
-curl -sLO "https://github.com/konih/mkurator/releases/download/v${VERSION}/install.yaml"
+curl -sLO "https://github.com/conduit-ops/MKurator/releases/download/v${VERSION}/install-crds.yaml"
+curl -sLO "https://github.com/conduit-ops/MKurator/releases/download/v${VERSION}/install.yaml"
 
 kubectl apply -f install-crds.yaml
 kubectl apply -f install.yaml
@@ -119,18 +119,18 @@ kubectl get crd | grep messaging.mkurator.dev
 ```
 
 The release `install.yaml` pins the controller image to
-`ghcr.io/konih/mkurator:<version>`.
+`ghcr.io/conduit-ops/mkurator:<version>`.
 
 ### Option B — Helm chart (GitHub Release tarball)
 
 ```sh
 VERSION=0.7.1
-curl -sLO "https://github.com/konih/mkurator/releases/download/v${VERSION}/mkurator-${VERSION}.tgz"
+curl -sLO "https://github.com/conduit-ops/MKurator/releases/download/v${VERSION}/mkurator-${VERSION}.tgz"
 
 helm upgrade --install mkurator "mkurator-${VERSION}.tgz" \
   --namespace mkurator-system \
   --create-namespace \
-  --set image.repository=ghcr.io/konih/mkurator \
+  --set image.repository=ghcr.io/conduit-ops/mkurator \
   --set image.tag="${VERSION}"
 ```
 
@@ -138,11 +138,11 @@ helm upgrade --install mkurator "mkurator-${VERSION}.tgz" \
 
 ```sh
 VERSION=0.7.1
-helm upgrade --install mkurator oci://ghcr.io/konih/mkurator \
+helm upgrade --install mkurator oci://ghcr.io/conduit-ops/mkurator \
   --version "${VERSION}" \
   --namespace mkurator-system \
   --create-namespace \
-  --set image.repository=ghcr.io/konih/mkurator \
+  --set image.repository=ghcr.io/conduit-ops/mkurator \
   --set image.tag="${VERSION}"
 ```
 
@@ -592,7 +592,7 @@ default. Ensure **cert-manager** is installed and the webhook certificate become
 on an old schema while the controller expects new fields.
 
 **Before you upgrade:** read the [CHANGELOG](../CHANGELOG.md) and the
-[GitHub release notes](https://github.com/konih/mkurator/releases) for your target tag.
+[GitHub release notes](https://github.com/conduit-ops/MKurator/releases) for your target tag.
 Jumping to **0.5.0+** adds `ChannelAuthRule` and `AuthorityRecord`; tags before **v0.5.0**
 do not ship those CRDs.
 

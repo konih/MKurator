@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/konih/mkurator/internal/adapter/mqrest"
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/adapter/mqrest"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 const (

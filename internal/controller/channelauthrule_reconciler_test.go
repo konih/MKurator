@@ -11,9 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	messagingv1alpha1 "github.com/konih/mkurator/api/v1alpha1"
-	"github.com/konih/mkurator/internal/mqadmin"
-	mqadmintest "github.com/konih/mkurator/test/mocks/mqadmin"
+	messagingv1alpha1 "github.com/conduit-ops/mkurator/api/v1alpha1"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
+	mqadmintest "github.com/conduit-ops/mkurator/test/mocks/mqadmin"
 )
 
 var _ = Describe("ChannelAuthRuleReconciler", func() {

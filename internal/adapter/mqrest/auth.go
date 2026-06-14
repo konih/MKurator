@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/konih/mkurator/internal/metrics"
-	"github.com/konih/mkurator/internal/mqadmin"
+	"github.com/conduit-ops/mkurator/internal/metrics"
+	"github.com/conduit-ops/mkurator/internal/mqadmin"
 )
 
 const invalidSpecReason = "InvalidSpec"
