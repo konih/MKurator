@@ -286,6 +286,11 @@ func (in *ChannelSpec) DeepCopyInto(out *ChannelSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.MaxMsgLength != nil {
+		in, out := &in.MaxMsgLength, &out.MaxMsgLength
+		*out = new(int32)
+		**out = **in
+	}
 	out.WorkloadLifecyclePolicies = in.WorkloadLifecyclePolicies
 }
 

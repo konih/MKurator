@@ -18,6 +18,7 @@ const ChannelFinalizer = "messaging.mkurator.dev/channel"
 
 // ChannelSpec defines a channel to maintain on a referenced queue manager.
 // +kubebuilder:validation:XValidation:rule="!has(self.description) || self.description.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'descr')",message="description field and attributes.descr are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.maxMsgLength) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'maxmsgl')",message="maxMsgLength field and attributes.maxmsgl are mutually exclusive"
 type ChannelSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -49,6 +50,14 @@ type ChannelSpec struct {
 	// into the attribute map for mqadmin.
 	// +optional
 	Description string `json:"description,omitempty"`
+
+	// MaxMsgLength is the maximum message length in bytes (MQSC MAXMSGL).
+	// Mutually exclusive with attributes.maxmsgl; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=999999999
+	// +optional
+	MaxMsgLength *int32 `json:"maxMsgLength,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional

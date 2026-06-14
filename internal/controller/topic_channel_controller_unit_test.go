@@ -182,6 +182,22 @@ func TestToMQChannelSpecTypedDescription(t *testing.T) {
 	}
 }
 
+func TestToMQChannelSpecTypedMaxMsgLength(t *testing.T) {
+	t.Parallel()
+	maxMsgLength := int32(4194304)
+	channel := &messagingv1alpha1.Channel{
+		Spec: messagingv1alpha1.ChannelSpec{
+			ChannelName:  "ORDERS.APP",
+			Type:         messagingv1alpha1.ChannelTypeSvrconn,
+			MaxMsgLength: &maxMsgLength,
+		},
+	}
+	spec := toMQChannelSpec(channel)
+	if spec.Attributes["maxmsgl"] != "4194304" {
+		t.Fatalf("attrs = %v", spec.Attributes)
+	}
+}
+
 func TestToMQChannelSpec(t *testing.T) {
 	t.Parallel()
 	channel := &messagingv1alpha1.Channel{

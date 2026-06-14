@@ -181,6 +181,23 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("description"))
 	})
 
+	It("rejects Channel with both maxMsgLength and attributes.maxmsgl", func() {
+		ctx := context.Background()
+		maxMsgLength := int32(4194304)
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.Channel{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-channel-maxmsgl", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:   "ORDERS.APP",
+				MaxMsgLength:  &maxMsgLength,
+				Attributes:    map[string]string{"maxmsgl": "4194304"},
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("maxMsgLength"))
+	})
+
 	It("rejects Queue with both maxDepth and attributes.maxdepth", func() {
 		ctx := context.Background()
 		depth := int32(5000)
