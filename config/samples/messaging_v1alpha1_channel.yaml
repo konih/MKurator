@@ -9,6 +9,6 @@ spec:
   channelName: ORDERS.APP
   type: svrconn
   description: Application server-connection channel
+  maxMsgLength: 4194304
   attributes:
     trptype: tcp
-    maxmsgl: "4194304"

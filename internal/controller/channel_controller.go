@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -211,6 +212,9 @@ func toMQChannelSpec(channel *messagingv1alpha1.Channel) mqadmin.ChannelSpec {
 	}
 	if channel.Spec.Description != "" {
 		attrs[mqadmin.NormalizeAttrKey("descr")] = channel.Spec.Description
+	}
+	if channel.Spec.MaxMsgLength != nil {
+		attrs[mqadmin.NormalizeAttrKey("maxmsgl")] = strconv.FormatInt(int64(*channel.Spec.MaxMsgLength), 10)
 	}
 	chType := mqadmin.ChannelTypeSvrconn
 	if channel.Spec.Type != "" {

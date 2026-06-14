@@ -115,6 +115,15 @@ spec:
                   Mutually exclusive with attributes.descr; typed field takes precedence when folded
                   into the attribute map for mqadmin.
                 type: string
+              maxMsgLength:
+                description: |-
+                  MaxMsgLength is the maximum message length in bytes (MQSC MAXMSGL).
+                  Mutually exclusive with attributes.maxmsgl; typed field takes precedence when folded
+                  into the attribute map for mqadmin.
+                format: int32
+                maximum: 999999999
+                minimum: 0
+                type: integer
               suspend:
                 description: Suspend pauses MQ reconciliation for this object. Status
                   shows Synced=False ReasonSuspended.
@@ -134,6 +143,9 @@ spec:
             - message: description field and attributes.descr are mutually exclusive
               rule: '!has(self.description) || self.description.size() == 0 || !has(self.attributes)
                 || !self.attributes.exists(k, k.lowerAscii() == ''descr'')'
+            - message: maxMsgLength field and attributes.maxmsgl are mutually exclusive
+              rule: '!has(self.maxMsgLength) || !has(self.attributes) || !self.attributes.exists(k,
+                k.lowerAscii() == ''maxmsgl'')'
           status:
             description: ChannelStatus defines the observed state of Channel.
             properties:
