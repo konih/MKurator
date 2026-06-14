@@ -57,6 +57,12 @@ properties:
     - enabled
     - disabled
     type: string
+  publishScope:
+    description: |-
+      PublishScope is the publish scope for the topic (MQSC PUBSCOPE).
+      Mutually exclusive with attributes.pubscope; typed field takes precedence when folded
+      into the attribute map for mqadmin.
+    type: string
   subscribe:
     description: |-
       Subscribe controls whether applications may subscribe to the topic (MQSC SUB).
@@ -65,6 +71,12 @@ properties:
     enum:
     - enabled
     - disabled
+    type: string
+  subscribeScope:
+    description: |-
+      SubscribeScope is the subscribe scope for the topic (MQSC SUBSCOPE).
+      Mutually exclusive with attributes.subscope; typed field takes precedence when folded
+      into the attribute map for mqadmin.
     type: string
   suspend:
     description: Suspend pauses MQ reconciliation for this object. Status shows Synced=False
@@ -112,3 +124,9 @@ x-kubernetes-validations:
 - message: defPersistence field and attributes.defpsist are mutually exclusive
   rule: '!has(self.defPersistence) || !has(self.attributes) || !self.attributes.exists(k,
     k.lowerAscii() == ''defpsist'')'
+- message: publishScope field and attributes.pubscope are mutually exclusive
+  rule: '!has(self.publishScope) || self.publishScope.size() == 0 || !has(self.attributes)
+    || !self.attributes.exists(k, k.lowerAscii() == ''pubscope'')'
+- message: subscribeScope field and attributes.subscope are mutually exclusive
+  rule: '!has(self.subscribeScope) || self.subscribeScope.size() == 0 || !has(self.attributes)
+    || !self.attributes.exists(k, k.lowerAscii() == ''subscope'')'

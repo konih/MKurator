@@ -214,6 +214,7 @@ spec:
 | `attributes.topstr` | `retail/orders` | Topic string (`TOPICSTR` in MQSC); or use typed `topicString` |
 | `attributes.pub` / `sub` | `enabled` | Publish/subscribe policy; or use typed `publish` / `subscribe` (`enabled` / `disabled`) |
 | `attributes.defpsist` | `yes` | Default persistence; or use typed `defPersistence` (`yes` / `no`) |
+| `attributes.pubscope` / `subscope` | `QMGR` | Publish/subscribe scope; or use typed `publishScope` / `subscribeScope` |
 
 Verify on MQ:
 

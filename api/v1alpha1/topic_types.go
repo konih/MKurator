@@ -24,6 +24,8 @@ const TopicFinalizer = "messaging.mkurator.dev/topic"
 // +kubebuilder:validation:XValidation:rule="!has(self.publish) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'pub')",message="publish field and attributes.pub are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.subscribe) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'sub')",message="subscribe field and attributes.sub are mutually exclusive"
 // +kubebuilder:validation:XValidation:rule="!has(self.defPersistence) || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'defpsist')",message="defPersistence field and attributes.defpsist are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.publishScope) || self.publishScope.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'pubscope')",message="publishScope field and attributes.pubscope are mutually exclusive"
+// +kubebuilder:validation:XValidation:rule="!has(self.subscribeScope) || self.subscribeScope.size() == 0 || !has(self.attributes) || !self.attributes.exists(k, k.lowerAscii() == 'subscope')",message="subscribeScope field and attributes.subscope are mutually exclusive"
 type TopicSpec struct {
 	// ConnectionRef names a QueueManagerConnection in the same namespace.
 	// +kubebuilder:validation:Required
@@ -74,6 +76,18 @@ type TopicSpec struct {
 	// into the attribute map for mqadmin.
 	// +optional
 	DefPersistence QueueDefaultPersistence `json:"defPersistence,omitempty"`
+
+	// PublishScope is the publish scope for the topic (MQSC PUBSCOPE).
+	// Mutually exclusive with attributes.pubscope; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +optional
+	PublishScope string `json:"publishScope,omitempty"`
+
+	// SubscribeScope is the subscribe scope for the topic (MQSC SUBSCOPE).
+	// Mutually exclusive with attributes.subscope; typed field takes precedence when folded
+	// into the attribute map for mqadmin.
+	// +optional
+	SubscribeScope string `json:"subscribeScope,omitempty"`
 
 	// Suspend pauses MQ reconciliation for this object. Status shows Synced=False ReasonSuspended.
 	// +optional

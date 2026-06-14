@@ -208,6 +208,12 @@ func toMQTopicSpec(topic *messagingv1alpha1.Topic) mqadmin.TopicSpec {
 	if topic.Spec.DefPersistence != "" {
 		attrs[mqadmin.NormalizeAttrKey("defpsist")] = string(topic.Spec.DefPersistence)
 	}
+	if topic.Spec.PublishScope != "" {
+		attrs[mqadmin.NormalizeAttrKey("pubscope")] = topic.Spec.PublishScope
+	}
+	if topic.Spec.SubscribeScope != "" {
+		attrs[mqadmin.NormalizeAttrKey("subscope")] = topic.Spec.SubscribeScope
+	}
 	return mqadmin.TopicSpec{
 		Name:       topic.Spec.TopicName,
 		Attributes: attrs,

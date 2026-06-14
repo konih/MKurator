@@ -93,6 +93,24 @@ func TestToMQTopicSpecTypedPublishSubscribe(t *testing.T) {
 	}
 }
 
+func TestToMQTopicSpecTypedPublishSubscribeScope(t *testing.T) {
+	t.Parallel()
+	topic := &messagingv1alpha1.Topic{
+		Spec: messagingv1alpha1.TopicSpec{
+			TopicName:      "RETAIL.ORDERS",
+			PublishScope:   "QMGR",
+			SubscribeScope: "QMGR",
+		},
+	}
+	spec := toMQTopicSpec(topic)
+	if spec.Attributes["pubscope"] != "QMGR" {
+		t.Fatalf("pubscope = %q", spec.Attributes["pubscope"])
+	}
+	if spec.Attributes["subscope"] != "QMGR" {
+		t.Fatalf("subscope = %q", spec.Attributes["subscope"])
+	}
+}
+
 func TestTopicReconciler_SyncedWithoutDefine(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
