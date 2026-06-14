@@ -11,6 +11,35 @@ on the default branch using [git-cliff](https://git-cliff.org/).
 
 ### Bug Fixes
 
+- **api:** Guard Queue description CEL with has() (#23) ([#23](https://github.com/conduit-ops/MKurator/pull/23), )[27acadd](https://github.com/conduit-ops/MKurator/commit/27acaddd950da37e19c21615dd4634b0bfee2c4b)
+
+- **ci:** Use gitleaks CLI for org repo secret scan [ec336cd](https://github.com/conduit-ops/MKurator/commit/ec336cdb85327650610222be9d9769665d9afced)
+
+
+### Features
+
+- **api:** Add Channel.spec.description typed field (#30) ([#30](https://github.com/conduit-ops/MKurator/pull/30), )[756afe2](https://github.com/conduit-ops/MKurator/commit/756afe2eddcc3a1efb144725ca788fc0855d36e1)
+
+- **api:** Add Topic.spec.description typed field (#29) ([#29](https://github.com/conduit-ops/MKurator/pull/29), )[d9b2f02](https://github.com/conduit-ops/MKurator/commit/d9b2f02a9e7265c8db8989567320d9fc1cb9b030)
+
+- **api:** Add Topic.spec.topicString typed field (#28) ([#28](https://github.com/conduit-ops/MKurator/pull/28), )[9ba2b77](https://github.com/conduit-ops/MKurator/commit/9ba2b7708594e4927ba658974ecfdc75b5281394)
+
+- **api:** Add Queue remote xmitQueue and remoteQueueManager [64a1d5d](https://github.com/conduit-ops/MKurator/commit/64a1d5da588913d817e3bf234d5dff696f22b070)
+
+- **api:** Add Queue.spec.targetQueue for alias queues ([#26](https://github.com/conduit-ops/MKurator/pull/26), )[47ee589](https://github.com/conduit-ops/MKurator/commit/47ee5898a2958f23c30e4ecc430b362f4ad48031)
+
+- **api:** Add typed get/put fields to Queue spec (#25) ([#25](https://github.com/conduit-ops/MKurator/pull/25), )[b68aaaf](https://github.com/conduit-ops/MKurator/commit/b68aaafdbd1ac0877ffc4b9d96a9429f7dc01d8b)
+
+- **api:** Add typed defPersistence to Queue spec (#24) ([#24](https://github.com/conduit-ops/MKurator/pull/24), )[b739d3a](https://github.com/conduit-ops/MKurator/commit/b739d3adeb137642dc4399628e72107973b109dc)
+
+- **api:** Add typed description field to Queue spec [11e07cd](https://github.com/conduit-ops/MKurator/commit/11e07cde634edd9402a2bf80f852864df3983520)
+
+- **api:** Add typed maxDepth field to Queue spec [8e89273](https://github.com/conduit-ops/MKurator/commit/8e89273300f368115e8d8dafb078dd1f240a21a1)
+
+## [0.9.0](https://github.com/conduit-ops/MKurator/compare/v0.8.0..v0.9.0) - 2026-06-10
+
+### Bug Fixes
+
 - **api:** Keep MQObject interface out of api package [16aad54](https://github.com/conduit-ops/MKurator/commit/16aad54872710c9fb51b33256b76ef81e3768aeb)
 
 
