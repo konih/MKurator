@@ -218,6 +218,53 @@ func TestChannelAuthNeedsUpdateSSLPeerMapUserSourceChannel(t *testing.T) {
 	}
 }
 
+func TestChannelAuthNeedsUpdateQMGRMap(t *testing.T) {
+	t.Parallel()
+	desired := ChannelAuthSpec{
+		ChannelName:        "CH1",
+		RuleType:           ChannelAuthRuleTypeQMGRMap,
+		RemoteQueueManager: "QM_PARTNER",
+		UserSource:         "MAP",
+		McaUser:            "orders-app",
+	}
+	observed := &ChannelAuthState{
+		ChannelName:        "CH1",
+		RuleType:           ChannelAuthRuleTypeQMGRMap,
+		RemoteQueueManager: "QM_PARTNER",
+		UserSource:         "map",
+		McaUser:            "orders-app",
+		CheckClient:        "ASQMGR",
+	}
+	if ChannelAuthNeedsUpdate(desired, observed) {
+		t.Fatal("expected no update when QMGRMAP attributes match and CheckClient is MQ default")
+	}
+	observed.RemoteQueueManager = "QM_OTHER"
+	if !ChannelAuthNeedsUpdate(desired, observed) {
+		t.Fatal("expected update when remoteQueueManager drifts")
+	}
+}
+
+func TestChannelAuthNeedsUpdateQMGRMapUserSourceChannel(t *testing.T) {
+	t.Parallel()
+	desired := ChannelAuthSpec{
+		ChannelName:        "CH1",
+		RuleType:           ChannelAuthRuleTypeQMGRMap,
+		RemoteQueueManager: "QM_PARTNER",
+		UserSource:         "CHANNEL",
+	}
+	observed := &ChannelAuthState{
+		ChannelName:        "CH1",
+		RuleType:           ChannelAuthRuleTypeQMGRMap,
+		RemoteQueueManager: "QM_PARTNER",
+		UserSource:         "channel",
+		McaUser:            "legacy-mca",
+		CheckClient:        "ASQMGR",
+	}
+	if ChannelAuthNeedsUpdate(desired, observed) {
+		t.Fatal("expected no update when USERSRC CHANNEL and desired mcaUser is unset")
+	}
+}
+
 func TestAuthoritySetsEqualDifferentLengths(t *testing.T) {
 	t.Parallel()
 	if authoritySetsEqual([]string{"GET", "PUT"}, []string{"GET"}) {

@@ -553,6 +553,38 @@ var _ = Describe("CEL validation parity", func() {
 		Expect(err.Error()).To(ContainSubstring("mcaUser"))
 	})
 
+	It("rejects ChannelAuthRule QMGRMAP without remoteQueueManager", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.ChannelAuthRule{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-car-qmgrmap", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelAuthRuleSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:   "ORDERS.APP",
+				RuleType:      messagingv1alpha1.ChannelAuthRuleTypeQMGRMap,
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("QMGRMAP"))
+	})
+
+	It("rejects ChannelAuthRule QMGRMAP with userSource MAP without mcaUser", func() {
+		ctx := context.Background()
+		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.ChannelAuthRule{
+			ObjectMeta: metav1.ObjectMeta{Name: "cel-car-qmgrmap-map", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelAuthRuleSpec{
+				ConnectionRef:      messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:        "ORDERS.APP",
+				RuleType:           messagingv1alpha1.ChannelAuthRuleTypeQMGRMap,
+				RemoteQueueManager: "QM_PARTNER",
+				UserSource:         messagingv1alpha1.ChannelAuthUserSourceMap,
+			},
+		})
+		Expect(err).To(HaveOccurred())
+		Expect(apierrors.IsInvalid(err)).To(BeTrue())
+		Expect(err.Error()).To(ContainSubstring("mcaUser"))
+	})
+
 	It("rejects AuthorityRecord with both principal and group", func() {
 		ctx := context.Background()
 		err := webhookK8sClient.Create(ctx, &messagingv1alpha1.AuthorityRecord{

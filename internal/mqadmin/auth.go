@@ -14,16 +14,17 @@ const (
 
 // ChannelAuthSpec is the domain shape for SET CHLAUTH.
 type ChannelAuthSpec struct {
-	ChannelName string
-	RuleType    ChannelAuthRuleType
-	Address     string
-	UserList    string
-	ClientUser  string
-	SSLPeerName string
-	McaUser     string
-	UserSource  string
-	CheckClient string
-	Description string
+	ChannelName        string
+	RuleType           ChannelAuthRuleType
+	Address            string
+	UserList           string
+	ClientUser         string
+	SSLPeerName        string
+	RemoteQueueManager string
+	McaUser            string
+	UserSource         string
+	CheckClient        string
+	Description        string
 }
 
 // AuthorityObjectType mirrors AUTHREC OBJTYPE values.
@@ -50,16 +51,17 @@ type AuthoritySpec struct {
 
 // ChannelAuthState is the observed attributes of a CHLAUTH rule.
 type ChannelAuthState struct {
-	ChannelName string
-	RuleType    ChannelAuthRuleType
-	Address     string
-	UserList    string
-	ClientUser  string
-	SSLPeerName string
-	McaUser     string
-	UserSource  string
-	CheckClient string
-	Description string
+	ChannelName        string
+	RuleType           ChannelAuthRuleType
+	Address            string
+	UserList           string
+	ClientUser         string
+	SSLPeerName        string
+	RemoteQueueManager string
+	McaUser            string
+	UserSource         string
+	CheckClient        string
+	Description        string
 }
 
 // AuthorityState is the observed OAM authorities for a profile/principal or group.

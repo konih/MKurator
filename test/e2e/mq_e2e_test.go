@@ -24,6 +24,8 @@ const (
 	mqChannelUserMapPrereqCRName = "e2e-usermap-channel"
 	mqChannelSslPeerMapCRName       = "e2e-sslpeermap-car"
 	mqChannelSslPeerMapPrereqCRName = "e2e-sslpeermap-channel"
+	mqChannelQMGRMapCRName          = "e2e-qmgrmap-car"
+	mqChannelQMGRMapPrereqCRName    = "e2e-qmgrmap-channel"
 	mqChannelPrereqCRName     = "e2e-dev-app-channel"
 	mqAuthorityCRName         = "e2e-app-orders-get-put"
 )
@@ -651,6 +653,93 @@ spec:
 			ok, err := channelAuthExists(pollCtx, client, carLookup)
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(ok).To(BeFalse(), "SSLPEERMAP CHLAUTH for channel %s should be removed from MQ after CR delete", channelObject)
+		}).WithTimeout(KubectlWaitDuration).WithPolling(3 * time.Second).Should(Succeed())
+	})
+
+	It("reconciles a QMGRMAP ChannelAuthRule CR against the kind IBM MQ queue manager", func() {
+		specName := CurrentSpecReport().FullText()
+		remoteQM := e2eRemoteQueueManagerForTest(specName)
+		channelObject := e2eChannelNameForTest(specName)
+
+		Expect(kubectlApply(connectionManifest(ns))).To(Succeed())
+
+		channelYAML := fmt.Sprintf(`apiVersion: messaging.mkurator.dev/v1alpha1
+kind: Channel
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  channelName: %s
+  type: svrconn
+  attributes:
+    trptype: tcp
+`, mqChannelQMGRMapPrereqCRName, ns, mqConnectionName, channelObject)
+		Expect(applyWithWebhookRetry(channelYAML)).To(Succeed())
+
+		Eventually(func(g Gomega) {
+			out, runErr := runKubectl("get", "channel", mqChannelQMGRMapPrereqCRName, "-n", ns,
+				"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+			g.Expect(runErr).NotTo(HaveOccurred())
+			g.Expect(out).To(Equal("True"), "Channel %s must be Synced before QMGRMAP ChannelAuthRule admission", mqChannelQMGRMapPrereqCRName)
+		}).WithTimeout(mqSyncedEventuallyTimeout).WithPolling(5 * time.Second).Should(Succeed())
+
+		carYAML := fmt.Sprintf(`apiVersion: messaging.mkurator.dev/v1alpha1
+kind: ChannelAuthRule
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  connectionRef:
+    name: %s
+  channelName: %s
+  ruleType: QMGRMAP
+  remoteQueueManager: "%s"
+  userSource: MAP
+  mcaUser: app
+  description: e2e qmgrmap rule
+`, mqChannelQMGRMapCRName, ns, mqConnectionName, channelObject, remoteQM)
+		Expect(applyWithWebhookRetry(carYAML)).To(Succeed())
+
+		Eventually(func(g Gomega) {
+			out, err := runKubectl("get", "channelauthrule", mqChannelQMGRMapCRName, "-n", ns,
+				"-o", "jsonpath={.status.conditions[?(@.type==\"Synced\")].status}")
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(out).To(Equal("True"))
+		}).WithTimeout(mqSyncedEventuallyTimeout).WithPolling(5 * time.Second).Should(Succeed())
+
+		client, err := newMQClient()
+		Expect(err).NotTo(HaveOccurred())
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		carSpec := mqadmin.ChannelAuthSpec{
+			ChannelName:        channelObject,
+			RuleType:           mqadmin.ChannelAuthRuleTypeQMGRMap,
+			RemoteQueueManager: remoteQM,
+			UserSource:         "MAP",
+			McaUser:            "app",
+			Description:        "e2e qmgrmap rule",
+		}
+		ok, err := channelAuthMatches(ctx, client, carSpec)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(ok).To(BeTrue(), "QMGRMAP CHLAUTH for channel %s should match ChannelAuthRule spec", channelObject)
+
+		Expect(kubectlDeleteWait("channelauthrule", mqChannelQMGRMapCRName, ns)).To(Succeed(),
+			"QMGRMAP ChannelAuthRule CR delete should complete within %s", kubectlWaitTimeout)
+
+		carLookup := mqadmin.ChannelAuthSpec{
+			ChannelName:        channelObject,
+			RuleType:           mqadmin.ChannelAuthRuleTypeQMGRMap,
+			RemoteQueueManager: remoteQM,
+		}
+		Eventually(func(g Gomega) {
+			pollCtx, pollCancel := context.WithTimeout(context.Background(), time.Minute)
+			defer pollCancel()
+			ok, err := channelAuthExists(pollCtx, client, carLookup)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(ok).To(BeFalse(), "QMGRMAP CHLAUTH for channel %s should be removed from MQ after CR delete", channelObject)
 		}).WithTimeout(KubectlWaitDuration).WithPolling(3 * time.Second).Should(Succeed())
 	})
 

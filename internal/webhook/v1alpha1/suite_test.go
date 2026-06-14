@@ -325,6 +325,37 @@ var _ = Describe("Validating admission webhooks", func() {
 		Expect(webhookK8sClient.Create(ctx, rule)).To(Succeed())
 	})
 
+	It("allows ChannelAuthRule QMGRMAP when Channel exists", func() {
+		ctx := context.Background()
+		Expect(webhookK8sClient.Create(ctx, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: "creds", Namespace: ns},
+		})).To(Succeed())
+		conn := sampleWebhookConnection(ns, "qm1")
+		Expect(webhookK8sClient.Create(ctx, conn)).To(Succeed())
+
+		ch := &messagingv1alpha1.Channel{
+			ObjectMeta: metav1.ObjectMeta{Name: "orders-app", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelSpec{
+				ConnectionRef: messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:   "ORDERS.APP",
+			},
+		}
+		Expect(webhookK8sClient.Create(ctx, ch)).To(Succeed())
+
+		rule := &messagingv1alpha1.ChannelAuthRule{
+			ObjectMeta: metav1.ObjectMeta{Name: "car-qmgrmap", Namespace: ns},
+			Spec: messagingv1alpha1.ChannelAuthRuleSpec{
+				ConnectionRef:      messagingv1alpha1.LocalObjectReference{Name: "qm1"},
+				ChannelName:        "ORDERS.APP",
+				RuleType:           messagingv1alpha1.ChannelAuthRuleTypeQMGRMap,
+				RemoteQueueManager: "QM_PARTNER",
+				UserSource:         messagingv1alpha1.ChannelAuthUserSourceMap,
+				McaUser:            "orders-app",
+			},
+		}
+		Expect(webhookK8sClient.Create(ctx, rule)).To(Succeed())
+	})
+
 	It("allows ChannelAuthRule when Channel and connection exist", func() {
 		ctx := context.Background()
 		Expect(webhookK8sClient.Create(ctx, &corev1.Secret{

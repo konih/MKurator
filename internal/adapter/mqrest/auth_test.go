@@ -151,29 +151,40 @@ func TestBuildSetChannelAuthMQSCSSLPeerMapRemove(t *testing.T) {
 	}
 }
 
-func TestBuildSetChannelAuthMQSCDeferredRuleTypes(t *testing.T) {
-	// QMGRMAP CRD fields are still deferred (see docs/PHASE5_AUTH_SKETCH.md).
-	cases := []struct {
-		name     string
-		ruleType mqadmin.ChannelAuthRuleType
-		wantType string
-	}{
-		{"QMGRMAP", mqadmin.ChannelAuthRuleTypeQMGRMap, "QMGRMAP"},
+func TestBuildSetChannelAuthMQSCQMGRMap(t *testing.T) {
+	cmd, err := buildSetChannelAuthMQSC(mqadmin.ChannelAuthSpec{
+		ChannelName:        "ORDERS.APP",
+		RuleType:           mqadmin.ChannelAuthRuleTypeQMGRMap,
+		RemoteQueueManager: "QM_PARTNER",
+		UserSource:         "MAP",
+		McaUser:            "orders-app",
+		Description:        "map partner QM to orders-app",
+	}, "REPLACE")
+	if err != nil {
+		t.Fatalf("buildSetChannelAuthMQSC: %v", err)
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			cmd, err := buildSetChannelAuthMQSC(mqadmin.ChannelAuthSpec{
-				ChannelName: "APP.CH",
-				RuleType:    tc.ruleType,
-			}, "REPLACE")
-			if err != nil {
-				t.Fatalf("buildSetChannelAuthMQSC: %v", err)
-			}
-			want := "SET CHLAUTH('APP.CH') TYPE(" + tc.wantType + ") ACTION(REPLACE)"
-			if cmd != want {
-				t.Fatalf("got %q, want %q", cmd, want)
-			}
-		})
+	want := "SET CHLAUTH('ORDERS.APP') TYPE(QMGRMAP) QMNAME('QM_PARTNER') " +
+		"USERSRC(MAP) MCAUSER('orders-app') DESCR('map partner QM to orders-app') ACTION(REPLACE)"
+	if cmd != want {
+		t.Fatalf("got %q, want %q", cmd, want)
+	}
+}
+
+func TestBuildSetChannelAuthMQSCQMGRMapRemove(t *testing.T) {
+	cmd, err := buildSetChannelAuthMQSC(mqadmin.ChannelAuthSpec{
+		ChannelName:        "ORDERS.APP",
+		RuleType:           mqadmin.ChannelAuthRuleTypeQMGRMap,
+		RemoteQueueManager: "QM_PARTNER",
+		UserSource:         "MAP",
+		McaUser:            "orders-app",
+		Description:        "ignored on remove",
+	}, "REMOVE")
+	if err != nil {
+		t.Fatalf("buildSetChannelAuthMQSC: %v", err)
+	}
+	want := "SET CHLAUTH('ORDERS.APP') TYPE(QMGRMAP) QMNAME('QM_PARTNER') ACTION(REMOVE)"
+	if cmd != want {
+		t.Fatalf("got %q, want %q", cmd, want)
 	}
 }
 
@@ -479,6 +490,34 @@ func TestChannelAuthStateFromAttributesUserMap(t *testing.T) {
 		"clntuser": "johndoe", attrMcaUser: "orders-app", "usersrc": "MAP", "descr": "map",
 	})
 	if state.ClientUser != "johndoe" || state.McaUser != "orders-app" || state.UserSource != "MAP" {
+		t.Fatalf("state = %+v", state)
+	}
+}
+
+func TestBuildDisplayChannelAuthMQSCQMGRMap(t *testing.T) {
+	cmd, err := buildDisplayChannelAuthMQSC(mqadmin.ChannelAuthSpec{
+		ChannelName:        "ORDERS.APP",
+		RuleType:           mqadmin.ChannelAuthRuleTypeQMGRMap,
+		RemoteQueueManager: "QM_PARTNER",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "DISPLAY CHLAUTH('ORDERS.APP') TYPE(QMGRMAP) QMNAME('QM_PARTNER')"
+	if cmd != want {
+		t.Fatalf("got %q, want %q", cmd, want)
+	}
+}
+
+func TestChannelAuthStateFromAttributesQMGRMap(t *testing.T) {
+	spec := mqadmin.ChannelAuthSpec{
+		ChannelName: "CH1",
+		RuleType:    mqadmin.ChannelAuthRuleTypeQMGRMap,
+	}
+	state := channelAuthStateFromAttributes(spec, map[string]string{
+		attrQmName: "QM_PARTNER", attrMcaUser: "orders-app", "usersrc": "MAP", "descr": "map",
+	})
+	if state.RemoteQueueManager != "QM_PARTNER" || state.McaUser != "orders-app" || state.UserSource != "MAP" {
 		t.Fatalf("state = %+v", state)
 	}
 }

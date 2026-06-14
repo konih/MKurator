@@ -148,16 +148,17 @@ func channelAuthStateFromAttributes(
 		}
 	}
 	return &mqadmin.ChannelAuthState{
-		ChannelName: spec.ChannelName,
-		RuleType:    spec.RuleType,
-		Address:     address,
-		UserList:    attrs["userlist"],
-		ClientUser:  attrs["clntuser"],
-		SSLPeerName: attrs[attrSslPeer],
-		McaUser:     attrs[attrMcaUser],
-		UserSource:  attrs["usersrc"],
-		CheckClient: attrs["chckclnt"],
-		Description: attrs["descr"],
+		ChannelName:        spec.ChannelName,
+		RuleType:           spec.RuleType,
+		Address:            address,
+		UserList:           attrs["userlist"],
+		ClientUser:         attrs["clntuser"],
+		SSLPeerName:        attrs[attrSslPeer],
+		RemoteQueueManager: attrs[attrQmName],
+		McaUser:            attrs[attrMcaUser],
+		UserSource:         attrs["usersrc"],
+		CheckClient:        attrs["chckclnt"],
+		Description:        attrs["descr"],
 	}
 }
 
@@ -199,6 +200,8 @@ func buildDisplayChannelAuthMQSC(spec mqadmin.ChannelAuthSpec) (string, error) {
 		parts = append(parts, fmt.Sprintf("CLNTUSER('%s')", mqscQuote(spec.ClientUser)))
 	case spec.RuleType == mqadmin.ChannelAuthRuleTypeSSLPeerMap && spec.SSLPeerName != "":
 		parts = append(parts, fmt.Sprintf("SSLPEER('%s')", mqscQuote(spec.SSLPeerName)))
+	case spec.RuleType == mqadmin.ChannelAuthRuleTypeQMGRMap && spec.RemoteQueueManager != "":
+		parts = append(parts, fmt.Sprintf("QMNAME('%s')", mqscQuote(spec.RemoteQueueManager)))
 	case spec.Address != "":
 		parts = append(parts, fmt.Sprintf("ADDRESS('%s')", mqscQuote(spec.Address)))
 	}
@@ -266,6 +269,9 @@ func buildSetChannelAuthMQSC(spec mqadmin.ChannelAuthSpec, action string) (strin
 		parts = append(parts, clause)
 	}
 	if clause := channelAuthSSLPeerClause(spec); clause != "" {
+		parts = append(parts, clause)
+	}
+	if clause := channelAuthRemoteQueueManagerClause(spec); clause != "" {
 		parts = append(parts, clause)
 	}
 	if action == "REMOVE" {
@@ -341,6 +347,13 @@ func channelAuthSSLPeerClause(spec mqadmin.ChannelAuthSpec) string {
 		return ""
 	}
 	return fmt.Sprintf("SSLPEER('%s')", mqscQuote(spec.SSLPeerName))
+}
+
+func channelAuthRemoteQueueManagerClause(spec mqadmin.ChannelAuthSpec) string {
+	if spec.RemoteQueueManager == "" || spec.RuleType != mqadmin.ChannelAuthRuleTypeQMGRMap {
+		return ""
+	}
+	return fmt.Sprintf("QMNAME('%s')", mqscQuote(spec.RemoteQueueManager))
 }
 
 func channelAuthAddressClause(spec mqadmin.ChannelAuthSpec) string {
